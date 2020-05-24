@@ -1,0 +1,106 @@
+{
+  "action colours": {
+      "Push": 16098851,
+      "PR": 9442302,
+      "Misc": 16777215,
+      "Issue": 13632027,
+      "Mod": 852223
+  },
+  "repo pfps": {
+      "SirChopwood/test": "https://media.discordapp.net/attachments/562121682538594314/707549568182779924/pack101.png",
+      "SirChopwood/FICSIT-Fred": "https://media.discordapp.net/attachments/599990474668769290/708729597910581299/ficsitfred.png"
+  },
+  "filter channel": 708420574988468200,
+  "log channel": 713440443815166100,
+  "prefix": ">",
+  "automated responses": [],
+  "media only channels": [
+      {
+          "name": "Screenshots",
+          "id": "709509235028918334"
+      }
+  ],
+  "commands": [
+      {
+          "command": ">generator",
+          "response": "../Images/Generators.png",
+          "media": true
+      },
+      {
+          "command": ">redirector",
+          "response": "../Images/Redirectors.png",
+          "media": true
+      },
+      {
+          "command": ">install",
+          "response": "../Images/Install.png",
+          "media": true
+      },
+      {
+          "command": ">docs",
+          "response": "https://docs.ficsit.app/",
+          "media": false
+      }
+  ],
+  "special commands": [
+      {
+          "command": ">mod (name)",
+          "response": "Searches for (name) in the SMR database, returning the details of the mod if it is found. If multiple are found, it will state so. Same for if none are found. Only the user can react to the clipboard, and if so within 60s, will post the full description of said mod below."
+      },
+      {
+          "command": ">help",
+          "response": "Displays the menu you are looking at right now... funny that..."
+      },
+      {
+          "command": ">add response",
+          "response": "[MOD] Creates a prompt to add an automated response."
+      },
+      {
+          "command": ">remove response",
+          "response": "[MOD] Creates a prompt to remove an automated response."
+      },
+      {
+          "command": ">add media only",
+          "response": "[MOD] Creates a prompt to add a media only channel."
+      },
+      {
+          "command": ">remove media only",
+          "response": "[MOD] Creates a prompt to remove a media only channel."
+      },
+      {
+          "command": ">add command",
+          "response": "[MOD] Creates a prompt to add a command."
+      },
+      {
+          "command": ">remove command",
+          "response": "[MOD] Creates a prompt to remove a command."
+      }
+  ],
+  "role assignments": [
+      {
+          "command": ">t1",
+          "role": "T1 Member",
+          "response": "Congratulations... you're not a pleb anymore!",
+          "mod assignable": false
+      },
+      {
+          "command": ">t2",
+          "role": "T2 Member",
+          "response": "**YOU GOT PROMOOOOOOOOTEEEEED! :D**\nhttps://www.youtube.com/watch?v=S4YIl4BhO3E",
+          "mod assignable": true
+      }
+  ],
+  "mod roles": [
+      "T3 Member",
+      "FICSIT Staff",
+      "Coffeestainer VIP",
+      "Moderator"
+  ],
+  "known crashes": [
+      {
+          "name": "c++",
+          "crash": "Assertion failed: ObjectA == nullptr || ObjectA->IsA<UClass>()",
+          "response": "Hi {user}, thing thing thing"
+      }
+  ]
+}
