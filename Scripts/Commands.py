@@ -76,7 +76,7 @@ async def handleCommand(client,message, command, args, authorised):
             client.config["automated responses"].append(
                 {"name": name, "keywords": keywords, "additional words": additional_words, "response": response,
                  "ignore members": ignore_members})
-            json.dump(client.config, open("client.config.json", "w"))
+            json.dump(client.config, open("Config.json", "w"))
             await message.channel.send("Automated Response '" + name + "' added.")
 
         elif " ".join(args[0:2]) == "media only":
@@ -99,7 +99,7 @@ async def handleCommand(client,message, command, args, authorised):
 
             client.config["media only channels"].append(
                 {"name": name, "id": id})
-            json.dump(client.config, open("client.config.json", "w"))
+            json.dump(client.config, open("Config.json", "w"))
             await message.channel.send("Media Only Channel '" + name + "' added.")
             return
 
@@ -121,7 +121,7 @@ async def handleCommand(client,message, command, args, authorised):
 
                 client.config["commands"].append(
                     {"command": command, "response": response, "media": media})
-                json.dump(client.config, open("client.config.json", "w"))
+                json.dump(client.config, open("Config.json", "w"))
                 await message.channel.send("Command '" + command + "' added.")
 
         elif args[0] == "crash":
@@ -141,7 +141,7 @@ async def handleCommand(client,message, command, args, authorised):
                 response = response.content
 
                 client.config["known crashes"].append({"name": name, "crash": crash, "response": response})
-                json.dump(client.config, open("client.config.json", "w"))
+                json.dump(client.config, open("Config.json", "w"))
                 await message.channel.send("Known crash '" + name + "' added.")
 
     elif command == "remove":
@@ -157,7 +157,7 @@ async def handleCommand(client,message, command, args, authorised):
                 for response in client.config["automated responses"]:
                     if response["name"] == name:
                         del client.config["automated responses"][index]
-                        json.dump(client.config, open("client.config.json", "w"))
+                        json.dump(client.config, open("Config.json", "w"))
                         await message.channel.send("Response Removed!")
                         return
                     else:
@@ -176,7 +176,7 @@ async def handleCommand(client,message, command, args, authorised):
                 for response in client.config["media only channels"]:
                     if response["name"] == name:
                         del client.config["media only channels"][index]
-                        json.dump(client.config, open("client.config.json", "w"))
+                        json.dump(client.config, open("Config.json", "w"))
                         await message.channel.send("Media Only Channel Removed!")
                         return
                     else:
@@ -195,7 +195,7 @@ async def handleCommand(client,message, command, args, authorised):
                 for response in client.config["commands"]:
                     if response["command"] == command:
                         del client.config["commands"][index]
-                        json.dump(client.config, open("client.config.json", "w"))
+                        json.dump(client.config, open("Config.json", "w"))
                         await message.channel.send("Command Removed!")
                         return
                     else:
@@ -214,7 +214,7 @@ async def handleCommand(client,message, command, args, authorised):
                 for crash in client.config["known crashes"]:
                     if crash["name"] == name:
                         del client.config["known crashes"][index]
-                        json.dump(client.config, open("client.config.json", "w"))
+                        json.dump(client.config, open("Config.json", "w"))
                         await message.channel.send("Crash Removed!")
                         return
                     else:
