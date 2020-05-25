@@ -7,8 +7,11 @@ import json
 import threading
 import Commands
 import time
+import Helper
+import datetime
 
 from urllib.request import urlopen
+
 
 # server = 192.168.0.4:6969 | computer = 192.168.0.30:7000
 
@@ -23,8 +26,9 @@ class Bot(discord.Client):
     async def on_ready(self):
         with open("Config.json", "r") as file:
             self.config = json.load(file)
+        with open("Bans.json", "r") as file:
+            self.bans = json.load(file)
         self.logchannel = self.get_channel(self.config["log channel"])
-        authorised = 2
         print('We have logged in as {0.user}'.format(self))
 
     async def send_embed(self, embed_item):
@@ -55,12 +59,12 @@ class Bot(discord.Client):
             return
         if message.author.permissions_in(self.get_channel(self.config["filter channel"])).send_messages:
             authorised = True
-            if message.author.permissions_in(self.get_channel(self.config["log channel"])).send_messages:
+            if message.author.permissions_in(self.logchannel).send_messages:
                 authorised = 2
         else:
             authorised = False
         if message.content.startswith(self.config["prefix"]):
-            await Commands.handleCommand(self, message, message.content.lower()[1:].split(" ")[0], message.content.lower()[1:].split(" ")[1:], authorised)
+            await Commands.handleCommand(self, message, message.content.lower()[1:].split(" ")[0],message.content.lower()[1:].split(" ")[1:], authorised)
 
             if authorised:
                 return
@@ -75,7 +79,8 @@ class Bot(discord.Client):
                     if keyword in message.content.lower():
                         for word in automation["additional words"]:
                             if word in message.content.lower():
-                                await message.channel.send(str(automation["response"].format(user=message.author.mention)))
+                                await message.channel.send(
+                                    str(automation["response"].format(user=message.author.mention)))
                                 return
 
         # Crash Responses
@@ -137,6 +142,7 @@ class Bot(discord.Client):
             return
         if before.nick != after.nick:
             await self.logchannel.send(content=None, embed=CreateEmbed.member_nicked(before, after))
+
 
 with open("Secrets.json", "r") as Secrets:
     Secrets = json.load(Secrets)

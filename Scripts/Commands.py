@@ -2,8 +2,11 @@ import discord
 import asyncio
 import CreateEmbed
 import json
+import Helper
+import datetime
 
-async def handleCommand(client,message, command, args, authorised):
+
+async def handleCommand(client, message, command, args, authorised):
     # Normal Commands
     for automation in client.config["commands"]:
         if message.content.startswith(automation["command"]):
@@ -20,7 +23,8 @@ async def handleCommand(client,message, command, args, authorised):
             await message.channel.send("This command requires one argument")
             return
         if args[0] == "help":
-            await message.channel.send("This command earches for the passed argument in the SMR database, returning the details of the mod if it is found. If multiple are found, it will state so. Same for if none are found. If the user that used the command reacts with the clipboard within a minute, I will extend the post to show the full description of said mod.")
+            await message.channel.send(
+                "This command earches for the passed argument in the SMR database, returning the details of the mod if it is found. If multiple are found, it will state so. Same for if none are found. If the user that used the command reacts with the clipboard within a minute, I will extend the post to show the full description of said mod.")
             return
         result, desc = CreateEmbed.mod(args[0])
         if isinstance(result, str):
@@ -57,19 +61,23 @@ async def handleCommand(client,message, command, args, authorised):
                 name = await client.wait_for('message', timeout=30.0)
                 name = name.content
 
-            await message.channel.send("What keywords would you like to add? e.g. ``apple banana 110838934644211712`` (The last is a Discord User ID to grab pings)")
+            await message.channel.send(
+                "What keywords would you like to add? e.g. ``apple banana 110838934644211712`` (The last is a Discord User ID to grab pings)")
             keywords = await client.wait_for('message', timeout=60.0)
             keywords = keywords.content.split(" ")
 
-            await message.channel.send("What additional words would you like to add? e.g. ``apple banana carrot 110838934644211712`` (The last is a Discord User ID to grab pings)")
+            await message.channel.send(
+                "What additional words would you like to add? e.g. ``apple banana carrot 110838934644211712`` (The last is a Discord User ID to grab pings)")
             additional_words = await client.wait_for('message', timeout=60.0)
             additional_words = additional_words.content.split(" ")
 
-            await message.channel.send("What response do you want it to provide? e.g. ``Thanks for saying my keywords {user}`` (use {user} to ping the person saying the command (required))")
+            await message.channel.send(
+                "What response do you want it to provide? e.g. ``Thanks for saying my keywords {user}`` (use {user} to ping the person saying the command (required))")
             response = await client.wait_for('message', timeout=60.0)
             response = response.content
 
-            await message.channel.send("Do you want it to ignore members (and only target non-members)? e.g. ``True`` or ``False``")
+            await message.channel.send(
+                "Do you want it to ignore members (and only target non-members)? e.g. ``True`` or ``False``")
             ignore_members = await client.wait_for('message', timeout=10.0)
             ignore_members = ignore_members.content
 
@@ -132,11 +140,13 @@ async def handleCommand(client,message, command, args, authorised):
                 name = await client.wait_for('message', timeout=30.0)
                 name = name.content
 
-                await message.channel.send("What is the string to search for in the crash logs ? e.g. \"Assertion failed: ObjectA == nullptr\"")
+                await message.channel.send(
+                    "What is the string to search for in the crash logs ? e.g. \"Assertion failed: ObjectA == nullptr\"")
                 crash = await client.wait_for('message', timeout=60.0)
                 crash = crash.content
 
-                await message.channel.send("What response do you want it to provide? e.g. ``Thanks for saying my keywords {user}`` (use {user} to ping the user)")
+                await message.channel.send(
+                    "What response do you want it to provide? e.g. ``Thanks for saying my keywords {user}`` (use {user} to ping the user)")
                 response = await client.wait_for('message', timeout=60.0)
                 response = response.content
 
@@ -229,17 +239,91 @@ async def handleCommand(client,message, command, args, authorised):
         deletemessages = 7
         command = "ban"
     else:
-        deletemessages =0
+        deletemessages = 0
     if command == "ban":
-        if len(args) < 2:
-            await message.channel.send("This command needs a user and a reason")
+        if len(args) < 1:
+            await message.channel.send("This command needs a user")
             return
         try:
             user = message.mentions[0]
         except:
-            user = client.get_user(args[0])
-            if not user:
-                print(user)
+            try:
+                user = await client.fetch_user(int(args[0]))
+            except:
                 await message.channel.send("User cannot be found")
                 return
-        message.guild.ban(user, " ".join(args[1:]),deletemessages)
+        if user == message.author:
+            await message.channel.send("You cannot ban yourself, dummy !")
+            return
+        for x in client.bans:
+            if client.bans[x]["userid"] == user.id:
+                await message.channel.send("User is already banned")
+                return
+        try:
+            time = str(Helper.strToTime("".join(args).split("|")[1]))
+        except:
+            time = "Indefinitely"
+        try:
+            reason = args[1]
+            reason = " ".join(args[1:]).split("|")[0].strip()
+        except:
+            reason = "Unspecified"
+        try:
+            await message.guild.ban(user=user, delete_message_days=deletemessages, reason=reason)
+        except discord.Forbidden:
+            await message.channel.send("You do not have the necessary permissions to ban this specific user")
+            return
+        ban = {
+            "user": str(user),
+            "userid": user.id,
+            "reason": reason,
+            "moderator": str(message.author),
+            "moderatorid": message.author.id,
+            "until": time
+        }
+        client.bans[len(client.bans)] = ban
+        json.dump(client.bans, open("Bans.json", "w"))
+        if not user.dm_channel:
+            await user.create_dm()
+        try:
+            await user.dm_channel.send("You got banned by " + str(message.author) + " Until: " + time + " Reason: " + reason)#embed
+        except:
+            await message.channel.send("Banned " + str(user) + " (" + str(user.id) + ") Until: " + time + " Reason: " + reason + " (was unable to send a PM to the user)")#embed ? not sure if the precision is needed
+            return
+        await message.channel.send("Banned " + str(user) + " (" + str(user.id) + ") Until: " + time + " Reason: " + reason)#embed
+        return
+
+    if command == "unban":
+        if len(args) < 1:
+            await message.channel.send("This command needs a user")
+            return
+        try:
+            reason = args[1]
+            reason = " ".join(args[1:])
+        except:
+            reason = "Unspecified"
+        try:
+            user = message.mentions[0]
+        except:
+            user = await client.fetch_user(int(args[0]))
+            if not user:
+                await message.channel.send("User cannot be found")
+                return
+        for x in client.bans:
+            if client.bans[x]["userid"] == user.id:
+                print("Found")
+                try:
+                    await message.guild.unban(user=user, reason=reason)
+                except discord.Forbidden:
+                    await message.channel.send("Cannot ban this user")
+                    return
+                except:
+                    await message.channel.send("Something went wrong, sorry about that")
+                    return
+                print(client.bans[x])
+                del client.bans[x]
+                json.dump(client.bans, open("Bans.json", "w"))
+                await message.channel.send("Unbanned " + str(user) + "(" + str(user.id) + ") Reason: " + reason) #embed
+                return
+        await message.channel.send("User isn't banned")
+        return
