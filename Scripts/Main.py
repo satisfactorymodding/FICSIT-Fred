@@ -7,13 +7,17 @@ import json
 import threading
 import Commands
 import time
-import Helper
-import datetime
+from PIL import Image
+from pytesseract import pytesseract, image_to_string
+import io
 
 from urllib.request import urlopen
 
 
 # server = 192.168.0.4:6969 | computer = 192.168.0.30:7000
+
+pytesseract.tesseract_cmd = r"D:\Program Files\Tesseract-OCR\\tesseract"
+
 
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
@@ -26,8 +30,6 @@ class Bot(discord.Client):
     async def on_ready(self):
         with open("Config.json", "r") as file:
             self.config = json.load(file)
-        with open("Bans.json", "r") as file:
-            self.bans = json.load(file)
         self.logchannel = self.get_channel(self.config["log channel"])
         print('We have logged in as {0.user}'.format(self))
 
@@ -63,8 +65,20 @@ class Bot(discord.Client):
                 authorised = 2
         else:
             authorised = False
+
+        # Media Only Channels
+        for automation in self.config["media only channels"]:
+            if message.channel.id == int(automation["id"]) and len(message.embeds) == 0 and len(
+                    message.attachments) == 0:
+                await message.author.send("Hi " + message.author.name + ", the channel '" + automation["name"]
+                                          + "' you just tried to message in has been flagged as a 'Media Only' "
+                                            "channel. This means you must post an embed or attach a file in order to "
+                                            "post there. (we do not accept links)")
+                await message.delete()
+                return
+
         if message.content.startswith(self.config["prefix"]):
-            await Commands.handleCommand(self, message, message.content.lower()[1:].split(" ")[0],message.content.lower()[1:].split(" ")[1:], authorised)
+            await Commands.handleCommand(self, message, message.content.lower().lstrip(self.config["prefix"], "").split(" ")[0],message.content.lower().replace(self.config["prefix"], "").split(" ")[1:], authorised)
 
             if authorised:
                 return
@@ -79,70 +93,54 @@ class Bot(discord.Client):
                     if keyword in message.content.lower():
                         for word in automation["additional words"]:
                             if word in message.content.lower():
-                                await message.channel.send(
-                                    str(automation["response"].format(user=message.author.mention)))
+                                await message.channel.send(str(automation["response"].format(user=message.author.mention)))
                                 return
 
         # Crash Responses
-        for crash in self.config["known crashes"]:
+
+        #attachments
+        if message.attachments:
+            try:
+                file = await message.attachments[0].to_file()
+                file = file.fp
+            except:
+                file = io.BytesIO(b"")
             # .log or .txt Files
-            if message.attachments and (
-                    ".log" in message.attachments[0].filename or ".txt" in message.attachments[0].filename):
-                crashlog = await message.attachments[0].to_file()
-                crashlog = crashlog.fp
-                for line in crashlog:
-                    if crash["crash"].lower() in line.decode().lower():
+            if (".log" in message.attachments[0].filename or ".txt" in message.attachments[0].filename):
+                for line in file:
+                    for crash in self.config["known crashes"]:
+                        if crash["crash"].lower() in line.decode().lower():
+                            await message.channel.send(str(crash["response"].format(user=message.author.mention)))
+                            return
+
+            #images
+            else:
+                try:
+                    image = Image.open(file)
+                    image = image.convert(mode="L")
+                    ratioTo8k = 4320 / image.height
+                    if ratioTo8k > 1:
+                        image = image.resize((round(image.width * ratioTo8k), round(image.height * ratioTo8k)),Image.LANCZOS)
+                    result = image_to_string(image, lang="eng")[:2000]
+                except:
+                    result = ""
+                for crash in self.config["known crashes"]:
+                    if crash["crash"].lower() in result.lower():
                         await message.channel.send(str(crash["response"].format(user=message.author.mention)))
                         return
 
-            # Pastebin links
-            elif "https://pastebin.com/" in message.content:
-                try:
-                    pastebincontent
-                except NameError:
-                    pastebincontent = urlopen(
-                        "https://pastebin.com/raw/" + message.content.split("https://pastebin.com/")[1].split(" ")[
-                            0]).read()
+        #Pastebin links
+        elif "https://pastebin.com/" in message.content:
+            pastebincontent = urlopen("https://pastebin.com/raw/" + message.content.split("https://pastebin.com/")[1].split(" ")[0]).read()
+            for crash in self.config["known crashes"]:
                 if crash["crash"].lower() in pastebincontent.decode().lower():
                     await message.channel.send(str(crash["response"].format(user=message.author.mention)))
                     return
-
-            elif crash["crash"].lower() in message.content.lower():
-                await message.channel.send(str(crash["response"].format(user=message.author.mention)))
-                return
-
-        # Media Only Channels
-        time.sleep(0.5)
-        for automation in self.config["media only channels"]:
-            if message.channel.id == int(automation["id"]) and len(message.embeds) == 0 and len(
-                    message.attachments) == 0:
-                await message.author.send("Hi " + message.author.name + ", the channel '" + automation["name"]
-                                          + "' you just tried to message in has been flagged as a 'Media Only' "
-                                            "channel. This means you must post an embed or attach a file in order to "
-                                            "post there. (we do not accept links)")
-                await message.delete()
-
-    async def on_message_delete(self, message):
-        if message.author.bot:
-            return
-        await self.logchannel.send(content=None, embed=CreateEmbed.message_deleted(message))
-
-    async def on_message_edit(self, before, after):
-        if before.author.bot:
-            return
-        await self.logchannel.send(content=None, embed=CreateEmbed.message_edited(before, after))
-
-    async def on_member_remove(self, member):
-        if member.bot:
-            return
-        await self.logchannel.send(content=None, embed=CreateEmbed.user_left(member))
-
-    async def on_member_update(self, before, after):
-        if before.bot:
-            return
-        if before.nick != after.nick:
-            await self.logchannel.send(content=None, embed=CreateEmbed.member_nicked(before, after))
-
+        else:
+            for crash in self.config["known crashes"]:
+                if crash["crash"].lower() in message.content.lower():
+                    await message.channel.send(str(crash["response"].format(user=message.author.mention)))
+                    return
 
 with open("Secrets.json", "r") as Secrets:
     Secrets = json.load(Secrets)
