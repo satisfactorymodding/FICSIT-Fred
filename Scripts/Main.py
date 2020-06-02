@@ -12,12 +12,10 @@ from pytesseract import pytesseract, image_to_string
 import io
 
 from urllib.request import urlopen
-
-
+assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
+assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
+assert (os.environ.get("FRED_TOKEN")), "The ENV variable 'FRED_TOKEN' isn't set"
 # server = 192.168.0.4:6969 | computer = 192.168.0.30:7000
-
-pytesseract.tesseract_cmd = r"D:\Program Files\Tesseract-OCR\\tesseract"
-
 
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
@@ -142,8 +140,5 @@ class Bot(discord.Client):
                     await message.channel.send(str(crash["response"].format(user=message.author.mention)))
                     return
 
-with open("Secrets.json", "r") as Secrets:
-    Secrets = json.load(Secrets)
-
 client = Bot()
-client.run(Secrets["token"])
+client.run(os.environ.get("FRED_TOKEN"))

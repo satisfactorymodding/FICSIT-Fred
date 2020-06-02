@@ -2,8 +2,7 @@ def start_listener(bot):
     from http.server import BaseHTTPRequestHandler, HTTPServer
     import json
     import sys
-    with open("Secrets.json", "r") as Secrets:
-        Secrets = json.load(Secrets)
+    import os
 
     global bot_ref
     bot_ref = bot
@@ -54,7 +53,7 @@ def start_listener(bot):
 
     # Run Github webhook handling server
     try:
-        server = HTTPServer((Secrets["server"]["ip"], Secrets["server"]["port"]), MyHandler)
+        server = HTTPServer((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MyHandler)
         server.serve_forever()
     except KeyboardInterrupt:
         print("Exiting")
