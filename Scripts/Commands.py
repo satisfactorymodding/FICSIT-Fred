@@ -23,7 +23,7 @@ async def handleCommand(client, message, command, args, authorised):
                 full = True
         except:
             full = False
-        await message.channel.send(content=None, embed=CreateEmbed.command_list(full=full))
+        await message.channel.send(content=None, embed=CreateEmbed.command_list(message.guild, full=full))
 
     if command == "mod":
         if len(args) != 1:

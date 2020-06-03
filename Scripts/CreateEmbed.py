@@ -147,7 +147,7 @@ def desc(full_desc):
 
 
 # Generic Bot Embed Formats
-def command_list(full=False):
+def command_list(guild, full=False):
     with open("Config.json", "r") as file:
         Config = json.load(file)
 
@@ -185,11 +185,13 @@ def command_list(full=False):
         embed.add_field(name=str("**" + command["name"] + "**"), value=str("Error:\n```" + command["crash"] + "```Response:\n```" + command["response"] + "```"),
                         inline=False)
 
-    embed.add_field(name="**__Media Only Channels__**",
-                    value="*These channels only allow users to post files (inc. images).*", inline=False)
 
-    for command in Config["media only channels"]:
-        embed.add_field(name=str("**" + command["name"] + "**"), value=str("```" + command["id"] + "```"), inline=False)
+    value = "*These channels only allow users to post files (inc. images).*\n"
+    for id in Config["media only channels"]:
+        value = value + guild.get_channel(id).mention + "\n"
+    embed.add_field(name="**__Media Only Channels__**",value=value, inline=False)
+
+
 
     embed.add_field(name="**__Commands__**",
                     value="*These are normal commands that can be called by stating their name.*",
