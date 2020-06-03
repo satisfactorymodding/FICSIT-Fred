@@ -3,3 +3,4 @@ asyncio
 Pillow
 pytesseract
 requests
+matplotlib

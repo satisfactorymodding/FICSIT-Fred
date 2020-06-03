@@ -8,7 +8,7 @@ import threading
 import Commands
 import time
 from PIL import Image
-from pytesseract import pytesseract, image_to_string
+from pytesseract import image_to_string
 import io
 
 from urllib.request import urlopen
@@ -28,7 +28,7 @@ class Bot(discord.Client):
     async def on_ready(self):
         with open("Config.json", "r") as file:
             self.config = json.load(file)
-        self.logchannel = self.get_channel(self.config["log channel"])
+        self.modchannel = self.get_channel(self.config["mod channel"])
         print('We have logged in as {0.user}'.format(self))
 
     async def send_embed(self, embed_item):
@@ -59,14 +59,14 @@ class Bot(discord.Client):
             return
         if message.author.permissions_in(self.get_channel(self.config["filter channel"])).send_messages:
             authorised = True
-            if message.author.permissions_in(self.logchannel).send_messages:
+            if message.author.permissions_in(self.modchannel).send_messages:
                 authorised = 2
         else:
             authorised = False
 
         # Media Only Channels
         for automation in self.config["media only channels"]:
-            if message.channel.id == int(automation["id"]) and len(message.embeds) == 0 and len(
+            if message.channel.id == automation and len(message.embeds) == 0 and len(
                     message.attachments) == 0:
                 await message.author.send("Hi " + message.author.name + ", the channel '" + automation["name"]
                                           + "' you just tried to message in has been flagged as a 'Media Only' "
@@ -76,7 +76,7 @@ class Bot(discord.Client):
                 return
 
         if message.content.startswith(self.config["prefix"]):
-            await Commands.handleCommand(self, message, message.content.lower().lstrip(self.config["prefix"], "").split(" ")[0],message.content.lower().replace(self.config["prefix"], "").split(" ")[1:], authorised)
+            await Commands.handleCommand(self, message, message.content.lower().lstrip(self.config["prefix"]).split(" ")[0],message.content.lower().replace(self.config["prefix"], "").split(" ")[1:], authorised)
 
             if authorised:
                 return

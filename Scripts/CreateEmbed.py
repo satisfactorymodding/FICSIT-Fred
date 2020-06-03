@@ -2,6 +2,7 @@ import discord
 import datetime
 import requests
 import json
+import Helper
 
 with open("Config.json", "r") as file:
     Config = json.load(file)
@@ -28,13 +29,9 @@ def push(data):
 
     embed = discord.Embed(title=str("Push created by __**" + data["sender"]["login"] + "**__"),
                           colour=Config["action colours"]["Push"], url=data["repository"]["url"],
-                          description=data["head_commit"]["message"],
-                          timestamp=datetime.datetime.now())
+                          description=data["head_commit"]["message"])
 
-    embed.set_thumbnail(url=data["sender"]["avatar_url"])
-    embed.set_author(name=repo_full_name, icon_url=Config["repo pfps"][repo_name])
-    embed.set_footer(text="FICSIT Fred by Illya#5376",
-                     icon_url="https://cdn.discordapp.com/avatars/110838934644211712/e486240daf6006f8de59bb866b74dcfc.png")
+    embed.set_author(name=repo_full_name)
 
     commits = data["commits"]
 
@@ -60,13 +57,9 @@ def contributer_added(data):
     repo_full_name = str(data["repository"]["name"] + data["ref"].lstrip("refs/heads"))
 
     embed = discord.Embed(title=str("__**" + data["member"]["login"] + "**__ has been added to the Repository."),
-                          colour=Config["action colours"]["Misc"], url=data["repository"]["url"], description=" ",
-                          timestamp=datetime.datetime.now())
+                          colour=Config["action colours"]["Misc"], url=data["repository"]["url"], description=" ")
 
-    embed.set_thumbnail(url=data["member"]["avatar_url"])
-    embed.set_author(name=repo_full_name, icon_url=Config["repo pfps"][repo_name])
-    embed.set_footer(text="FICSIT Fred by Illya#5376",
-                     icon_url="https://cdn.discordapp.com/avatars/110838934644211712/e486240daf6006f8de59bb866b74dcfc.png")
+    embed.set_author(name=repo_full_name)
     return embed
 
 
@@ -76,13 +69,9 @@ def pull_request(data):
 
     embed = discord.Embed(title=str("Pull Request " + data["action"] + " by __**" + data["sender"]["login"] + "**__"),
                           colour=Config["action colours"]["PR"], url=data["repository"]["url"],
-                          description=data["pull_request"]["title"],
-                          timestamp=datetime.datetime.now())
+                          description=data["pull_request"]["title"])
 
-    embed.set_thumbnail(url=data["sender"]["avatar_url"])
-    embed.set_author(name=repo_full_name, icon_url=Config["repo pfps"][repo_name])
-    embed.set_footer(text="FICSIT Fred by Illya#5376",
-                     icon_url="https://cdn.discordapp.com/avatars/110838934644211712/e486240daf6006f8de59bb866b74dcfc.png")
+    embed.set_author(name=repo_full_name)
 
     stats = str("[Link to PR](" + data["pull_request"]["url"] +
                 ")\n📋 " + str(data["pull_request"]["commits"]) +
@@ -141,38 +130,28 @@ def mod(name):
                           colour=Config["action colours"]["Mod"], url=str("https://ficsit.app/mod/" + data["id"]),
                           description=str(data["short_description"] +
                                           "\n\n Last Updated: " + date +
-                                          "\nCreated by: " + data["authors"][0]["user"]["username"]),
-                          timestamp=datetime.datetime.now())
+                                          "\nCreated by: " + data["authors"][0]["user"]["username"]))
 
     embed.set_thumbnail(url=data["logo"])
     embed.set_author(name="ficsit.app Mod Lookup")
-    embed.set_footer(text="FICSIT Fred by Illya#5376",
-                     icon_url="https://cdn.discordapp.com/avatars/110838934644211712/e486240daf6006f8de59bb866b74dcfc.png")
     return embed, data["full_description"]
 
 
 def desc(full_desc):
-    if len(full_desc) > 1800:
-        full_desc = full_desc[:1800]
+    full_desc = Helper.formatDesc(full_desc[:1900])
     embed = discord.Embed(title="Description",
                           colour=Config["action colours"]["Mod"],
-                          description=full_desc,
-                          timestamp=datetime.datetime.now())
+                          description=full_desc)
     embed.set_author(name="ficsit.app Mod Description")
-    embed.set_footer(text="FICSIT Fred by Illya#5376",
-                     icon_url="https://cdn.discordapp.com/avatars/110838934644211712/e486240daf6006f8de59bb866b74dcfc.png")
     return embed
 
 
 # Generic Bot Embed Formats
-def command_list():
-    embed = discord.Embed(title=str("What I do..."), colour=Config["action colours"]["Misc"],
-                          timestamp=datetime.datetime.now())
+def command_list(full=False):
+    with open("Config.json", "r") as file:
+        Config = json.load(file)
 
-    embed.set_author(name="FICSIT Fred",
-                     icon_url="https://cdn.discordapp.com/attachments/599990474668769290/708729597910581299/ficsitfred.png")
-    embed.set_footer(text="FICSIT Fred by Illya#5376",
-                     icon_url="https://cdn.discordapp.com/avatars/110838934644211712/e486240daf6006f8de59bb866b74dcfc.png")
+    embed = discord.Embed(title=str("What I do..."), colour=Config["action colours"]["Misc"])
 
     embed.add_field(name="**__Automated Responses__**",
                     value="*These commands trigger when one Keyword and one Additional Word are sent in a message.*",
@@ -199,7 +178,7 @@ def command_list():
                     "response"] + "```This response applies to **everyone**."), inline=False)
 
     embed.add_field(name="**__Known Crashes__**",
-                    value="*These commands trigger when a string is present in a message, pastebin or .txt/.log file.*",
+                    value="*The bot respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*",
                     inline=False)
 
     for command in Config["known crashes"]:
@@ -207,7 +186,7 @@ def command_list():
                         inline=False)
 
     embed.add_field(name="**__Media Only Channels__**",
-                    value="*These channels only allow users to post files (inc. images) and embeds.*", inline=False)
+                    value="*These channels only allow users to post files (inc. images).*", inline=False)
 
     for command in Config["media only channels"]:
         embed.add_field(name=str("**" + command["name"] + "**"), value=str("```" + command["id"] + "```"), inline=False)
@@ -218,71 +197,35 @@ def command_list():
 
     for command in Config["commands"]:
         if command["media"]:
-            embed.add_field(name=str("**" + command["command"] + "**"), value="```An image is posted.```", inline=False)
+            embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value="```An image is posted.```", inline=False)
         else:
-            embed.add_field(name=str("**" + command["command"] + "**"), value=str("```" + command["response"] + "```"),
+            embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value=str("```" + command["response"] + "```"),
                             inline=False)
 
     embed.add_field(name="**__Special Commands__**",
-                    value="*These are normal commands that can be called by stating their name.*",
+                    value="*These are special commands doing something else than just replying with a predetermined answer.*",
                     inline=False)
 
+
     for command in Config["special commands"]:
-        embed.add_field(name=str("**" + command["command"] + "**"), value=str("```" + command["response"] + "```"),
+        embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value=str("```" + command["response"] + "```"),
                         inline=False)
 
-    return embed
+    if full:
+        embed.add_field(name="**__Management Commands__**",
+                        value="*These are commands to manage the bot and its automations.*",
+                        inline=False)
 
-def message_edited(before, after):
-    embed = discord.Embed(colour=discord.Colour(0x5dc0),
-                          description="[**Message edited**](" + before.jump_url + ") in " + before.channel.mention)
+        for command in Config["management commands"]:
+            embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value=str("```" + command["response"] + "```"),
+                            inline=False)
 
-    embed.set_author(name=before.author.name + "#" + before.author.discriminator, icon_url=before.author.avatar_url)
-    embed.set_footer(text="Author ID : " + str(before.author.id) + " | Message ID : " + str(before.id))
+        embed.add_field(name="**__Miscellaneous commands__**",
+                        value="*It's all in the title.*",
+                        inline=False)
 
-    embed.add_field(name="Before", value=before.content, inline=False)
-    embed.add_field(name="After", value=after.content, inline=False)
-
-    return embed
-
-def message_edited(before, after):
-    embed = discord.Embed(colour=discord.Colour(38399),description=before.author.mention + " **edited their [message](" + before.jump_url + ") in **" + before.channel.mention)
-
-    embed.set_author(name=before.author.name + "#" + before.author.discriminator, icon_url=before.author.avatar_url)
-    embed.set_footer(text="Author ID : " + str(before.author.id) + " | Message ID : " + str(before.id))
-
-    embed.add_field(name="Before", value=before.content, inline=False)
-    embed.add_field(name="After", value=after.content, inline=False)
-
-    return embed
-
-def message_deleted(message):
-    embed = discord.Embed(description="**[Message](" + message.jump_url + ") by " + message.author.mention + " in " + message.channel.mention + " was deleted**\n" + message.content, colour=discord.Colour(15408413))
-
-    embed.set_author(name=message.author.name + "#" + message.author.discriminator, icon_url=message.author.avatar_url)
-    embed.set_footer(text="Author ID : " + str(message.author.id) + " | Message ID : " + str(message.id))
-
-    return embed
-
-def user_left(user):
-    embed = discord.Embed(description=user.mention +" **left the server**", colour=discord.Colour(15408413))
-
-    embed.set_author(name=user.name + "#" + user.discriminator, icon_url=user.avatar_url)
-    embed.set_footer(text="User ID : " + str(user.id))
-
-    return embed
-
-def member_nicked(before, after):
-    if not before.nick:
-        before.nick = before.name
-    if not after.nick:
-        after.nick = after.name
-    embed = discord.Embed(colour=discord.Colour(38399),description=before.mention + " **changed their nick**")
-
-    embed.set_author(name=before.name + "#" + before.discriminator, icon_url=before.avatar_url)
-    embed.set_footer(text="Author ID : " + str(before.id))
-
-    embed.add_field(name="Before", value=before.nick, inline=False)
-    embed.add_field(name="After", value=after.nick, inline=False)
+        for command in Config["miscellaneous commands"]:
+            embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value=str("```" + command["response"] + "```"),
+                            inline=False)
 
     return embed
