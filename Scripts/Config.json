@@ -1,13 +1,18 @@
 {
     "action colours": {
-        "Push": 16098851,
-        "PR": 9442302,
-        "Misc": 16777215,
-        "Issue": 13632027,
-        "Mod": 852223
+        "Red": 15408413,
+        "Orange": 15436573,
+        "Yellow": 15529284,
+        "Green": 7465775,
+        "Light Blue": 6414322,
+        "Dark Blue": 2629304,
+        "Purple": 7482326,
+        "Pink": 16087789,
+        "DIE": 16711918
     },
     "filter channel": 713440443815166063,
-    "mod channel": 713440443815166063,
+    "mod channel": 708420623310913628,
+    "githook channel": 708420623310913628,
     "prefix": ">",
     "automated responses": [],
     "media only channels": [
@@ -27,6 +32,11 @@
         {
             "command": "devdocs",
             "response": "https://docs-dev.ficsit.app/",
+            "media": false
+        },
+        {
+            "command": "legend",
+            "response": "<:white_check_mark:717773166126301214>:Line additions\n<:x:717773166126301214>:Line deletions\n<:pencil:717773166126301214>:Number of changed files\n<:clipboard:717773166126301214>:Number of commits",
             "media": false
         }
     ],
@@ -86,7 +96,7 @@
             "response": "Sets the filter channel for moderators."
         }
     ],
-    "miscellenaous commands": [
+    "miscellaneous commands": [
         {
             "command": "members",
             "response": "Sends a graph showing the amount of users on the server for 24 months after the server's creation [WIP]"

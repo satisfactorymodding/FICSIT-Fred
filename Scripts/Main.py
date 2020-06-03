@@ -41,10 +41,9 @@ class Bot(discord.Client):
             if os.path.exists("queue.txt"):
                 with open("queue.txt", "r+") as file:
                     data = json.load(file)
-                    try:
-                        embed = CreateEmbed.run(data)
-                    except:
-                        print("Failed to create embed")
+                    print("creating")
+                    embed = CreateEmbed.run(data)
+
                     if embed == "Debug":
                         print("Unknown Payload received")
                     else:
@@ -68,10 +67,10 @@ class Bot(discord.Client):
         for automation in self.config["media only channels"]:
             if message.channel.id == automation and len(message.embeds) == 0 and len(
                     message.attachments) == 0:
-                await message.author.send("Hi " + message.author.name + ", the channel '" + automation["name"]
+                await message.author.send("Hi " + message.author.name + ", the channel '" + message.guild.get_channel(automation).name
                                           + "' you just tried to message in has been flagged as a 'Media Only' "
-                                            "channel. This means you must post an embed or attach a file in order to "
-                                            "post there. (we do not accept links)")
+                                            "channel. This means you must attach a file in order to "
+                                            "post there.")
                 await message.delete()
                 return
 

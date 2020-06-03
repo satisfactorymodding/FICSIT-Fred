@@ -11,7 +11,7 @@ import io
 async def handleCommand(client, message, command, args, authorised):
     # Normal Commands
     for automation in client.config["commands"]:
-        if message.content.startswith(automation["command"]):
+        if message.content.lstrip(client.config["prefix"]).startswith(automation["command"]):
             if automation["media"]:
                 await message.channel.send(content=None, file=discord.File(automation["response"]))
             else:
@@ -45,7 +45,7 @@ async def handleCommand(client, message, command, args, authorised):
         else:
             newmessage = await message.channel.send(content=None, embed=result)
             await newmessage.add_reaction("📋")
-            await asyncio.sleep(2)
+            #await asyncio.sleep(2)
 
             def check(reaction, user):
                 if reaction.emoji == "📋" and reaction.message.id == newmessage.id:
@@ -216,13 +216,14 @@ async def handleCommand(client, message, command, args, authorised):
 
         elif args[0] == "crash":
             try:
-                name = args[0]
+                name = args[1]
+                print(name)
             except:
                 name = await Helper.waitResponse(client, message.channel, "Which known crash do you want to remove?")
 
             index = 0
             for crash in client.config["known crashes"]:
-                if crash["name"] == name:
+                if crash["name"] == name.lower():
                     del client.config["known crashes"][index]
                     json.dump(client.config, open("Config.json", "w"))
                     await message.channel.send("Crash removed!")
@@ -262,6 +263,20 @@ async def handleCommand(client, message, command, args, authorised):
         json.dump(client.config, open("Config.json", "w"))
         await message.channel.send(
             "The filter channel for the moderators is now " + client.get_channel(int(id)).mention + "!")
+
+    elif command == "githook":
+        try:
+            id = message.channel_mentions[0].id
+        except:
+            try:
+                id = args[0]
+            except:
+                id = await Helper.waitResponse(client, message.channel,
+                                               "What is the ID for the channel? e.g. ``709509235028918334``")
+        client.config["githook channel"] = id
+        json.dump(client.config, open("Config.json", "w"))
+        await message.channel.send(
+            "The channel for the github hooks is now " + client.get_channel(int(id)).mention + "!")
 
     elif command == "prefix":
         client.config["prefix"] = args[0]

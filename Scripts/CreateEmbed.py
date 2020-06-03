@@ -7,16 +7,32 @@ import Helper
 with open("Config.json", "r") as file:
     Config = json.load(file)
 
+
+
+
 # Github Update Embed Formats
 def run(data):
     embed = "Debug"
-    if "commits" in data:
+    try:
+        global repo_name
+        repo_name = data["repository"]["full_name"]
+        global repo_full_name
+        repo_full_name = str(data["repository"]["name"] + "/" + data["ref"].lstrip("refs/heads"))
+    except:
+        repo_name = "None"
+        repo_full_name = "None"
+    type = data["type"]
+    print(type)
+    if type == "push":
         embed = push(data)
-    elif "pull_request" in data:
+    elif type == "pull_request":
         embed = pull_request(data)
-    elif "action" in data:
-        if data["action"] == "added":
-            embed = contributer_added(data)
+    elif type == "member" and data["action"] == "added":
+        embed = contributer_added(data)
+    elif type == "release" and data["action"] == "published" and not data["release"]["draft"]:
+        embed = release(data)
+    elif type == "issue":
+        embed = issue(data)
     else:
         print(data)
 
@@ -24,63 +40,135 @@ def run(data):
 
 
 def push(data):
-    repo_name = data["repository"]["full_name"]
-    repo_full_name = str(data["repository"]["name"] + "/" + data["ref"].lstrip("refs/heads"))
+    if data["forced"]:
+        colour = Config["action colours"]["Red"]
+        forced = "Forced "
+    else:
+        colour = Config["action colours"]["Green"]
+        forced = ""
 
-    embed = discord.Embed(title=str("Push created by __**" + data["sender"]["login"] + "**__"),
-                          colour=Config["action colours"]["Push"], url=data["repository"]["url"],
-                          description=data["head_commit"]["message"])
-
-    embed.set_author(name=repo_full_name)
+    if data["created"]:
+        embed = create(data)
+        return embed
+    elif data["deleted"]:
+        embed = delete(data)
+        return embed
 
     commits = data["commits"]
+    desc = ""
+    for commit in commits:
+        desc = desc + "[`" + commit["id"][:7] + "`](" + commit["html_url"] + ") " + commit["message"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
 
-    embed.add_field(name=commits[0]["message"],
-                    value=str(
-                        "[Link to commit](" + commits[0]["url"] + ")\n✅ " + str(len(commits[0]["added"])) + " ❌ " + str(
-                            len(commits[0]["removed"])) + " 📝 " + str(len(commits[0]["modified"]))), inline=False)
+    embed = discord.Embed(title= forced + "Pushed " + str(len(data["commits"])) + " commit(s) to " + repo_full_name,
+                          colour=colour, url=data["compare"],
+                          description=desc)
 
-    if len(commits) > 1:
-        commits = commits[1:]
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
-        for commit in commits:
-            embed.add_field(name=commit["message"],
-                            value=str(
-                                "[Link to commit](" + commit["url"] + ")\n✅ " + str(len(commit["added"])) + " ❌ " + str(
-                                    len(commit["removed"])) + " 📝 " + str(len(commit["modified"]))), inline=False)
+
 
     return embed
 
 
 def contributer_added(data):
-    repo_name = data["repository"]["full_name"]
-    repo_full_name = str(data["repository"]["name"] + data["ref"].lstrip("refs/heads"))
 
-    embed = discord.Embed(title=str("__**" + data["member"]["login"] + "**__ has been added to the Repository."),
-                          colour=Config["action colours"]["Misc"], url=data["repository"]["url"], description=" ")
+    embed = discord.Embed(title=str("__**" + data["member"]["login"] + "**__ has been added to the Repository !"),
+                          colour=Config["action colours"]["Green"], url=data["repository"]["html_url"], description=" ")
 
     embed.set_author(name=repo_full_name)
     return embed
 
 
 def pull_request(data):
-    repo_name = data["repository"]["full_name"]
-    repo_full_name = str(data["repository"]["name"] + "/" + data["pull_request"]["head"]["ref"])
-
-    embed = discord.Embed(title=str("Pull Request " + data["action"] + " by __**" + data["sender"]["login"] + "**__"),
-                          colour=Config["action colours"]["PR"], url=data["repository"]["url"],
+    action = data["action"]
+    colour = Config["action colours"]["Orange"]
+    if action == "opened":
+        colour = Config["action colours"]["Green"]
+    elif action == "review_requested":
+        action = "review requested"
+    elif action == "review_request_removed":
+        action = "review request removed"
+    elif action == "ready_for_review":
+        action = "is ready for review"
+    elif action == "synchronize":
+        action = "review synchronized"
+    elif action == "closed":
+        if data["pull_request"]["merged"]:
+            action = "merged"
+            colour = Config["action colours"]["Green"]
+        else:
+            action = "closed without merging"
+            colour = Config["action colours"]["Red"]
+    embed = discord.Embed(title=str("Pull Request " + action + " in " + data["repository"]["full_name"]),
+                          colour=colour, url=data["pull_request"]["html_url"],
                           description=data["pull_request"]["title"])
 
-    embed.set_author(name=repo_full_name)
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
-    stats = str("[Link to PR](" + data["pull_request"]["url"] +
-                ")\n📋 " + str(data["pull_request"]["commits"]) +
+    stats = str("\n📋 " + str(data["pull_request"]["commits"]) +
                 "\n✅ " + str(data["pull_request"]["additions"]) +
                 " ❌ " + str(data["pull_request"]["deletions"]) +
                 " 📝 " + str(data["pull_request"]["changed_files"]))
 
     direction = str(data["pull_request"]["head"]["ref"] + " -> " + data["pull_request"]["base"]["ref"])
     embed.add_field(name=direction, value=stats)
+
+    embed.set_footer(text=Config["prefix"] + "legend to understand the emojis")
+
+    return embed
+
+
+def create(data):
+    ref_type = data["ref"].split("/")[1]
+    ref_name = data["ref"].split("/")[2]
+    if ref_type == "tags":
+        ref_type = "Tag"
+    elif ref_type == "heads":
+        ref_type = "Branch"
+    else:
+        ref_type = data["ref"]
+    embed = discord.Embed(title=str(ref_type + " \"" + ref_name + "\"" + " created in " + repo_name),
+                          colour=Config["action colours"]["Green"], url=data["repository"]["html_url"])
+
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
+
+    return embed
+
+def delete(data):
+    ref_type = data["ref"].split("/")[1]
+    ref_name = data["ref"].split("/")[2]
+    embed = discord.Embed(title=str(ref_type + " \"" + ref_name + "\"" + " deleted in " + repo_name),
+                          colour=Config["action colours"]["Red"], url=data["repository"]["html_url"])
+
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
+
+    return embed
+
+def release(data):
+
+    if data["release"]["prerelease"]:
+        state = "pre-release"
+    else:
+        state = "release"
+    embed = discord.Embed(title= "A new " + state + " for " + data["repository"]["name"] + " is available !",
+                          colour=Config["action colours"]["Green"], url=data["release"]["html_url"])
+
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
+
+    return embed
+
+def issue(data):
+
+    colour = Config["action colours"]["Orange"]
+    action = data["action"]
+    if action == "opened":
+        colour = Config["action colours"]["Green"]
+    if action == "deleted":
+        colour = Config["action colours"]["Red"]
+
+    embed = discord.Embed(title=data["action"].capitalize() + " issue #" + str(data["issue"]["number"]) + " in " + data["repository"]["full_name"],
+                          colour=colour, url=data["issue"]["html_url"])
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
     return embed
 
@@ -153,6 +241,10 @@ def command_list(guild, full=False):
 
     embed = discord.Embed(title=str("What I do..."), colour=Config["action colours"]["Misc"])
 
+    embed.add_field(name="**__GitHook__**",
+                    value="*I fetch payloads from Github and show relevant info in* " + guild.get_channel(Config["githook channel"]).mention,
+                    inline=False)
+
     embed.add_field(name="**__Automated Responses__**",
                     value="*These commands trigger when one Keyword and one Additional Word are sent in a message.*",
                     inline=False)
@@ -223,11 +315,7 @@ def command_list(guild, full=False):
                             inline=False)
 
         embed.add_field(name="**__Miscellaneous commands__**",
-                        value="*It's all in the title.*",
+                        value="*Two 'hidden' commands who didn't fit in the embed.*",
                         inline=False)
-
-        for command in Config["miscellaneous commands"]:
-            embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value=str("```" + command["response"] + "```"),
-                            inline=False)
 
     return embed
