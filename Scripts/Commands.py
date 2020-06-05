@@ -5,11 +5,11 @@ import json
 import Helper
 import matplotlib.pyplot as plt
 import datetime
-import io
 
 
 async def handleCommand(client, message, command, args, authorised):
     # Normal Commands
+    global full
     for automation in client.config["commands"]:
         if message.content.lstrip(client.config["prefix"]).startswith(automation["command"]):
             if automation["media"]:
@@ -45,7 +45,7 @@ async def handleCommand(client, message, command, args, authorised):
         else:
             newmessage = await message.channel.send(content=None, embed=result)
             await newmessage.add_reaction("📋")
-            #await asyncio.sleep(2)
+            await asyncio.sleep(0.5)
 
             def check(reaction, user):
                 if reaction.emoji == "📋" and reaction.message.id == newmessage.id:
@@ -100,7 +100,7 @@ async def handleCommand(client, message, command, args, authorised):
             client.config["automated responses"].append(
                 {"name": name, "keywords": keywords, "additional words": additional_words, "response": response,
                  "ignore members": ignore_members})
-            json.dump(client.config, open("Config.json", "w"))
+            json.dump(client.config, open("config/config.json", "w"))
             await message.channel.send("Automated Response '" + name + "' added!")
 
         elif " ".join(args[0:2]) == "media only":
@@ -114,7 +114,7 @@ async def handleCommand(client, message, command, args, authorised):
                                                                             "``709509235028918334``")
 
             client.config["media only channels"].append(id)
-            json.dump(client.config, open("Config.json", "w"))
+            json.dump(client.config, open("config/config.json", "w"))
             await message.channel.send("Media only channel " + client.get_channel(int(id)).mention + " added!")
             return
 
@@ -122,7 +122,7 @@ async def handleCommand(client, message, command, args, authorised):
             try:
                 command = args[1]
             except:
-                command = await Helper.waitResponse(client, message.channel, "What is the command? e.g. ``>install``")
+                command = await Helper.waitResponse(client, message.channel, "What is the command? e.g. ``install``")
 
             response = await Helper.waitResponse(client, message.channel, "What is the response? e.g. ``Hello there`` "
                                                                           "or ``../Images/Install.png``")
@@ -136,7 +136,7 @@ async def handleCommand(client, message, command, args, authorised):
                 media = False
             client.config["commands"].append(
                 {"command": command, "response": response, "media": media})
-            json.dump(client.config, open("Config.json", "w"))
+            json.dump(client.config, open("config/config.json", "w"))
             await message.channel.send("Command '" + command + "' added!")
 
         elif args[0] == "crash":
@@ -153,7 +153,7 @@ async def handleCommand(client, message, command, args, authorised):
                                                  "What response do you want it to provide? e.g. ``Thanks for saying my keywords {user}`` (use {user} to ping the user)")
 
             client.config["known crashes"].append({"name": name, "crash": crash, "response": response})
-            json.dump(client.config, open("Config.json", "w"))
+            json.dump(client.config, open("config/config.json", "w"))
             await message.channel.send("Known crash '" + name + "' added!")
 
     elif command == "remove":
@@ -168,7 +168,7 @@ async def handleCommand(client, message, command, args, authorised):
             for response in client.config["automated responses"]:
                 if response["name"] == name:
                     del client.config["automated responses"][index]
-                    json.dump(client.config, open("Config.json", "w"))
+                    json.dump(client.config, open("config/config.json", "w"))
                     await message.channel.send("Response Removed!")
                     return
                 else:
@@ -189,7 +189,7 @@ async def handleCommand(client, message, command, args, authorised):
             for response in client.config["media only channels"]:
                 if response == id:
                     del client.config["media only channels"][index]
-                    json.dump(client.config, open("Config.json", "w"))
+                    json.dump(client.config, open("config/config.json", "w"))
                     await message.channel.send("Media Only Channel removed!")
                     return
                 else:
@@ -207,7 +207,7 @@ async def handleCommand(client, message, command, args, authorised):
             for response in client.config["commands"]:
                 if response["command"] == command:
                     del client.config["commands"][index]
-                    json.dump(client.config, open("Config.json", "w"))
+                    json.dump(client.config, open("config/config.json", "w"))
                     await message.channel.send("Command removed!")
                     return
                 else:
@@ -225,7 +225,7 @@ async def handleCommand(client, message, command, args, authorised):
             for crash in client.config["known crashes"]:
                 if crash["name"] == name.lower():
                     del client.config["known crashes"][index]
-                    json.dump(client.config, open("Config.json", "w"))
+                    json.dump(client.config, open("config/config.json", "w"))
                     await message.channel.send("Crash removed!")
                     return
                 else:
@@ -246,7 +246,7 @@ async def handleCommand(client, message, command, args, authorised):
                 id = await Helper.waitResponse(client, message.channel,
                                                "What is the ID for the channel? e.g. ``709509235028918334``")
         client.config["filter channel"] = id
-        json.dump(client.config, open("Config.json", "w"))
+        json.dump(client.config, open("config/config.json", "w"))
         await message.channel.send(
             "The filter channel for the engineers is now " + client.get_channel(int(id)).mention + "!")
 
@@ -260,7 +260,7 @@ async def handleCommand(client, message, command, args, authorised):
                 id = await Helper.waitResponse(client, message.channel,
                                                "What is the ID for the channel? e.g. ``709509235028918334``")
         client.config["mod channel"] = id
-        json.dump(client.config, open("Config.json", "w"))
+        json.dump(client.config, open("config/config.json", "w"))
         await message.channel.send(
             "The filter channel for the moderators is now " + client.get_channel(int(id)).mention + "!")
 
@@ -271,17 +271,22 @@ async def handleCommand(client, message, command, args, authorised):
             try:
                 id = args[0]
             except:
-                id = await Helper.waitResponse(client, message.channel,
-                                               "What is the ID for the channel? e.g. ``709509235028918334``")
+                id = await Helper.waitResponse(client, message.channel,"What is the ID for the channel? e.g. ``709509235028918334``")
         client.config["githook channel"] = id
-        json.dump(client.config, open("Config.json", "w"))
+        json.dump(client.config, open("config/config.json", "w"))
         await message.channel.send(
             "The channel for the github hooks is now " + client.get_channel(int(id)).mention + "!")
 
     elif command == "prefix":
         client.config["prefix"] = args[0]
-        json.dump(client.config, open("Config.json", "w"))
+        json.dump(client.config, open("config/config.json", "w"))
         await message.channel.send("Prefix changed to " + args[0] + " !")
+
+    elif command == "saveconfig":
+        if not message.author.dm_channel:
+            await message.author.create_dm()
+        await message.author.dm_channel.send(content=None,
+                                   file=discord.File(open("config/config.json", "r"), filename="config.json"))
 
     elif command == "members":
         list = []

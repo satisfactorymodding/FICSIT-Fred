@@ -4,7 +4,7 @@ import requests
 import json
 import Helper
 
-with open("Config.json", "r") as file:
+with open("config/config.json", "r") as file:
     Config = json.load(file)
 
 
@@ -22,7 +22,6 @@ def run(data):
         repo_name = "None"
         repo_full_name = "None"
     type = data["type"]
-    print(type)
     if type == "push":
         embed = push(data)
     elif type == "pull_request":
@@ -161,9 +160,10 @@ def issue(data):
 
     colour = Config["action colours"]["Orange"]
     action = data["action"]
+    print(action)
     if action == "opened":
         colour = Config["action colours"]["Green"]
-    if action == "deleted":
+    elif action == "deleted":
         colour = Config["action colours"]["Red"]
 
     embed = discord.Embed(title=data["action"].capitalize() + " issue #" + str(data["issue"]["number"]) + " in " + data["repository"]["full_name"],
@@ -213,9 +213,9 @@ def mod(name):
         else:
             data = data[0]
     date = str(data["last_version_date"][0:10] + " " + data["last_version_date"][11:19])
-
+    
     embed = discord.Embed(title=data["name"],
-                          colour=Config["action colours"]["Mod"], url=str("https://ficsit.app/mod/" + data["id"]),
+                          colour=Config["action colours"]["Light Blue"], url=str("https://ficsit.app/mod/" + data["id"]),
                           description=str(data["short_description"] +
                                           "\n\n Last Updated: " + date +
                                           "\nCreated by: " + data["authors"][0]["user"]["username"]))
@@ -228,7 +228,7 @@ def mod(name):
 def desc(full_desc):
     full_desc = Helper.formatDesc(full_desc[:1900])
     embed = discord.Embed(title="Description",
-                          colour=Config["action colours"]["Mod"],
+                          colour=Config["action colours"]["Light Blue"],
                           description=full_desc)
     embed.set_author(name="ficsit.app Mod Description")
     return embed
@@ -236,10 +236,10 @@ def desc(full_desc):
 
 # Generic Bot Embed Formats
 def command_list(guild, full=False):
-    with open("Config.json", "r") as file:
+    with open("config/config.json", "r") as file:
         Config = json.load(file)
 
-    embed = discord.Embed(title=str("What I do..."), colour=Config["action colours"]["Misc"])
+    embed = discord.Embed(title=str("What I do..."), colour=Config["action colours"]["Purple"])
 
     embed.add_field(name="**__GitHook__**",
                     value="*I fetch payloads from Github and show relevant info in* " + guild.get_channel(Config["githook channel"]).mention,

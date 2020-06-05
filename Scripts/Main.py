@@ -15,9 +15,9 @@ from urllib.request import urlopen
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
 assert (os.environ.get("FRED_TOKEN")), "The ENV variable 'FRED_TOKEN' isn't set"
-# server = 192.168.0.4:6969 | computer = 192.168.0.30:7000
 
 class Bot(discord.Client):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.git_listener = threading.Thread(target=WebhookListener.start_listener, args=[self])
@@ -26,11 +26,15 @@ class Bot(discord.Client):
         self.queue_checker = self.loop.create_task(self.check_queue())
 
     async def on_ready(self):
-        with open("Config.json", "r") as file:
+        with open("config/config.json", "r") as file:
             self.config = json.load(file)
         self.modchannel = self.get_channel(self.config["mod channel"])
+        with open("payload.txt", "r+") as file:
+            data = json.load(file)
+        embed = CreateEmbed.run(data)
+        #if embed != "Debug":
+            #await self.modchannel.send(content=None, embed=embed)
         print('We have logged in as {0.user}'.format(self))
-
     async def send_embed(self, embed_item):
         channel = self.get_channel(708420623310913628)
         await channel.send(content=None, embed=embed_item)
@@ -41,11 +45,9 @@ class Bot(discord.Client):
             if os.path.exists("queue.txt"):
                 with open("queue.txt", "r+") as file:
                     data = json.load(file)
-                    print("creating")
                     embed = CreateEmbed.run(data)
-
                     if embed == "Debug":
-                        print("Unknown Payload received")
+                        print("Non-supported Payload received")
                     else:
                         await self.send_embed(embed)
                 os.remove("queue.txt")
@@ -117,7 +119,7 @@ class Bot(discord.Client):
                     image = image.convert(mode="L")
                     ratioTo8k = 4320 / image.height
                     if ratioTo8k > 1:
-                        image = image.resize((round(image.width * ratioTo8k), round(image.height * ratioTo8k)),Image.LANCZOS)
+                        image = image.resize((round(image.width * ratioTo8k), round(image.height * ratioTo8k)), Image.LANCZOS)
                     result = image_to_string(image, lang="eng")[:2000]
                 except:
                     result = ""

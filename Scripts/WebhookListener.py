@@ -45,7 +45,7 @@ def start_listener(bot):
             self.send_response(200)
             self.send_header('content-type', 'text/html')
             self.end_headers()
-            self.wfile.write(bytes('The fecking machine returned the message ok!?', 'utf-8'))
+            self.wfile.write(bytes('FICSIT-Fred received the payload', 'utf-8'))
 
             # Save that shit!
             with open("queue.txt", "w") as file:
