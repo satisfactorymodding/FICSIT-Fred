@@ -17,13 +17,23 @@ def start_listener(bot):
 
     class MyHandler(BaseHTTPRequestHandler):
         async def do_GET(self):
-            pass
+            if self.path == "/readiness":
+                self.send_response(200)
+            elif self.path == "/liveness":
+                if await bot_ref.isAlive():
+                    self.send_response(200)
+                else:
+                    self.send_response(503)
+            else:
+                self.send_response(200)
 
         async def do_CONNECT(self):
-            pass
+            self.send_response(200)
+
 
         def do_POST(self):
             if not all(x in self.headers for x in [CONTENT_TYPE, CONTENT_LEN, EVENT_TYPE]):
+                self.send_response(417)
                 return
             content_type = self.headers['content-type']
             content_len = int(self.headers['content-length'])

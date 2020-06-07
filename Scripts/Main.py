@@ -18,6 +18,13 @@ assert (os.environ.get("FRED_TOKEN")), "The ENV variable 'FRED_TOKEN' isn't set"
 
 class Bot(discord.Client):
 
+    async def isAlive(self):
+        try:
+            await self.fetch_user(227473074616795137)
+        except discord.HTTPException:
+            return False
+        return True
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.git_listener = threading.Thread(target=WebhookListener.start_listener, args=[self])
@@ -37,7 +44,7 @@ class Bot(discord.Client):
             #await self.modchannel.send(content=None, embed=embed)
         print('We have logged in as {0.user}'.format(self))
     async def send_embed(self, embed_item):
-        channel = self.get_channel(708420623310913628)
+        channel = self.get_channel(self.config["githook channel"])
         await channel.send(content=None, embed=embed_item)
 
     async def check_queue(self):
