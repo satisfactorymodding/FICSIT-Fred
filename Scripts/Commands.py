@@ -5,9 +5,12 @@ import json
 import Helper
 import matplotlib.pyplot as plt
 import datetime
-
+import logging
+logging.basicConfig(level=logging.INFO)
 
 async def handleCommand(client, message, command, args, authorised):
+    # Logging
+    logging.info("Handling command:\nMessage: " + message.content + "\nCommand: " + command + "\nArguments: " + str(args) + "\nAuthorisation: " + str(authorised) + "\n")
     # Normal Commands
     global full
     for automation in client.config["commands"]:

@@ -45,6 +45,21 @@
             "command": "invite",
             "response": "https://bit.ly/SatisfactoryModding",
             "media": false
+        },
+        {
+            "command": "source",
+            "response": "<https://github.com/Feyko/FICSIT-Fred>",
+            "media": false
+        },
+        {
+            "command": ".<",
+            "response": ">.<",
+            "media": false
+        },
+        {
+            "command": "smmhelp",
+            "response": "../Images/smmhelp.png",
+            "media": true
         }
     ],
     "special commands": [

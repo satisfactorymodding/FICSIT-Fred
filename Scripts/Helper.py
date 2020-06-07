@@ -10,6 +10,7 @@ async def waitResponse(client, channel, question):
     except asyncio.TimeoutError:
         await channel.send("Timed out and aborted after 30 seconds.")
         raise asyncio.TimeoutError
+    time.sleep(0.1)
     return response.content
 
 def formatDesc(desc):

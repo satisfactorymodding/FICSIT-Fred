@@ -10,11 +10,14 @@ import time
 from PIL import Image
 from pytesseract import image_to_string
 import io
-
 from urllib.request import urlopen
+import logging
+
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
 assert (os.environ.get("FRED_TOKEN")), "The ENV variable 'FRED_TOKEN' isn't set"
+
+logging.basicConfig(level=logging.INFO)
 
 class Bot(discord.Client):
 
@@ -38,7 +41,7 @@ class Bot(discord.Client):
     async def on_ready(self):
         with open("config/config.json", "r") as file:
             self.config = json.load(file)
-        print(self.config)
+        logging.info(str(self.config))
         self.modchannel = self.get_channel(self.config["mod channel"])
         #with open("payload.txt", "r+") as file:
             #data = json.load(file)
