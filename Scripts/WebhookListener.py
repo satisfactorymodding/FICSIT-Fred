@@ -20,7 +20,7 @@ def start_listener(bot):
             if self.path == "/readiness":
                 self.send_response(200)
             elif self.path == "/liveness":
-                if await bot_ref.isAlive():
+                if bot_ref.isAlive():
                     self.send_response(200)
                 else:
                     self.send_response(503)

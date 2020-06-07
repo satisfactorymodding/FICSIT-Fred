@@ -10,13 +10,15 @@
         "Pink": 16087789,
         "DIE": 16711918
     },
-    "filter channel": 709521490554650716,
-    "mod channel": 713440443815166063,
-    "githook channel": 708420623310913628,
+    "filter channel": 599990474668769290,
+    "mod channel": 555515430681313300,
+    "githook channel": 708384236159107129,
     "prefix": ">",
     "automated responses": [],
     "media only channels": [
-        709509235028918334
+        696718959193489438,
+        562121682538594314,
+        623891487683510323
     ],
     "commands": [
         {
@@ -99,6 +101,10 @@
         {
             "command": "moderators",
             "response": "Sets the filter channel for moderators."
+        },
+        {
+            "command": "githook",
+            "response": "Sets the channel for the GitHook to post updates."
         }
     ],
     "miscellaneous commands": [

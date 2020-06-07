@@ -18,12 +18,15 @@ assert (os.environ.get("FRED_TOKEN")), "The ENV variable 'FRED_TOKEN' isn't set"
 
 class Bot(discord.Client):
 
-    async def isAlive(self):
+    def isAlive(self):
         try:
-            await self.fetch_user(227473074616795137)
-        except discord.HTTPException:
+            user = self.get_user(227473074616795137)
+        except:
             return False
-        return True
+        if user:
+            return True
+        else:
+            return False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
