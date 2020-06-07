@@ -2,6 +2,7 @@ def start_listener(bot):
     from http.server import BaseHTTPRequestHandler, HTTPServer
     import json
     import sys
+    import socket
     import os
 
     global bot_ref
@@ -53,9 +54,13 @@ def start_listener(bot):
 
             return
 
+    class HTTPServerV6(HTTPServer):
+        address_family = socket.AF_INET6
+
+
     # Run Github webhook handling server
     try:
-        server = HTTPServer((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MyHandler)
+        server = HTTPServerV6((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MyHandler)
         server.serve_forever()
     except KeyboardInterrupt:
         print("Exiting")

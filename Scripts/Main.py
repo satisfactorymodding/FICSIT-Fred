@@ -28,6 +28,7 @@ class Bot(discord.Client):
     async def on_ready(self):
         with open("config/config.json", "r") as file:
             self.config = json.load(file)
+        print(self.config)
         self.modchannel = self.get_channel(self.config["mod channel"])
         #with open("payload.txt", "r+") as file:
             #data = json.load(file)
