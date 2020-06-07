@@ -8,4 +8,6 @@ RUN apt-get install -y tesseract-ocr
 
 RUN pip install -r requirements.txt
 
+VOLUME /app/Scripts/config/
+
 CMD python ./Main.py

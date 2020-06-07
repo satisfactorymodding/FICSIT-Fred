@@ -29,9 +29,9 @@ class Bot(discord.Client):
         with open("config/config.json", "r") as file:
             self.config = json.load(file)
         self.modchannel = self.get_channel(self.config["mod channel"])
-        with open("payload.txt", "r+") as file:
-            data = json.load(file)
-        embed = CreateEmbed.run(data)
+        #with open("payload.txt", "r+") as file:
+            #data = json.load(file)
+        #embed = CreateEmbed.run(data)
         #if embed != "Debug":
             #await self.modchannel.send(content=None, embed=embed)
         print('We have logged in as {0.user}'.format(self))
@@ -130,7 +130,10 @@ class Bot(discord.Client):
 
         #Pastebin links
         elif "https://pastebin.com/" in message.content:
-            pastebincontent = urlopen("https://pastebin.com/raw/" + message.content.split("https://pastebin.com/")[1].split(" ")[0]).read()
+            try:
+                pastebincontent = urlopen("https://pastebin.com/raw/" + message.content.split("https://pastebin.com/")[1].split(" ")[0]).read()
+            except:
+                return
             for crash in self.config["known crashes"]:
                 if crash["crash"].lower() in pastebincontent.decode().lower():
                     await message.channel.send(str(crash["response"].format(user=message.author.mention)))
