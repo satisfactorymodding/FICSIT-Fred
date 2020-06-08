@@ -12,6 +12,9 @@ from pytesseract import image_to_string
 import io
 from urllib.request import urlopen
 import logging
+import requests
+from algoliasearch.search_client import SearchClient
+from pprint import pprint
 
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
@@ -37,6 +40,7 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
+        self.activity = discord.CustomActivity(name="At your service")
 
     async def on_ready(self):
         with open("config/config.json", "r") as file:
@@ -83,13 +87,14 @@ class Bot(discord.Client):
         for automation in self.config["media only channels"]:
             if message.channel.id == automation and len(message.embeds) == 0 and len(
                     message.attachments) == 0:
-                await message.author.send("Hi " + message.author.name + ", the channel '" + message.guild.get_channel(automation).name
+                await message.author.send("Hi " + message.author.name + ", the channel '" + self.get_channel(automation).name
                                           + "' you just tried to message in has been flagged as a 'Media Only' "
                                             "channel. This means you must attach a file in order to "
                                             "post there.")
                 await message.delete()
                 return
 
+        # Command handling
         if message.content.startswith(self.config["prefix"]):
             await Commands.handleCommand(self, message, message.content.lower().lstrip(self.config["prefix"]).split(" ")[0],message.content.lower().replace(self.config["prefix"], "").split(" ")[1:], authorised)
 
@@ -112,14 +117,21 @@ class Bot(discord.Client):
         # Crash Responses
 
         #attachments
-        if message.attachments:
+        if message.attachments or "https://cdn.discordapp.com/attachments/" in message.content:
             try:
                 file = await message.attachments[0].to_file()
                 file = file.fp
+                name = message.attachments[0].filename
             except:
-                file = io.BytesIO(b"")
+                try:
+                    id = message.content.split("https://cdn.discordapp.com/attachments/")[1].split(" ")[0]
+                    name = id.split("/")[2]
+                    file = io.BytesIO(requests.get("https://cdn.discordapp.com/attachments/" + id).content)
+                except:
+                    file = io.BytesIO(b"")
+                    name = ""
             # .log or .txt Files
-            if (".log" in message.attachments[0].filename or ".txt" in message.attachments[0].filename):
+            if (".log" in name or ".txt" in name):
                 for line in file:
                     for crash in self.config["known crashes"]:
                         if crash["crash"].lower() in line.decode().lower():

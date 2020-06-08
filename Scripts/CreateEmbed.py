@@ -235,14 +235,14 @@ def desc(full_desc):
 
 
 # Generic Bot Embed Formats
-def command_list(guild, full=False):
+def command_list(client, full=False):
     with open("config/config.json", "r") as file:
         Config = json.load(file)
 
     embed = discord.Embed(title=str("What I do..."), colour=Config["action colours"]["Purple"])
 
     embed.add_field(name="**__GitHook__**",
-                    value="*I fetch payloads from Github and show relevant info in* " + guild.get_channel(Config["githook channel"]).mention,
+                    value="*I fetch payloads from Github and show relevant info in* " + client.get_channel(Config["githook channel"]).mention,
                     inline=False)
 
     embed.add_field(name="**__Automated Responses__**",
@@ -280,7 +280,7 @@ def command_list(guild, full=False):
 
     value = "*These channels only allow users to post files (inc. images).*\n"
     for id in Config["media only channels"]:
-        value = value + guild.get_channel(id).mention + "\n"
+        value = value + client.get_channel(id).mention + "\n"
     embed.add_field(name="**__Media Only Channels__**",value=value, inline=False)
 
 

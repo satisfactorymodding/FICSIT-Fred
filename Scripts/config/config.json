@@ -60,6 +60,11 @@
             "command": "smmhelp",
             "response": "../Images/smmhelp.png",
             "media": true
+        },
+        {
+            "command": "kronos",
+            "response": "Hi ! The Kronos Mod hasn't been updated and probably won't be. You might be interested in the Pak Utility Mod instead, which does a lot of the same things.",
+            "media": false
         }
     ],
     "special commands": [

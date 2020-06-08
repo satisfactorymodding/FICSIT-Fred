@@ -6,6 +6,9 @@ import Helper
 import matplotlib.pyplot as plt
 import datetime
 import logging
+from algoliasearch.search_client import SearchClient
+import requests
+import io
 logging.basicConfig(level=logging.INFO)
 
 async def handleCommand(client, message, command, args, authorised):
@@ -14,19 +17,41 @@ async def handleCommand(client, message, command, args, authorised):
     # Normal Commands
     global full
     for automation in client.config["commands"]:
-        if message.content.lstrip(client.config["prefix"]).startswith(automation["command"]):
+        if command == automation["command"]:
             if automation["media"]:
                 await message.channel.send(content=None, file=discord.File(automation["response"]))
             else:
                 await message.channel.send(automation["response"])
 
     if command == "help":
+        here = False
+        full = False
         try:
-            if args[0].lower() == "true":
+            if args[0] == "here":
+                here = True
+            elif args[0] == "full":
                 full = True
+            try:
+                if args[1] == "here":
+                    here = True
+                if args[1] == "full":
+                    full = True
+            except:
+                pass
         except:
-            full = False
-        await message.channel.send(content=None, embed=CreateEmbed.command_list(message.guild, full=full))
+            pass
+        if here:
+            await message.channel.send(content=None, embed=CreateEmbed.command_list(client, full=full))
+        else:
+            if not message.author.dm_channel:
+                await message.author.create_dm()
+            try:
+                await message.author.dm_channel.send(content=None, embed=CreateEmbed.command_list(client, full=full))
+                await message.add_reaction("✅")
+            except:
+                await message.channel("I was unable to send you a direct message. Please check your discord "
+                                      "settings regarding those !")
+
 
     if command == "mod":
         if len(args) != 1:
@@ -55,7 +80,7 @@ async def handleCommand(client, message, command, args, authorised):
                     raise InterruptedError
 
             try:
-                await client.wait_for('reaction_add', timeout=60.0, check=check)
+                await client.wait_for('reaction_add', timeout=240.0, check=check)
             except asyncio.TimeoutError:
                 print("User didnt react")
             except InterruptedError:
@@ -67,8 +92,20 @@ async def handleCommand(client, message, command, args, authorised):
                     await message.channel("I was unable to send you a direct message. Please check your discord "
                                           "settings regarding those !")
 
+    if command == "docsearch":
+        yaml = requests.get("https://raw.githubusercontent.com/satisfactorymodding/Documentation/Dev/antora.yml")
+        yamlf = io.BytesIO(yaml.content)
+        version = str(yamlf.read()).split("version: ")[1].split("\\")[0]
+
+        client = SearchClient.create('BH4D9OD16A', '53b3a8362ea7b391f63145996cfe8d82')
+        index = client.init_index('ficsit')
+        query = index.search(" ".join(args) + version)
+
+        await message.channel.send("This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
+        pass
+
     if not authorised:
-        message.channel.send("You're not allowed to do this !")
+        await message.channel.send("You're not allowed to do this !")
         return
 
     elif command == "add":
@@ -235,62 +272,6 @@ async def handleCommand(client, message, command, args, authorised):
                     index += 1
             await message.channel.send("Crash could not be found!")
 
-    if authorised < 2:
-        message.channel.send("You're not allowed to do this !")
-        return
-
-    elif command == "engineers":
-        try:
-            id = message.channel_mentions[0].id
-        except:
-            try:
-                id = args[0]
-            except:
-                id = await Helper.waitResponse(client, message.channel,
-                                               "What is the ID for the channel? e.g. ``709509235028918334``")
-        client.config["filter channel"] = id
-        json.dump(client.config, open("config/config.json", "w"))
-        await message.channel.send(
-            "The filter channel for the engineers is now " + client.get_channel(int(id)).mention + "!")
-
-    elif command == "moderators":
-        try:
-            id = message.channel_mentions[0].id
-        except:
-            try:
-                id = args[0]
-            except:
-                id = await Helper.waitResponse(client, message.channel,
-                                               "What is the ID for the channel? e.g. ``709509235028918334``")
-        client.config["mod channel"] = id
-        json.dump(client.config, open("config/config.json", "w"))
-        await message.channel.send(
-            "The filter channel for the moderators is now " + client.get_channel(int(id)).mention + "!")
-
-    elif command == "githook":
-        try:
-            id = message.channel_mentions[0].id
-        except:
-            try:
-                id = args[0]
-            except:
-                id = await Helper.waitResponse(client, message.channel,"What is the ID for the channel? e.g. ``709509235028918334``")
-        client.config["githook channel"] = id
-        json.dump(client.config, open("config/config.json", "w"))
-        await message.channel.send(
-            "The channel for the github hooks is now " + client.get_channel(int(id)).mention + "!")
-
-    elif command == "prefix":
-        client.config["prefix"] = args[0]
-        json.dump(client.config, open("config/config.json", "w"))
-        await message.channel.send("Prefix changed to " + args[0] + " !")
-
-    elif command == "saveconfig":
-        if not message.author.dm_channel:
-            await message.author.create_dm()
-        await message.author.dm_channel.send(content=None,
-                                   file=discord.File(open("config/config.json", "r"), filename="config.json"))
-
     elif command == "members":
         list = []
         async for member in message.guild.fetch_members():
@@ -348,3 +329,61 @@ async def handleCommand(client, message, command, args, authorised):
             plt.clf()
         with open("Growth.png", "rb") as image:
             await message.channel.send(content=None, file=discord.File(image))
+
+    if authorised < 2:
+        await message.channel.send("You're not allowed to do this !")
+        return
+
+    elif command == "engineers":
+        try:
+            id = message.channel_mentions[0].id
+        except:
+            try:
+                id = args[0]
+            except:
+                id = await Helper.waitResponse(client, message.channel,
+                                               "What is the ID for the channel? e.g. ``709509235028918334``")
+        client.config["filter channel"] = id
+        json.dump(client.config, open("config/config.json", "w"))
+        await message.channel.send(
+            "The filter channel for the engineers is now " + client.get_channel(int(id)).mention + "!")
+
+    elif command == "moderators":
+        try:
+            id = message.channel_mentions[0].id
+        except:
+            try:
+                id = args[0]
+            except:
+                id = await Helper.waitResponse(client, message.channel,
+                                               "What is the ID for the channel? e.g. ``709509235028918334``")
+        client.config["mod channel"] = id
+        json.dump(client.config, open("config/config.json", "w"))
+        await message.channel.send(
+            "The filter channel for the moderators is now " + client.get_channel(int(id)).mention + "!")
+
+    elif command == "githook":
+        try:
+            id = message.channel_mentions[0].id
+        except:
+            try:
+                id = args[0]
+            except:
+                id = await Helper.waitResponse(client, message.channel,"What is the ID for the channel? e.g. ``709509235028918334``")
+        client.config["githook channel"] = id
+        json.dump(client.config, open("config/config.json", "w"))
+        await message.channel.send(
+            "The channel for the github hooks is now " + client.get_channel(int(id)).mention + "!")
+
+    elif command == "prefix":
+        client.config["prefix"] = args[0]
+        json.dump(client.config, open("config/config.json", "w"))
+        await message.channel.send("Prefix changed to " + args[0] + " !")
+
+    elif command == "saveconfig":
+        if not message.author.dm_channel:
+            await message.author.create_dm()
+        await message.author.dm_channel.send(content=None,
+                                   file=discord.File(open("config/config.json", "r"), filename="config.json"))
+
+
