@@ -65,6 +65,16 @@
             "command": "kronos",
             "response": "Hi ! The Kronos Mod hasn't been updated and probably won't be. You might be interested in the Pak Utility Mod instead, which does a lot of the same things.",
             "media": false
+        },
+        {
+            "command": "steam",
+            "response": "Hi ! Steam isn't supported by the mod manager yet. For the time being, please follow these <https://docs.ficsit.app/satisfactory-modding/2.1.0/ManualInstallDirections.html> instructions to manually install mods. Please note that using SMM is way better and that you should switch to using that when steam support comes out (in a few days)",
+            "media": false
+        },
+        {
+            "command": "manualinstall",
+            "response": "<https://docs.ficsit.app/satisfactory-modding/2.1.0/ManualInstallDirections.html>",
+            "media": false
         }
     ],
     "special commands": [
