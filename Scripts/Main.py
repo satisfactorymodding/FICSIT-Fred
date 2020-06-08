@@ -13,8 +13,6 @@ import io
 from urllib.request import urlopen
 import logging
 import requests
-from algoliasearch.search_client import SearchClient
-from pprint import pprint
 
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"

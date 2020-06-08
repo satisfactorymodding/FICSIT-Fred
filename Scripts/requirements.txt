@@ -4,3 +4,4 @@ Pillow
 pytesseract
 requests
 matplotlib
+algoliasearch
