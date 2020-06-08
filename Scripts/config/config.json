@@ -23,64 +23,64 @@
     "commands": [
         {
             "command": "install",
-            "response": "../Images/Install.png",
-            "media": true
+            "response": "https://cdn.discordapp.com/attachments/555782140533407764/719613245475782797/Install.png",
+            "byPM": false
         },
         {
             "command": "docs",
             "response": "https://docs.ficsit.app/",
-            "media": false
+            "byPM": false
         },
         {
             "command": "devdocs",
             "response": "https://docs-dev.ficsit.app/",
-            "media": false
+            "byPM": false
         },
         {
             "command": "legend",
             "response": "<:white_check_mark:717773166126301214>:Line additions\n<:x:717773166126301214>:Line deletions\n<:pencil:717773166126301214>:Number of changed files\n<:clipboard:717773166126301214>:Number of commits",
-            "media": false
+            "byPM": false
         },
         {
             "command": "invite",
             "response": "https://bit.ly/SatisfactoryModding",
-            "media": false
+            "byPM": false
         },
         {
             "command": "source",
             "response": "<https://github.com/Feyko/FICSIT-Fred>",
-            "media": false
+            "byPM": false
         },
         {
             "command": ".<",
             "response": ">.<",
-            "media": false
+            "byPM": false
         },
         {
             "command": "smmhelp",
-            "response": "../Images/smmhelp.png",
-            "media": true
+            "response": "https://cdn.discordapp.com/attachments/599990474668769290/719269975537352734/smm_onboard1.png",
+            "byPM": false
         },
         {
             "command": "kronos",
             "response": "Hi ! The Kronos Mod hasn't been updated and probably won't be. You might be interested in the Pak Utility Mod instead, which does a lot of the same things.",
-            "media": false
+            "byPM": false
         },
         {
             "command": "steam",
             "response": "Hi ! Steam isn't supported by the mod manager yet. For the time being, please follow these <https://docs.ficsit.app/satisfactory-modding/2.1.0/ManualInstallDirections.html> instructions to manually install mods. Please note that using SMM is way better and that you should switch to using that when steam support comes out (in a few days)",
-            "media": false
+            "byPM": false
         },
         {
             "command": "manualinstall",
             "response": "<https://docs.ficsit.app/satisfactory-modding/2.1.0/ManualInstallDirections.html>",
-            "media": false
+            "byPM": false
         }
     ],
     "special commands": [
         {
             "command": "mod (name)",
-            "response": "Searches for (name) in the SMR database, returning the details of the mod if it is found. If multiple are found, it will state so. Same for if none are found. Only the user can react to the clipboard, and if so within 60s, will post the full description of said mod below."
+            "response": "Searches for (name) in the SMR database, returning the details of the mod if it is found. If multiple are found, it will state so. Same for if none are found. If someone reacts to the clipboard in 4m, I will send them the full description of the mod."
         },
         {
             "command": "help",

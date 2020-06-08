@@ -222,6 +222,7 @@ def mod(name):
 
     embed.set_thumbnail(url=data["logo"])
     embed.set_author(name="ficsit.app Mod Lookup")
+    embed.set_footer(text="React with the clipboard to have the full description be sent to you")
     return embed, data["full_description"]
 
 
@@ -290,11 +291,12 @@ def command_list(client, full=False):
                     inline=False)
 
     for command in Config["commands"]:
-        if command["media"]:
-            embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value="```An image is posted.```", inline=False)
+        if command["byPM"]:
+            byPM = " (By Direct Message)"
         else:
-            embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value=str("```" + command["response"] + "```"),
-                            inline=False)
+            byPM = ""
+        embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value=str("```" + command["response"]+ "```" + byPM),
+                        inline=False)
 
     embed.add_field(name="**__Special Commands__**",
                     value="*These are special commands doing something else than just replying with a predetermined answer.*",
