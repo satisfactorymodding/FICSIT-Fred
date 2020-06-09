@@ -34,6 +34,7 @@ async def handleCommand(client, message, command, args, authorised):
                                           "settings regarding those if you are the target !")
             else:
                 await message.channel.send(automation["response"])
+            return
 
     if command == "help":
         here = False
@@ -63,6 +64,7 @@ async def handleCommand(client, message, command, args, authorised):
             except:
                 await message.channel("I was unable to send you a direct message. Please check your discord "
                                       "settings regarding those !")
+        return
 
 
     if command == "mod":
@@ -103,7 +105,7 @@ async def handleCommand(client, message, command, args, authorised):
                                           "settings regarding those !")
             except asyncio.TimeoutError:
                 print("User didnt react")
-
+        return
     if command == "docsearch":
         yaml = requests.get("https://raw.githubusercontent.com/satisfactorymodding/Documentation/Dev/antora.yml")
         yamlf = io.BytesIO(yaml.content)
@@ -113,6 +115,7 @@ async def handleCommand(client, message, command, args, authorised):
         index = client.init_index('ficsit')
         query = index.search(" ".join(args) + " " + version)
         await message.channel.send("This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
+        return
 
     if not authorised:
         await message.channel.send("You're not allowed to do this !")
@@ -204,7 +207,7 @@ async def handleCommand(client, message, command, args, authorised):
             client.config["known crashes"].append({"name": name, "crash": crash, "response": response})
             json.dump(client.config, open("config/config.json", "w"))
             await message.channel.send("Known crash '" + name + "' added!")
-
+        return
     elif command == "remove":
         if args[0] == "response":
             try:
@@ -280,7 +283,7 @@ async def handleCommand(client, message, command, args, authorised):
                 else:
                     index += 1
             await message.channel.send("Crash could not be found!")
-
+        return
     elif command == "members":
         list = []
         async for member in message.guild.fetch_members():
@@ -305,7 +308,7 @@ async def handleCommand(client, message, command, args, authorised):
             plt.clf()
         with open("Countlist.png", "rb") as image:
             await message.channel.send(content=None, file=discord.File(image))
-
+        return
     elif command == "growth":
         list = []
         async for member in message.guild.fetch_members():
@@ -338,7 +341,7 @@ async def handleCommand(client, message, command, args, authorised):
             plt.clf()
         with open("Growth.png", "rb") as image:
             await message.channel.send(content=None, file=discord.File(image))
-
+        return
     if authorised < 2:
         await message.channel.send("You're not allowed to do this !")
         return
