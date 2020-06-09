@@ -118,7 +118,6 @@ async def handleCommand(client, message, command, args, authorised):
         return
 
     if not authorised:
-        await message.channel.send("You're not allowed to do this !")
         return
 
     elif command == "add":
@@ -342,8 +341,7 @@ async def handleCommand(client, message, command, args, authorised):
         with open("Growth.png", "rb") as image:
             await message.channel.send(content=None, file=discord.File(image))
         return
-    if authorised < 2:
-        await message.channel.send("You're not allowed to do this !")
+    if authorised != 2:
         return
 
     elif command == "engineers":
