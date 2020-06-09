@@ -268,7 +268,6 @@ async def handleCommand(client, message, command, args, authorised):
         elif args[0] == "crash":
             try:
                 name = args[1]
-                print(name)
             except:
                 name = await Helper.waitResponse(client, message, "Which known crash do you want to remove?")
 

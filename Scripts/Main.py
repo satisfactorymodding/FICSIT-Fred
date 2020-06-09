@@ -34,6 +34,8 @@ class Bot(discord.Client):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        with open("config/config.json", "r") as file:
+            self.config = json.load(file)
         self.git_listener = threading.Thread(target=WebhookListener.start_listener, args=[self])
         self.git_listener.daemon = True
         self.git_listener.start()
@@ -41,8 +43,6 @@ class Bot(discord.Client):
         self.activity = discord.CustomActivity(name="At your service")
 
     async def on_ready(self):
-        with open("config/config.json", "r") as file:
-            self.config = json.load(file)
         logging.info(str(self.config))
         self.modchannel = self.get_channel(self.config["mod channel"])
         #with open("payload.txt", "r+") as file:

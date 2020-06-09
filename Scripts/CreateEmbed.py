@@ -34,7 +34,6 @@ def run(data):
         embed = issue(data)
     else:
         print(data)
-
     return embed
 
 
@@ -56,14 +55,12 @@ def push(data):
     commits = data["commits"]
     desc = ""
     for commit in commits:
-        desc = desc + "[`" + commit["id"][:7] + "`](" + commit["html_url"] + ") " + commit["message"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
-
+        desc = desc + "[`" + commit["id"][:7] + "`](" + commit["url"] + ") " + commit["message"].split("\n")[0] + " - " + commit["committer"]["name"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
     embed = discord.Embed(title= forced + "Pushed " + str(len(data["commits"])) + " commit(s) to " + repo_full_name,
                           colour=colour, url=data["compare"],
                           description=desc)
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
-
 
 
     return embed
@@ -160,7 +157,6 @@ def issue(data):
 
     colour = Config["action colours"]["Orange"]
     action = data["action"]
-    print(action)
     if action == "opened":
         colour = Config["action colours"]["Green"]
     elif action == "deleted":

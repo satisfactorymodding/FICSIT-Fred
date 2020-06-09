@@ -50,7 +50,6 @@ def start_listener(bot):
                 data = data.decode()
             data = json.loads(data)
             data["type"] = event_type
-            print(event_type)
 
             # Respond to GitHub saying the payload arrived, as it fucking should!
             self.send_response(200)
