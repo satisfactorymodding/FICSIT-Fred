@@ -53,17 +53,57 @@ async def handleCommand(client, message, command, args, authorised):
                 pass
         except:
             pass
+        embedList = CreateEmbed.command_list(client, full=full, here=here)
         if here:
-            await message.channel.send(content=None, embed=CreateEmbed.command_list(client, full=full))
+            channel = message.channel
         else:
             if not message.author.dm_channel:
                 await message.author.create_dm()
-            try:
-                await message.author.dm_channel.send(content=None, embed=CreateEmbed.command_list(client, full=full))
-                await message.add_reaction("✅")
-            except:
-                await message.channel("I was unable to send you a direct message. Please check your discord "
-                                      "settings regarding those !")
+            channel = message.author.dm_channel
+        try:
+            helpMessage = await channel.send(content=None, embed=embedList[0])
+            if not here:
+                message.add_reaction("✅")
+        except:
+            if not here:
+                await message.channel.send("I was unable to send you a direct message. Please check your discord "
+                                          "settings regarding those !")
+            return
+        page = 0
+        await helpMessage.add_reaction("➡️")
+        ready = True
+        def check(reaction, user):
+            if ready and reaction.message.id == helpMessage.id and not user.bot and reaction.emoji in ["⬅", "➡️"]:
+                return True
+        try:
+            while True:
+                reaction = await client.wait_for("reaction_add", check=check, timeout=240.0)
+                ready = False
+                if here:
+                    await helpMessage.remove_reaction(reaction[0].emoji, reaction[1])
+                if reaction[0].emoji == "➡️":
+                    page += 1
+                    await helpMessage.edit(embed=embedList[page])
+                    if here:
+                        await helpMessage.remove_reaction("➡️", reaction[1])
+                    if (embedList[2] and page == 3) or (not embedList[2] and page == 1):
+                        await helpMessage.remove_reaction("➡️", client.user)
+                        await helpMessage.add_reaction("⬅")
+                    elif page == 1:
+                        await helpMessage.remove_reaction("➡️", client.user)
+                        await helpMessage.add_reaction("⬅")
+                        await helpMessage.add_reaction("➡️")
+                    ready = True
+                elif reaction[0].emoji == "⬅":
+                    page -= 1
+                    await helpMessage.edit(embed=embedList[page])
+                    if page == 0:
+                        await helpMessage.remove_reaction("⬅", client.user)
+                    if (embedList[2] and page < 3) or (not embedList[2] and page < 1):
+                        await helpMessage.add_reaction("➡️")
+                    ready = True
+        except asyncio.TimeoutError:
+            pass
         return
 
 
@@ -104,7 +144,7 @@ async def handleCommand(client, message, command, args, authorised):
                     await message.channel("I was unable to send you a direct message. Please check your discord "
                                           "settings regarding those !")
             except asyncio.TimeoutError:
-                print("User didnt react")
+                pass
         return
     if command == "docsearch":
         yaml = requests.get("https://raw.githubusercontent.com/satisfactorymodding/Documentation/Dev/antora.yml")
@@ -115,6 +155,10 @@ async def handleCommand(client, message, command, args, authorised):
         index = client.init_index('ficsit')
         query = index.search(" ".join(args) + " " + version)
         await message.channel.send("This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
+        return
+
+    if command == "version":
+        await message.channel.send(client.version)
         return
 
     if not authorised:
@@ -176,13 +220,21 @@ async def handleCommand(client, message, command, args, authorised):
             except:
                 command = await Helper.waitResponse(client, message, "What is the command? e.g. ``install``")
 
+            for scommand in (client.config["commands"] + client.config["special commands"] + client.config["management commands"] + client.config["miscellaneous commands"]):
+                if command == scommand["command"]:
+                    await message.channel.send("This command already exists !")
+                    return
+
             response = await Helper.waitResponse(client, message, "What is the response? e.g. ``Hello there`` "
                                                                           "or an image or link to an image")
 
             byPM = await Helper.waitResponse(client, message, "Should the response be sent by dm ? (True or False)")
 
-
-            byPM = json.loads(byPM.lower())
+            try:
+                byPM = json.loads(byPM.lower())
+            except:
+                await message.channel.send("You didn't respond with a valid boolean. Defaulting to False")
+                byPM = False
 
 
             client.config["commands"].append(

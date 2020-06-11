@@ -232,88 +232,86 @@ def desc(full_desc):
 
 
 # Generic Bot Embed Formats
-def command_list(client, full=False):
-    with open("config/config.json", "r") as file:
-        Config = json.load(file)
+def command_list(client, full=False, here=False):
 
-    embed = discord.Embed(title=str("What I do..."), colour=Config["action colours"]["Purple"])
+    desc = "**__GitHook__**\n*I fetch payloads from Github and show relevant info in* " + client.get_channel(
+                        client.config["githook channel"]).mention + "\n\n"
 
-    embed.add_field(name="**__GitHook__**",
-                    value="*I fetch payloads from Github and show relevant info in* " + client.get_channel(Config["githook channel"]).mention,
-                    inline=False)
+    desc = desc + "**__Special Commands__**\n*These are special commands doing something else than just replying with a predetermined answer.*\n\n"
 
-    embed.add_field(name="**__Automated Responses__**",
-                    value="*These commands trigger when one Keyword and one Additional Word are sent in a message.*",
-                    inline=False)
+    for command in client.config["special commands"]:
+        desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command["response"] + "```"
 
-    for command in Config["automated responses"]:
-        keywords = ""
-        words = "\n" + command["additional words"][0]
-        del command["additional words"][0]
+    desc = desc + "**__Known Crashes__**\n*The bot respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*\n\n"
 
-        for keyword in command["keywords"]:
-            keywords = keywords + "\n" + keyword
-
-        for word in command["additional words"]:
-            words = words + ", " + word
-
-        if command["ignore members"]:
-            embed.add_field(name=str("**" + command["name"] + "**"), value=str(
-                "Keywords:\n```" + keywords + "```Additional Words:\n```" + words + "```Response:\n```" + command[
-                    "response"] + "```This response **ignores** anyone with T1+."), inline=False)
-        else:
-            embed.add_field(name=str("**" + command["name"] + "**"), value=str(
-                "Keywords:\n```" + keywords + "```Additional Words:\n```" + words + "```Response:\n```" + command[
-                    "response"] + "```This response applies to **everyone**."), inline=False)
-
-    embed.add_field(name="**__Known Crashes__**",
-                    value="*The bot respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*",
-                    inline=False)
-
-    for command in Config["known crashes"]:
-        embed.add_field(name=str("**" + command["name"] + "**"), value=str("Error:\n```" + command["crash"] + "```Response:\n```" + command["response"] + "```"),
-                        inline=False)
+    for command in client.config["known crashes"]:
+        desc = desc + "**" + command["name"] + "**\nError:\n```" + command["crash"] + "```Response:\n```" + command["response"] + "```"
 
 
-    value = "*These channels only allow users to post files (inc. images).*\n"
-    for id in Config["media only channels"]:
-        value = value + client.get_channel(id).mention + "\n"
-    embed.add_field(name="**__Media Only Channels__**",value=value, inline=False)
+    desc = desc + "\n**__Media Only Channels__**\n*These channels only allow users to post files (inc. images).*\n"
+    for id in client.config["media only channels"]:
+        desc = desc + client.get_channel(id).mention + "\n"
 
+    specialities = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
+                                 description=desc)
 
+    if here:
+        specialities.set_footer(text="Please do not spam the reactions for this embed to work properly.")
+    else:
+        specialities.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
+                             "cannot remove your reactions in direct messages, navigation in here could be a "
+                             "little weird")
 
-    embed.add_field(name="**__Commands__**",
-                    value="*These are normal commands that can be called by stating their name.*",
-                    inline=False)
+    desc = "**__Commands__**\n*These are normal commands that can be called by stating their name.*\n\n"
 
-    for command in Config["commands"]:
+    for command in client.config["commands"]:
         if command["byPM"]:
             byPM = " (By Direct Message)"
         else:
             byPM = ""
-        embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value=str("```" + command["response"]+ "```" + byPM),
-                        inline=False)
+        desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command["response"]+ "```" + byPM + "\n"
 
-    embed.add_field(name="**__Special Commands__**",
-                    value="*These are special commands doing something else than just replying with a predetermined answer.*",
-                    inline=False)
+    commands = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
+                                 description=desc)
 
-
-    for command in Config["special commands"]:
-        embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value=str("```" + command["response"] + "```"),
-                        inline=False)
+    if here:
+        commands.set_footer(text="Please do not spam the reactions for this embed to work properly.")
+    else:
+        commands.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
+                             "cannot remove your reactions in direct messages, navigation in here could be a "
+                             "little weird")
 
     if full:
-        embed.add_field(name="**__Management Commands__**",
-                        value="*These are commands to manage the bot and its automations.*",
-                        inline=False)
+        desc = "**__Management Commands__**\n*These are commands to manage the bot and its automations.*\n\n"
 
-        for command in Config["management commands"]:
-            embed.add_field(name=str("**" + Config["prefix"] + command["command"] + "**"), value=str("```" + command["response"] + "```"),
-                            inline=False)
+        for command in client.config["management commands"]:
+            desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command["response"] + "```\n"
 
-        embed.add_field(name="**__Miscellaneous commands__**",
-                        value="*Two 'hidden' commands who didn't fit in the embed.*",
-                        inline=False)
+        management = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
+                                 description=desc)
 
-    return embed
+        if here:
+            management.set_footer(text="Please do not spam the reactions for this embed to work properly.")
+        else:
+            management.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
+                                 "cannot remove your reactions in direct messages, navigation in here could be a "
+                                 "little weird")
+
+        desc = "**__Miscellaneous commands__**\n*It's all in the title*\n\n"
+
+        for command in client.config["miscellaneous commands"]:
+            desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command["response"] + "```"
+
+        misc = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
+                                 description=desc)
+        if here:
+            misc.set_footer(text="Please do not spam the reactions for this embed to work properly.")
+        else:
+            misc.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
+                                 "cannot remove your reactions in direct messages, navigation in here could be a "
+                                 "little weird")
+    else:
+        management = False
+        misc = False
+
+    return [specialities, commands, management, misc]

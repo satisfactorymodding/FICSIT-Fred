@@ -13,6 +13,8 @@ import io
 from urllib.request import urlopen
 import logging
 import requests
+import sys
+import traceback
 
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
@@ -40,8 +42,16 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        self.activity = discord.CustomActivity(name="At your service")
 
+        self.version = "1.0.0"
+
+    async def on_error(self, event, *args, **kwargs):
+        type, value, tb = sys.exc_info()
+        tbs = "```Fred v" + self.version + "\n\n" + type.__name__ + " exception handled in " + event + " : " + str(value) + "\n\n"
+        for string in traceback.format_tb(tb):
+            tbs = tbs + string
+        tbs = tbs + "```"
+        await self.get_channel(720683767135469590).send(tbs)
     async def on_ready(self):
         logging.info(str(self.config))
         self.modchannel = self.get_channel(self.config["mod channel"])
@@ -74,6 +84,9 @@ class Bot(discord.Client):
         time.sleep(0.1)
         if message.author.bot:
             return
+        if isinstance(message.channel, discord.DMChannel):
+            await message.channel.send("I do not allow commands to be used by direct message, please use an "
+                                       "appropriate channel in the Modding Discord instead.")
         if message.author.permissions_in(self.get_channel(self.config["filter channel"])).send_messages:
             authorised = True
             if message.author.permissions_in(self.modchannel).send_messages:
