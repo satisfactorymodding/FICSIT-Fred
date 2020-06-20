@@ -39,19 +39,15 @@ async def handleCommand(client, message, command, args, authorised):
     if command == "help":
         here = False
         full = False
+        if authorised:
+            full = True
         try:
-            if args[0] == "here":
+            if args[0] == "here" and authorised:
                 here = True
-            elif args[0] == "full":
-                full = True
-            try:
-                if args[1] == "here":
-                    here = True
+                full = False
                 if args[1] == "full":
                     full = True
-            except:
-                pass
-        except:
+        except IndexError:
             pass
         embedList = CreateEmbed.command_list(client, full=full, here=here)
         if here:
@@ -63,17 +59,22 @@ async def handleCommand(client, message, command, args, authorised):
         try:
             helpMessage = await channel.send(content=None, embed=embedList[0])
             if not here:
-                message.add_reaction("✅")
+                print("not here")
+                await message.add_reaction("✅")
         except:
             if not here:
                 await message.channel.send("I was unable to send you a direct message. Please check your discord "
                                           "settings regarding those !")
             return
         page = 0
-        await helpMessage.add_reaction("➡️")
+        await helpMessage.add_reaction("1️⃣")
+        await helpMessage.add_reaction("2️⃣")
+        if full:
+            await helpMessage.add_reaction("3️⃣")
+            await helpMessage.add_reaction("4️⃣")
         ready = True
         def check(reaction, user):
-            if ready and reaction.message.id == helpMessage.id and not user.bot and reaction.emoji in ["⬅", "➡️"]:
+            if ready and reaction.message.id == helpMessage.id and not user.bot:
                 return True
         try:
             while True:
@@ -81,26 +82,21 @@ async def handleCommand(client, message, command, args, authorised):
                 ready = False
                 if here:
                     await helpMessage.remove_reaction(reaction[0].emoji, reaction[1])
-                if reaction[0].emoji == "➡️":
-                    page += 1
+                if reaction[0].emoji == "1️⃣":
+                    page = 0
                     await helpMessage.edit(embed=embedList[page])
-                    if here:
-                        await helpMessage.remove_reaction("➡️", reaction[1])
-                    if (embedList[2] and page == 3) or (not embedList[2] and page == 1):
-                        await helpMessage.remove_reaction("➡️", client.user)
-                        await helpMessage.add_reaction("⬅")
-                    elif page == 1:
-                        await helpMessage.remove_reaction("➡️", client.user)
-                        await helpMessage.add_reaction("⬅")
-                        await helpMessage.add_reaction("➡️")
                     ready = True
-                elif reaction[0].emoji == "⬅":
-                    page -= 1
+                elif reaction[0].emoji == "2️⃣":
+                    page = 1
                     await helpMessage.edit(embed=embedList[page])
-                    if page == 0:
-                        await helpMessage.remove_reaction("⬅", client.user)
-                    if (embedList[2] and page < 3) or (not embedList[2] and page < 1):
-                        await helpMessage.add_reaction("➡️")
+                    ready = True
+                elif reaction[0].emoji == "3️⃣":
+                    page = 2
+                    await helpMessage.edit(embed=embedList[page])
+                    ready = True
+                elif reaction[0].emoji == "4️⃣":
+                    page = 3
+                    await helpMessage.edit(embed=embedList[page])
                     ready = True
         except asyncio.TimeoutError:
             pass
@@ -335,63 +331,65 @@ async def handleCommand(client, message, command, args, authorised):
             await message.channel.send("Crash could not be found!")
         return
     elif command == "members":
-        list = []
-        async for member in message.guild.fetch_members():
-            list.append(member.joined_at)
-        list.sort()
-        first = list[0]
-        last = list[len(list) - 1]
-        count = 0
-        countlist = []
-        nb = 24
-        for x in range(0, nb):
-            for item in list:
-                if item > first + datetime.timedelta(days=x*30):
-                    break
-                count += 1
-            countlist.append(count)
+        async with message.channel.typing():
+            list = []
+            async for member in message.guild.fetch_members():
+                list.append(member.joined_at)
+            list.sort()
+            first = list[0]
+            last = list[len(list) - 1]
             count = 0
+            countlist = []
+            nb = 24
+            for x in range(0, nb):
+                for item in list:
+                    if item > first + datetime.timedelta(days=x*30):
+                        break
+                    count += 1
+                countlist.append(count)
+                count = 0
 
-        plt.plot(range(0, nb), countlist)
-        with open("Countlist.png", "wb") as image:
-            plt.savefig(image, format="PNG")
-            plt.clf()
-        with open("Countlist.png", "rb") as image:
-            await message.channel.send(content=None, file=discord.File(image))
-        return
+            plt.plot(range(0, nb), countlist)
+            with open("Countlist.png", "wb") as image:
+                plt.savefig(image, format="PNG")
+                plt.clf()
+            with open("Countlist.png", "rb") as image:
+                await message.channel.send(content=None, file=discord.File(image))
+            return
     elif command == "growth":
-        list = []
-        async for member in message.guild.fetch_members():
-            list.append(member.joined_at)
-        list.sort()
-        first = list[0]
-        last = list[len(list) - 1]
-        count = 0
-        countlist = []
-        nb = 24
-        for x in range(0, nb):
-            for item in list:
-                if item > first + datetime.timedelta(days=x*30):
-                    break
-                count += 1
-            countlist.append(count)
+        async with message.channel.typing():
+            list = []
+            async for member in message.guild.fetch_members():
+                list.append(member.joined_at)
+            list.sort()
+            first = list[0]
+            last = list[len(list) - 1]
             count = 0
+            countlist = []
+            nb = 24
+            for x in range(0, nb):
+                for item in list:
+                    if item > first + datetime.timedelta(days=x*30):
+                        break
+                    count += 1
+                countlist.append(count)
+                count = 0
 
-        growth = []
-        for x in range(0, nb):
-            try:
-                ratio = (countlist[x] - countlist[x - 1]) / countlist[x - 1]
-                growth.append(ratio * 100)
-            except IndexError:
-                growth.append(100)
+            growth = []
+            for x in range(0, nb):
+                try:
+                    ratio = (countlist[x] - countlist[x - 1]) / countlist[x - 1]
+                    growth.append(ratio * 100)
+                except IndexError:
+                    growth.append(100)
 
-        plt.plot(range(0, nb), growth)
-        with open("Growth.png", "wb") as image:
-            plt.savefig(image, format="PNG")
-            plt.clf()
-        with open("Growth.png", "rb") as image:
-            await message.channel.send(content=None, file=discord.File(image))
-        return
+            plt.plot(range(0, nb), growth)
+            with open("Growth.png", "wb") as image:
+                plt.savefig(image, format="PNG")
+                plt.clf()
+            with open("Growth.png", "rb") as image:
+                await message.channel.send(content=None, file=discord.File(image))
+            return
     if authorised != 2:
         return
 

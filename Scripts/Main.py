@@ -15,6 +15,8 @@ import logging
 import requests
 import sys
 import traceback
+import inspect
+import textwrap
 
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
@@ -42,12 +44,36 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
+        self.version = "1.0.1"
+        source = inspect.getsource(discord.abc.Messageable.send)
+        source = textwrap.dedent(source)
+        assert ("content = str(content) if content is not None else None" in source)
+        source = source.replace("def send", "def new_send")
+        r = """
+    async def check_delete(ret=ret):
+        def check(reaction, user):
+            if reaction.message.id == ret.id and not user.bot and reaction.emoji == "❌":
+                return True
+        try:
+            await client.wait_for("reaction_add", check=check, timeout=60.0)
+            await ret.delete()
+        except asyncio.TimeoutError:
+            pass
+    asyncio.create_task(check_delete(ret))
+    return ret
+                """
+        source = source.replace("return ret", r)
+        exec(source, globals())
+        discord.abc.Messageable.send = new_send
 
-        self.version = "1.0.0"
 
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
-        tbs = "```Fred v" + self.version + "\n\n" + type.__name__ + " exception handled in " + event + " : " + str(value) + "\n\n"
+        if event == "on_message":
+            channel = " in #" + args[0].channel.name
+        else:
+            channel = ""
+        tbs = "```Fred v" + self.version + "\n\n" + type.__name__ + " exception handled in " + event + channel + " : " + str(value) + "\n\n"
         for string in traceback.format_tb(tb):
             tbs = tbs + string
         tbs = tbs + "```"
@@ -60,21 +86,30 @@ class Bot(discord.Client):
         #embed = CreateEmbed.run(data)
         #if embed != "Debug":
             #await self.modchannel.send(content=None, embed=embed)
+        #self.modchannel.send()
         print('We have logged in as {0.user}'.format(self))
     async def send_embed(self, embed_item):
         channel = self.get_channel(self.config["githook channel"])
+        await self.get_channel(720683767135469590).send("got channel " + str(channel))
         await channel.send(content=None, embed=embed_item)
+        await self.get_channel(720683767135469590).send("sent")
+
 
     async def check_queue(self):
         await self.wait_until_ready()
         while True:
             if os.path.exists("queue.txt"):
+                await self.get_channel(720683767135469590).send("queue.txt exists")
                 with open("queue.txt", "r+") as file:
+                    await self.get_channel(720683767135469590).send("opened")
                     data = json.load(file)
-                    embed = CreateEmbed.run(data)
+                    await self.get_channel(720683767135469590).send("loaded")
+                    embed = await CreateEmbed.run(data, self)
                     if embed == "Debug":
+                        await client.get_channel(720683767135469590).send("Non-supported Payload received")
                         print("Non-supported Payload received")
                     else:
+                        await self.get_channel(720683767135469590).send("sending")
                         await self.send_embed(embed)
                 os.remove("queue.txt")
             else:

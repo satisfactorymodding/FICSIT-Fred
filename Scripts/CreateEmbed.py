@@ -11,8 +11,9 @@ with open("config/config.json", "r") as file:
 
 
 # Github Update Embed Formats
-def run(data):
+async def run(data, client):
     embed = "Debug"
+    await client.get_channel(720683767135469590).send("Creating embed")
     try:
         global repo_name
         repo_name = data["repository"]["full_name"]
@@ -21,7 +22,11 @@ def run(data):
     except:
         repo_name = "None"
         repo_full_name = "None"
-    type = data["type"]
+    try:
+        type = data["type"]
+    except KeyError:
+        await client.get_channel(720683767135469590).send("Type doesn't exist")
+    await client.get_channel(720683767135469590).send("got a payload of type " + type)
     if type == "push":
         embed = push(data)
     elif type == "pull_request":
@@ -173,31 +178,41 @@ def issue(data):
 def mod(name):
     # GraphQL Queries
 
-    query = str('''{
-      getMods(filter: { search: "''' + name + '''", order_by: last_version_date, order:desc}) {
-        mods {
-          name
-          authors {
-            user {
-              username
+    modCount = requests.post("https://api.ficsit.app/v2/query", json={'query': "{getMods{count}}"})
+    modCount = json.loads(modCount.text)
+    modCount = modCount["data"]["getMods"]["count"]
+    remainingMods = modCount
+    mods = []
+    page = 0
+    while remainingMods > 1:
+        query = str('''{
+          getMods(filter: {limit: 100, offset: ''' + str(page * 100) +''', order_by: last_version_date, order:desc}) {
+            mods {
+              name
+              authors {
+                user {
+                  username
+                }
+              }
+              logo
+              short_description
+              full_description
+              last_version_date
+              id
             }
           }
-          logo
-          short_description
-          full_description
-          last_version_date
-          id
-        }
-      }
-    }''')
-    data = requests.post("https://api.ficsit.app/v2/query", json={'query': query})
-    data = json.loads(data.text)
-    data = data["data"]["getMods"]["mods"]
+        }''')
+        data = requests.post("https://api.ficsit.app/v2/query", json={'query': query})
+        data = json.loads(data.text)
+        mods = mods + data["data"]["getMods"]["mods"]
+        remainingMods -= 100
+        page *= 1
 
-    for mod in data:
+    for mod in mods:
         if mod["name"] == name:
             data = mod
             break
+
     if isinstance(data, list):
         if len(data) > 1:
             mod_list = ""
@@ -301,6 +316,8 @@ def command_list(client, full=False, here=False):
 
         for command in client.config["miscellaneous commands"]:
             desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command["response"] + "```"
+
+        desc = desc + "\n**__Additional information__**\nThis info is relevant if you are an engineer or above, which you should be if you are seeing this page.\n\n```*You can react to any of the bot's message with ❌ to remove it\n*You can add 'here' after the help command to send the embed in the channel you typed the command in. This will make the embed not be full by default, but you can override that by adding another argument, 'full'```"
 
         misc = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
                                  description=desc)

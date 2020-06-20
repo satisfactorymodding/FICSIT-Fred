@@ -56,11 +56,11 @@ def start_listener(bot):
             self.send_header('content-type', 'text/html')
             self.end_headers()
             self.wfile.write(bytes('FICSIT-Fred received the payload', 'utf-8'))
-
+            print("Got a POST with good data")
             # Save that shit!
             with open("queue.txt", "w") as file:
                 json.dump(data, file)
-
+            print("saved")
             return
 
     class HTTPServerV6(HTTPServer):

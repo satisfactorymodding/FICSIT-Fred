@@ -17,15 +17,9 @@
     "automated responses": [],
     "media only channels": [
         696718959193489438,
-        562121682538594314,
-        623891487683510323
+        562121682538594314
     ],
     "commands": [
-        {
-            "command": "install",
-            "response": "https://cdn.discordapp.com/attachments/555782140533407764/719613245475782797/Install.png",
-            "byPM": false
-        },
         {
             "command": "docs",
             "response": "https://docs.ficsit.app/",
@@ -34,16 +28,6 @@
         {
             "command": "devdocs",
             "response": "https://docs-dev.ficsit.app/",
-            "byPM": false
-        },
-        {
-            "command": "legend",
-            "response": "<:white_check_mark:717773166126301214>:Line additions\n<:x:717773166126301214>:Line deletions\n<:pencil:717773166126301214>:Number of changed files\n<:clipboard:717773166126301214>:Number of commits",
-            "byPM": false
-        },
-        {
-            "command": "invite",
-            "response": "https://bit.ly/SatisfactoryModding",
             "byPM": false
         },
         {
@@ -67,13 +51,53 @@
             "byPM": false
         },
         {
-            "command": "steam",
-            "response": "Hi ! Steam isn't supported by the mod manager yet. For the time being, please follow these <https://docs.ficsit.app/satisfactory-modding/2.1.0/ManualInstallDirections.html> instructions to manually install mods. Please note that using SMM is way better and that you should switch to using that when steam support comes out (in a few days)",
+            "command": "super",
+            "response": "<:lazy:642114479097905206>",
+            "byPM": false
+        },
+        {
+            "command": "legend",
+            "response": "✅:File additions\n❌:File deletions\n📝:Number of changed files\n📋:Number of commits",
+            "byPM": false
+        },
+        {
+            "command": "map",
+            "response": "https://satisfactory-calculator.com/en/interactive-map",
             "byPM": false
         },
         {
             "command": "manualinstall",
-            "response": "<https://docs.ficsit.app/satisfactory-modding/2.1.0/ManualInstallDirections.html>",
+            "response": "<https://docs-dev.ficsit.app/satisfactory-modding/2.1.0/ManualInstallDirections.html>",
+            "byPM": false
+        },
+        {
+            "command": "acronym",
+            "response": "https://github.com/satisfactorymodding/SatisfactoryAcronymVault",
+            "byPM": false
+        },
+        {
+            "command": "invite",
+            "response": "<https://bit.ly/SatisfactoryModding>",
+            "byPM": false
+        },
+        {
+            "command": "smr",
+            "response": "If you want to find mods or upload your own - check out the Satisfactory Mod Repo <https://ficsit.app/>",
+            "byPM": false
+        },
+        {
+            "command": "creative",
+            "response": "Read more here: https://discordapp.com/channels/555424930502541343/555516979260293132/709043679687344158",
+            "byPM": false
+        },
+        {
+            "command": "steam",
+            "response": "SMM is now out ! That means Steam support too. Check <#555428529903239178>  for more info !",
+            "byPM": false
+        },
+        {
+            "command": "install",
+            "response": "https://cdn.discordapp.com/attachments/599990474668769290/721691062359425054/smminstall_03.png",
             "byPM": false
         }
     ],
@@ -84,7 +108,11 @@
         },
         {
             "command": "help",
-            "response": "Displays the menu you are looking at right now... funny that..."
+            "response": "Displays the menu you are looking at right now."
+        },
+        {
+            "command": "docsearch",
+            "response": "Searches for the given text in the Satisfactory Modding Documentation, returning the best result I can find."
         }
     ],
     "management commands": [
@@ -152,6 +180,16 @@
             "name": "c++",
             "crash": "Assertion failed: ObjectA == nullptr",
             "response": "Hi {user} ! This crash is most likely caused by c++ mods being broken. Check the pinned messages for a list of broken mods !"
+        },
+        {
+            "name": "MaxUObjects",
+            "crash": "Maximum number of UObjects (2162688) exceeded",
+            "response": "Hi {user}, please read the pin about the max limit of UObjects in <#555782140533407764>"
+        },
+        {
+            "name": "Dummies",
+            "crash": "FactoryGame_Win64_Shipping!APlayerState::GetPlayerName() [d:\\ws\\sb-200518130817-657\\ue4\\engine\\source\\runtime\\engine\\private\\playerstate.cpp:316]\nUE4_SML_Win64_Shipping\nUE4_SML_Win64_Shipping\nUE4_SML_Win64_Shipping",
+            "response": "Hi {user} ! This crash is somewhat known and is caused by dummy actors in your world. Try killing the dummy characters and retrying. If you are unable to kill some characters, use a save editor to remove them."
         }
     ]
 }
