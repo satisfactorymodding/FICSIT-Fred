@@ -56,11 +56,6 @@
             "byPM": false
         },
         {
-            "command": "legend",
-            "response": "✅:File additions\n❌:File deletions\n📝:Number of changed files\n📋:Number of commits",
-            "byPM": false
-        },
-        {
             "command": "map",
             "response": "https://satisfactory-calculator.com/en/interactive-map",
             "byPM": false
