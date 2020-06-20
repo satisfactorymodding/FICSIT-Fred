@@ -17,7 +17,6 @@ with open("config/config.json", "r") as file:
 # Github Update Embed Formats
 async def run(data, client):
     embed = "Debug"
-    await client.get_channel(720683767135469590).send("Creating embed")
     try:
         global repo_name
         repo_name = data["repository"]["full_name"]
@@ -29,8 +28,7 @@ async def run(data, client):
     try:
         type = data["type"]
     except KeyError:
-        await client.get_channel(720683767135469590).send("Type doesn't exist")
-    await client.get_channel(720683767135469590).send("got a payload of type " + type)
+        print("data didn't have a type field")
     if type == "push":
         embed = push(data)
     elif type == "pull_request":

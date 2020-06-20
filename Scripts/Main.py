@@ -49,6 +49,7 @@ class Bot(discord.Client):
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
         source = source.replace("def send", "def new_send")
+        source = source.replace("isinstance(file, File)", "isinstance(file, discord.File)")
         r = """
     async def check_delete(ret=ret):
         def check(reaction, user):
@@ -77,6 +78,7 @@ class Bot(discord.Client):
         for string in traceback.format_tb(tb):
             tbs = tbs + string
         tbs = tbs + "```"
+        print(tbs.replace("```", ""))
         await self.get_channel(720683767135469590).send(tbs)
     async def on_ready(self):
         logging.info(str(self.config))
@@ -90,30 +92,26 @@ class Bot(discord.Client):
         print('We have logged in as {0.user}'.format(self))
     async def send_embed(self, embed_item):
         channel = self.get_channel(self.config["githook channel"])
-        await self.get_channel(720683767135469590).send("got channel " + str(channel))
         await channel.send(content=None, embed=embed_item)
-        await self.get_channel(720683767135469590).send("sent")
 
 
     async def check_queue(self):
         await self.wait_until_ready()
         while True:
-            if os.path.exists("queue.txt"):
-                await self.get_channel(720683767135469590).send("queue.txt exists")
-                with open("queue.txt", "r+") as file:
-                    await self.get_channel(720683767135469590).send("opened")
-                    data = json.load(file)
-                    await self.get_channel(720683767135469590).send("loaded")
-                    embed = await CreateEmbed.run(data, self)
-                    if embed == "Debug":
-                        await client.get_channel(720683767135469590).send("Non-supported Payload received")
-                        print("Non-supported Payload received")
-                    else:
-                        await self.get_channel(720683767135469590).send("sending")
-                        await self.send_embed(embed)
-                os.remove("queue.txt")
-            else:
-                await asyncio.sleep(1)
+            try:
+                if os.path.exists("queue.txt"):
+                    with open("queue.txt", "r+") as file:
+                        data = json.load(file)
+                        embed = await CreateEmbed.run(data, self)
+                        if embed == "Debug":
+                            print("Non-supported Payload received")
+                        else:
+                            await self.send_embed(embed)
+                    os.remove("queue.txt")
+                else:
+                    await asyncio.sleep(1)
+            except:
+                await self.on_error("check_queue")
 
     async def on_message(self, message):
         time.sleep(0.1)
