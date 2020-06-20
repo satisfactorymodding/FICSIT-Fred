@@ -7,7 +7,7 @@ import os
 import shutil
 
 if not os.path.exists("config/config.json"):
-    shutil.copyfile("config/config_example.json", "config/config.json")
+    shutil.copyfile("../config_example.json", "config/config.json")
 with open("config/config.json", "r") as file:
     Config = json.load(file)
 
