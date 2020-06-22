@@ -44,7 +44,7 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        self.version = "1.0.3"
+        self.version = "1.1.0"
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
@@ -66,33 +66,6 @@ class Bot(discord.Client):
         source = source.replace("return ret", r)
         exec(source, globals())
         discord.abc.Messageable.send = new_send
-
-        with open("FactoryGame.log") as file:
-            data = file.read()
-
-        data = ""
-        try:
-            SML_version = data.find("SatisfactoryModLoader ", 0, 1000)
-            assert SML_version != -1
-            SML_version = data[SML_version:][22:].split("\n")[0]
-        except:
-            SML_version = ""
-        try:
-            CL = data[:200000].split("-CL-")[1].split("\n")[0]
-        except:
-            CL = ""
-
-        query = """{
-  getSMLVersions{
-    sml_versions {
-      version
-      satisfactory_version
-    }
-  }
-}"""
-        data = requests.post("https://api.ficsit.app/v2/query", json={'query': query})
-        data = json.loads(data.text)
-        sml_versions = data["data"]["getSMLVersions"]["sml_versions"]
 
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
@@ -224,6 +197,37 @@ class Bot(discord.Client):
                 data = ""
         else:
             data = message.content
+
+        try:
+            sml_version = data.find("SatisfactoryModLoader ", 0, 1000)
+            assert sml_version != -1
+            sml_version = data[sml_version:][23:].split("\r")[0]
+        except:
+            sml_version = ""
+        try:
+            CL = int(data[:200000].split("-CL-")[1].split("\n")[0])
+        except:
+            CL = 0
+        if CL and sml_version:
+            query = """{
+      getSMLVersions{
+        sml_versions {
+          version
+          satisfactory_version
+        }
+      }
+    }"""
+            data = requests.post("https://api.ficsit.app/v2/query", json={'query': query})
+            data = json.loads(data.text)
+            sml_versions = data["data"]["getSMLVersions"]["sml_versions"]
+            for i in range(0, len(sml_versions) - 1):
+                if sml_versions[i]["satisfactory_version"] > CL:
+                    continue
+                else:
+                    latest = sml_versions[i]
+                    break
+            if latest["version"] != sml_version:
+                await message.channel.send("Your SML version is wrong. Please update it to " + latest["version"])
 
         for crash in self.config["known crashes"]:
             if crash["crash"].lower() in data:
