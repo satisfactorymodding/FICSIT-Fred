@@ -180,15 +180,8 @@ def issue(data):
 def mod(name):
     # GraphQL Queries
 
-    modCount = requests.post("https://api.ficsit.app/v2/query", json={'query': "{getMods{count}}"})
-    modCount = json.loads(modCount.text)
-    modCount = modCount["data"]["getMods"]["count"]
-    remainingMods = modCount
-    mods = []
-    page = 0
-    while remainingMods > 1:
-        query = str('''{
-          getMods(filter: {limit: 100, offset: ''' + str(page * 100) +''', order_by: last_version_date, order:desc}) {
+    query = str('''{
+          getMods(filter: { search: "''' + name + '''", order_by: last_version_date, order:desc}) {
             mods {
               name
               authors {
@@ -204,17 +197,14 @@ def mod(name):
             }
           }
         }''')
-        data = requests.post("https://api.ficsit.app/v2/query", json={'query': query})
-        data = json.loads(data.text)
-        mods = mods + data["data"]["getMods"]["mods"]
-        remainingMods -= 100
-        page *= 1
+    data = requests.post("https://api.ficsit.app/v2/query", json={'query': query})
+    data = json.loads(data.text)
+    data = data["data"]["getMods"]["mods"]
 
-    for mod in mods:
+    for mod in data:
         if mod["name"] == name:
             data = mod
             break
-
     if isinstance(data, list):
         if len(data) > 1:
             mod_list = ""
@@ -226,9 +216,10 @@ def mod(name):
         else:
             data = data[0]
     date = str(data["last_version_date"][0:10] + " " + data["last_version_date"][11:19])
-    
+
     embed = discord.Embed(title=data["name"],
-                          colour=Config["action colours"]["Light Blue"], url=str("https://ficsit.app/mod/" + data["id"]),
+                          colour=Config["action colours"]["Light Blue"],
+                          url=str("https://ficsit.app/mod/" + data["id"]),
                           description=str(data["short_description"] +
                                           "\n\n Last Updated: " + date +
                                           "\nCreated by: " + data["authors"][0]["user"]["username"]))

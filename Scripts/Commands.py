@@ -244,7 +244,7 @@ async def handleCommand(client, message, command, args, authorised):
             except:
                 name = await Helper.waitResponse(client, message, "What would you like to name this known "
                                                                           "crash? e.g. ``CommandDave``")
-
+            name = name.lower()
             crash = await Helper.waitResponse(client, message,
                                               "What is the string to search for in the crash logs ? e.g. \"Assertion failed: ObjectA == nullptr\"")
 
@@ -262,7 +262,7 @@ async def handleCommand(client, message, command, args, authorised):
             except:
                 name = await Helper.waitResponse(client, message,
                                                  "Which Automated Response do you want to remove?")
-
+            name = name.lower()
             index = 0
             for response in client.config["automated responses"]:
                 if response["name"] == name:
@@ -301,7 +301,7 @@ async def handleCommand(client, message, command, args, authorised):
             except:
                 command = await Helper.waitResponse(client, message,
                                                     "Which Command do you want to remove? e.g. ``>install``")
-
+            command = command.lower()
             index = 0
             for response in client.config["commands"]:
                 if response["command"] == command:

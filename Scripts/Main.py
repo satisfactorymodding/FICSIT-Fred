@@ -44,7 +44,7 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        self.version = "1.0.2"
+        self.version = "1.0.3"
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
@@ -67,6 +67,32 @@ class Bot(discord.Client):
         exec(source, globals())
         discord.abc.Messageable.send = new_send
 
+        with open("FactoryGame.log") as file:
+            data = file.read()
+
+        data = ""
+        try:
+            SML_version = data.find("SatisfactoryModLoader ", 0, 1000)
+            assert SML_version != -1
+            SML_version = data[SML_version:][22:].split("\n")[0]
+        except:
+            SML_version = ""
+        try:
+            CL = data[:200000].split("-CL-")[1].split("\n")[0]
+        except:
+            CL = ""
+
+        query = """{
+  getSMLVersions{
+    sml_versions {
+      version
+      satisfactory_version
+    }
+  }
+}"""
+        data = requests.post("https://api.ficsit.app/v2/query", json={'query': query})
+        data = json.loads(data.text)
+        sml_versions = data["data"]["getSMLVersions"]["sml_versions"]
 
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
@@ -176,11 +202,7 @@ class Bot(discord.Client):
                     name = ""
             # .log or .txt Files
             if (".log" in name or ".txt" in name):
-                for line in file:
-                    for crash in self.config["known crashes"]:
-                        if crash["crash"].lower() in line.decode().lower():
-                            await message.channel.send(str(crash["response"].format(user=message.author.mention)))
-                            return
+                data = file.read().decode("utf-8")
 
             #images
             else:
@@ -190,29 +212,23 @@ class Bot(discord.Client):
                     ratioTo8k = 4320 / image.height
                     if ratioTo8k > 1:
                         image = image.resize((round(image.width * ratioTo8k), round(image.height * ratioTo8k)), Image.LANCZOS)
-                    result = image_to_string(image, lang="eng")[:2000]
+                    data = image_to_string(image, lang="eng")
                 except:
-                    result = ""
-                for crash in self.config["known crashes"]:
-                    if crash["crash"].lower() in result.lower():
-                        await message.channel.send(str(crash["response"].format(user=message.author.mention)))
-                        return
+                    data = ""
 
         #Pastebin links
         elif "https://pastebin.com/" in message.content:
             try:
-                pastebincontent = urlopen("https://pastebin.com/raw/" + message.content.split("https://pastebin.com/")[1].split(" ")[0]).read()
+                data = urlopen("https://pastebin.com/raw/" + message.content.split("https://pastebin.com/")[1].split(" ")[0]).read().decode("utf-8")
             except:
-                return
-            for crash in self.config["known crashes"]:
-                if crash["crash"].lower() in pastebincontent.decode().lower():
-                    await message.channel.send(str(crash["response"].format(user=message.author.mention)))
-                    return
+                data = ""
         else:
-            for crash in self.config["known crashes"]:
-                if crash["crash"].lower() in message.content.lower():
-                    await message.channel.send(str(crash["response"].format(user=message.author.mention)))
-                    return
+            data = message.content
+
+        for crash in self.config["known crashes"]:
+            if crash["crash"].lower() in data:
+                await message.channel.send(str(crash["response"].format(user=message.author.mention)))
+                return
 
 client = Bot()
 client.run(os.environ.get("FRED_TOKEN"))
