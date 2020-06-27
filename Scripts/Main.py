@@ -228,7 +228,8 @@ class Bot(discord.Client):
                     break
             if latest["version"] != sml_version:
                 await message.channel.send("Your SML version is wrong. Please update it to " + latest["version"])
-
+                
+        data = data.lower()
         for crash in self.config["known crashes"]:
             if crash["crash"].lower() in data:
                 await message.channel.send(str(crash["response"].format(user=message.author.mention)))
