@@ -35,7 +35,7 @@ async def run(data, client):
         embed = pull_request(data)
     elif type == "member" and data["action"] == "added":
         embed = contributer_added(data)
-    elif type == "release" and data["action"] == "published" and not data["release"]["draft"]:
+    elif type == "release" and data["action"] in ["released", "prerelease"]:
         embed = release(data)
     elif type == "issue":
         embed = issue(data)
