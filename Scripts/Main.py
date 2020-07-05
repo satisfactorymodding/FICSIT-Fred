@@ -44,7 +44,7 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        self.version = "1.1.0"
+        self.version = "1.1.1"
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
@@ -82,12 +82,11 @@ class Bot(discord.Client):
     async def on_ready(self):
         logging.info(str(self.config))
         self.modchannel = self.get_channel(self.config["mod channel"])
-        #with open("payload.txt", "r+") as file:
-            #data = json.load(file)
-        #embed = CreateEmbed.run(data)
-        #if embed != "Debug":
-            #await self.modchannel.send(content=None, embed=embed)
-        #self.modchannel.send()
+        # with open("payload.txt", "r+") as file:
+        #     data = json.load(file)
+        # embed = await CreateEmbed.run(data, self)
+        # if embed != "Debug":
+        #     await self.modchannel.send(content=None, embed=embed)
         print('We have logged in as {0.user}'.format(self))
     async def send_embed(self, embed_item):
         channel = self.get_channel(self.config["githook channel"])
@@ -228,7 +227,7 @@ class Bot(discord.Client):
                     break
             if latest["version"] != sml_version:
                 await message.channel.send("Your SML version is wrong. Please update it to " + latest["version"])
-                
+
         data = data.lower()
         for crash in self.config["known crashes"]:
             if crash["crash"].lower() in data:

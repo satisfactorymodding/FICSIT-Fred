@@ -21,7 +21,7 @@ async def run(data, client):
         global repo_name
         repo_name = data["repository"]["full_name"]
         global repo_full_name
-        repo_full_name = str(data["repository"]["name"] + "/" + data["ref"].lstrip("refs/heads"))
+        repo_full_name = str(data["repository"]["name"] + "/" + data["ref"].split("/")[2])
     except:
         repo_name = "None"
         repo_full_name = "None"
@@ -202,7 +202,8 @@ def mod(name):
     data = data["data"]["getMods"]["mods"]
 
     for mod in data:
-        if mod["name"] == name:
+        print("Mod name is " + mod["name"] + " and name is " + name)
+        if mod["name"].lower() == name:
             data = mod
             break
     if isinstance(data, list):
