@@ -29,9 +29,10 @@ class Bot(discord.Client):
     def isAlive(self):
         try:
             user = self.get_user(227473074616795137)
+            queue = not self.queue_checker.done()
         except:
             return False
-        if user:
+        if user and queue:
             return True
         else:
             return False
@@ -44,7 +45,7 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        self.version = "1.1.2"
+        self.version = "1.1.3"
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
@@ -95,21 +96,20 @@ class Bot(discord.Client):
 
     async def check_queue(self):
         await self.wait_until_ready()
-        while True:
-            try:
-                if os.path.exists("queue.txt"):
-                    with open("queue.txt", "r+") as file:
-                        data = json.load(file)
-                        embed = await CreateEmbed.run(data, self)
-                        if embed == "Debug":
-                            print("Non-supported Payload received")
-                        else:
-                            await self.send_embed(embed)
-                    os.remove("queue.txt")
-                else:
-                    await asyncio.sleep(1)
-            except:
-                await self.on_error("check_queue")
+        try:
+            if os.path.exists("queue.txt"):
+                with open("queue.txt", "r+") as file:
+                    data = json.load(file)
+                    embed = await CreateEmbed.run(data, self)
+                    if embed == "Debug":
+                        print("Non-supported Payload received")
+                    else:
+                        await self.send_embed(embed)
+                os.remove("queue.txt")
+            else:
+                await asyncio.sleep(1)
+        except:
+            await self.on_error("check_queue")
 
     async def on_message(self, message):
         time.sleep(0.1)
@@ -118,6 +118,7 @@ class Bot(discord.Client):
         if isinstance(message.channel, discord.DMChannel):
             await message.channel.send("I do not allow commands to be used by direct message, please use an "
                                        "appropriate channel in the Modding Discord instead.")
+            return
         if message.author.permissions_in(self.get_channel(self.config["filter channel"])).send_messages:
             authorised = True
             if message.author.permissions_in(self.modchannel).send_messages:

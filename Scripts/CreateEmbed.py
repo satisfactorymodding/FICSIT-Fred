@@ -35,7 +35,7 @@ async def run(data, client):
         embed = pull_request(data)
     elif type == "member" and data["action"] == "added":
         embed = contributer_added(data)
-    elif type == "release" and data["action"] in ["released", "prerelease"]:
+    elif type == "release" and data["action"] in ["released", "prereleased"]:
         embed = release(data)
     elif type == "issue":
         embed = issue(data)
@@ -60,9 +60,20 @@ def push(data):
         return embed
 
     commits = data["commits"]
+
     desc = ""
     for commit in commits:
         desc = desc + "[`" + commit["id"][:7] + "`](" + commit["url"] + ") " + commit["message"].split("\n")[0] + " - " + commit["committer"]["name"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
+
+    commitLength = len(commits)
+    while len(desc) > 2030:
+        commitLength -= 1
+        desc = ""
+        for commit in commits[:commitLength]:
+            desc = desc + "[`" + commit["id"][:7] + "`](" + commit["url"] + ") " + commit["message"].split("\n")[0] + " - " + commit["committer"]["name"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
+
+    if commitLength != len(commits):
+        desc = desc + "\n And " + str(len(commits) - commitLength) + " more..."
     embed = discord.Embed(title= forced + "Pushed " + str(len(data["commits"])) + " commit(s) to " + repo_full_name,
                           colour=colour, url=data["compare"],
                           description=desc)
