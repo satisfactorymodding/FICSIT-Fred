@@ -17,6 +17,8 @@ import sys
 import traceback
 import inspect
 import textwrap
+import zipfile
+from packaging import version
 
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
@@ -46,7 +48,7 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        self.version = "1.2.1"
+        self.version = "1.2.2"
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
@@ -169,6 +171,10 @@ class Bot(discord.Client):
 
         # Crash Responses
 
+        hasMetadata = False
+        sml_version = ""
+        CL = 0
+
         # attachments
         if message.attachments or "https://cdn.discordapp.com/attachments/" in message.content:
             try:
@@ -186,6 +192,21 @@ class Bot(discord.Client):
             # .log or .txt Files
             if (".log" in name or ".txt" in name):
                 data = file.read().decode("utf-8")
+
+            # SMM Debug file
+            elif ".zip" in name and "SMMDebug" in name:
+                with zipfile.ZipFile(file) as zip:
+                    try:
+                        data = zip.open("FactoryGame.log").read().decode("utf-8")
+                    except KeyError:
+                        data = ""
+                        pass
+                    with zip.open("metadata.json") as metadataFile:
+                        metadata = json.load(metadataFile)
+                        CL = int(metadata["selectedInstall"]["version"])
+                        sml_version = metadata["smlVersion"]
+                        smb_version = metadata["bootstrapperVersion"]
+                        hasMetadata = True
 
             # images
             else:
@@ -211,22 +232,27 @@ class Bot(discord.Client):
         else:
             data = message.content
 
-        try:
-            sml_version = data.find("SatisfactoryModLoader ", 0, 1000)
-            assert sml_version != -1
-            sml_version = data[sml_version:][23:].split("\r")[0]
-        except:
-            sml_version = ""
-        try:
-            CL = int(data[:200000].split("-CL-")[1].split("\n")[0])
-        except:
-            CL = 0
+        # Try to find CL and SML versions in data
+        if not hasMetadata:
+            try:
+                sml_version = data.find("SatisfactoryModLoader ", 0, 1000)
+                assert sml_version != -1
+                sml_version = data[sml_version:][23:].split("\r")[0]
+            except:
+                sml_version = ""
+            try:
+                CL = int(data[:200000].split("-CL-")[1].split("\n")[0])
+            except:
+                CL = 0
+
         if CL and sml_version:
+            # Check the right SML for that CL
             query = """{
       getSMLVersions{
         sml_versions {
           version
           satisfactory_version
+          bootstrap_version
         }
       }
     }"""
@@ -234,15 +260,26 @@ class Bot(discord.Client):
             rData = json.loads(r.text)
             sml_versions = rData["data"]["getSMLVersions"]["sml_versions"]
             for i in range(0, len(sml_versions) - 1):
+                if hasMetadata:
+                    if sml_versions[i]["version"] == sml_version:
+                        if version.parse(sml_versions[i]["bootstrap_version"]) > version.parse(smb_version):
+                            await message.channel.send(
+                                "Your SMBootstrapper version is wrong. Please update it to " + sml_versions[i][
+                                    "bootstrap_version"] + ". This can often be done by switch to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
                 if sml_versions[i]["satisfactory_version"] > CL:
                     continue
                 else:
                     latest = sml_versions[i]
                     break
             if latest["version"] != sml_version:
-                await message.channel.send("Your SML version is wrong. Please update it to " + latest["version"])
+                await message.channel.send("Your SML version is wrong. Please update it to " + latest[
+                    "version"] + ". This can often be done by switch to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
 
         data = data.lower()
+        try:
+            file.close()
+        except:
+            pass
         for crash in self.config["known crashes"]:
             if crash["crash"].lower() in data:
                 await message.channel.send(str(crash["response"].format(user=message.author.mention)))
