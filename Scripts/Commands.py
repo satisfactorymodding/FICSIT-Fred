@@ -58,21 +58,22 @@ async def handleCommand(client, message, command, args, authorised):
             if not message.author.dm_channel:
                 await message.author.create_dm()
             channel = message.author.dm_channel
-        try:
-            helpMessage = await channel.send(content=None, embed=embedList[0])
-            if not here:
-                await message.add_reaction("✅")
-        except:
-            if not here:
-                await message.channel.send("I was unable to send you a direct message. Please check your discord "
-                                           "settings regarding those !")
-            return
+        # try:
+        helpMessage = await channel.send(content=None, embed=embedList[0])
+        if not here:
+            await message.add_reaction("✅")
+        # except:
+        #     if not here:
+        #         await message.channel.send("I was unable to send you a direct message. Please check your discord "
+        #                                    "settings regarding those !")
+        #         return
         await helpMessage.add_reaction("1️⃣")
         await helpMessage.add_reaction("2️⃣")
         await helpMessage.add_reaction("3️⃣")
+        await helpMessage.add_reaction("4️⃣")
         if full:
-            await helpMessage.add_reaction("4️⃣")
             await helpMessage.add_reaction("5️⃣")
+            await helpMessage.add_reaction("6️⃣")
         ready = True
 
         def check(reaction, user):
@@ -96,6 +97,8 @@ async def handleCommand(client, message, command, args, authorised):
                     index = 3
                 elif reaction[0].emoji == "5️⃣":
                     index = 4
+                elif reaction[0].emoji == "6️⃣":
+                    index = 5
                 await helpMessage.edit(embed=embedList[index])
                 ready = True
         except asyncio.TimeoutError:

@@ -269,12 +269,6 @@ def command_list(client, full=False, here=False):
     for command in client.config["special commands"]:
         desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command["response"] + "```"
 
-    desc = desc + "**__Known Crashes__**\n*The bot respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*\n\n"
-
-    for command in client.config["known crashes"]:
-        desc = desc + "**" + command["name"] + "**\nError:\n```" + command["crash"] + "```Response:\n```" + command[
-            "response"] + "```"
-
     desc = desc + "\n**__Media Only Channels__**\n*These channels only allow users to post files (inc. images).*\n"
     for id in client.config["media only channels"]:
         desc = desc + client.get_channel(id).mention + "\n"
@@ -288,6 +282,22 @@ def command_list(client, full=False, here=False):
         specialities.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
                                      "cannot remove your reactions in direct messages, navigation in here could be a "
                                      "little weird")
+
+    desc = "**__Known Crashes__**\n*The bot respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*\n\n"
+
+    for command in client.config["known crashes"]:
+        desc = desc + "**" + command["name"] + "**\nError:\n```" + command["crash"] + "```Response:\n```" + command[
+            "response"] + "```"
+
+    crashes = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
+                            description=desc)
+
+    if here:
+        crashes.set_footer(text="Please do not spam the reactions for this embed to work properly.")
+    else:
+        crashes.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
+                                "cannot remove your reactions in direct messages, navigation in here could be a "
+                                "little weird")
 
     commands = []
     desc = ""
@@ -361,4 +371,4 @@ def command_list(client, full=False, here=False):
         management = False
         misc = False
 
-    return [specialities, commands[0], commands[1], management, misc]
+    return [specialities, crashes, commands[0], commands[1], management, misc]
