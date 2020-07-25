@@ -61,19 +61,18 @@ async def handleCommand(client, message, command, args, authorised):
         try:
             helpMessage = await channel.send(content=None, embed=embedList[0])
             if not here:
-                print("not here")
                 await message.add_reaction("✅")
         except:
             if not here:
                 await message.channel.send("I was unable to send you a direct message. Please check your discord "
                                            "settings regarding those !")
             return
-        page = 0
         await helpMessage.add_reaction("1️⃣")
         await helpMessage.add_reaction("2️⃣")
+        await helpMessage.add_reaction("3️⃣")
         if full:
-            await helpMessage.add_reaction("3️⃣")
             await helpMessage.add_reaction("4️⃣")
+            await helpMessage.add_reaction("5️⃣")
         ready = True
 
         def check(reaction, user):
@@ -84,24 +83,21 @@ async def handleCommand(client, message, command, args, authorised):
             while True:
                 reaction = await client.wait_for("reaction_add", check=check, timeout=240.0)
                 ready = False
+                index = 0
                 if here:
                     await helpMessage.remove_reaction(reaction[0].emoji, reaction[1])
                 if reaction[0].emoji == "1️⃣":
-                    page = 0
-                    await helpMessage.edit(embed=embedList[page])
-                    ready = True
+                    index = 0
                 elif reaction[0].emoji == "2️⃣":
-                    page = 1
-                    await helpMessage.edit(embed=embedList[page])
-                    ready = True
+                    index = 1
                 elif reaction[0].emoji == "3️⃣":
-                    page = 2
-                    await helpMessage.edit(embed=embedList[page])
-                    ready = True
+                    index = 2
                 elif reaction[0].emoji == "4️⃣":
-                    page = 3
-                    await helpMessage.edit(embed=embedList[page])
-                    ready = True
+                    index = 3
+                elif reaction[0].emoji == "5️⃣":
+                    index = 4
+                await helpMessage.edit(embed=embedList[index])
+                ready = True
         except asyncio.TimeoutError:
             pass
         return
@@ -118,32 +114,35 @@ async def handleCommand(client, message, command, args, authorised):
             return
         args = [" ".join(args)]
         result, desc = CreateEmbed.mod(args[0])
-        if isinstance(result, str):
-            await message.channel.send("Multiple mods found: ```" + result + "```")
-        elif result is None:
+        if result is None:
             await message.channel.send("No mods found!")
+        elif isinstance(result, str):
+            await message.channel.send("multiple mods found")
         else:
             newmessage = await message.channel.send(content=None, embed=result)
-            await newmessage.add_reaction("📋")
-            await asyncio.sleep(0.5)
+            if desc:
+                await newmessage.add_reaction("📋")
+                await asyncio.sleep(0.5)
 
-            def check(reaction, user):
-                if reaction.emoji == "📋" and reaction.message.id == newmessage.id:
-                    return True
+                def check(reaction, user):
+                    if reaction.emoji == "📋" and reaction.message.id == newmessage.id:
+                        return True
 
-            try:
-                r = await client.wait_for('reaction_add', timeout=240.0, check=check)
-                member = r[1]
-                if not member.dm_channel:
-                    await member.create_dm()
-                try:
-                    await member.dm_channel.send(content=None, embed=CreateEmbed.desc(desc))
-                    await newmessage.add_reaction("✅")
-                except:
-                    await message.channel("I was unable to send you a direct message. Please check your discord "
-                                          "settings regarding those !")
-            except asyncio.TimeoutError:
-                pass
+                while True:
+                    try:
+                        r = await client.wait_for('reaction_add', timeout=240.0, check=check)
+                        member = r[1]
+                        if not member.dm_channel:
+                            await member.create_dm()
+                        try:
+                            await member.dm_channel.send(content=None, embed=CreateEmbed.desc(desc))
+                            await newmessage.add_reaction("✅")
+                        except:
+                            await message.channel(
+                                "I was unable to send you a direct message. Please check your discord "
+                                "settings regarding those !")
+                    except asyncio.TimeoutError:
+                        break
         return
     if command == "docsearch":
         yaml = requests.get("https://raw.githubusercontent.com/satisfactorymodding/Documentation/Dev/antora.yml")
@@ -268,7 +267,7 @@ async def handleCommand(client, message, command, args, authorised):
             name = name.lower()
             index = 0
             for response in client.config["automated responses"]:
-                if response["name"] == name:
+                if response["name"].lower() == name:
                     del client.config["automated responses"][index]
                     json.dump(client.config, open("config/config.json", "w"))
                     await message.channel.send("Response Removed!")
@@ -307,7 +306,7 @@ async def handleCommand(client, message, command, args, authorised):
             command = command.lower()
             index = 0
             for response in client.config["commands"]:
-                if response["command"] == command:
+                if response["command"].lower() == command:
                     del client.config["commands"][index]
                     json.dump(client.config, open("config/config.json", "w"))
                     await message.channel.send("Command removed!")
@@ -324,7 +323,7 @@ async def handleCommand(client, message, command, args, authorised):
 
             index = 0
             for crash in client.config["known crashes"]:
-                if crash["name"] == name.lower():
+                if crash["name"].lower() == name.lower():
                     del client.config["known crashes"][index]
                     json.dump(client.config, open("config/config.json", "w"))
                     await message.channel.send("Crash removed!")

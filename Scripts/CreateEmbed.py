@@ -216,16 +216,21 @@ def mod(name):
     data = data["data"]["getMods"]["mods"]
 
     for mod in data:
-        print("Mod name is " + mod["name"] + " and name is " + name)
         if mod["name"].lower() == name:
             data = mod
             break
     if isinstance(data, list):
         if len(data) > 1:
-            mod_list = ""
+            desc = ""
             for mod in data:
-                mod_list = str(mod_list + mod["name"] + "\n")
-            return mod_list, None
+                desc = desc + "" + mod["name"] + "[™](" + str("https://ficsit.app/mod/" + mod["id"]) + ")\n"
+            embed = discord.Embed(title="Multiple mods found:",
+                                  colour=Config["action colours"]["Light Blue"],
+                                  description=desc)
+            embed.set_author(name="ficsit.app Mod Lookup")
+            embed.set_thumbnail(url="https://ficsit.app/static/assets/images/no_image.png")
+            embed.set_footer(text="Click™ on the TM™ to open the link™ to the mod™ page on SMR™")
+            return embed, None
         elif len(data) == 0:
             return None, None
         else:
@@ -284,9 +289,10 @@ def command_list(client, full=False, here=False):
                                      "cannot remove your reactions in direct messages, navigation in here could be a "
                                      "little weird")
 
-    desc = "**__Commands__**\n*These are normal commands that can be called by stating their name.*\n\n"
-
-    for command in client.config["commands"]:
+    commands = []
+    desc = ""
+    half = int(len(client.config["commands"]) / 2)
+    for command in client.config["commands"][:half]:
         if command["byPM"]:
             byPM = " (By Direct Message)"
         else:
@@ -294,15 +300,29 @@ def command_list(client, full=False, here=False):
         desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command[
             "response"] + "```" + byPM + "\n"
 
-    commands = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
-                             description=desc)
+    commands.append(discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
+                                  description=desc))
+    desc = ""
+    for command in client.config["commands"][half:]:
+        if command["byPM"]:
+            byPM = " (By Direct Message)"
+        else:
+            byPM = ""
+        desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command[
+            "response"] + "```" + byPM + "\n"
 
-    if here:
-        commands.set_footer(text="Please do not spam the reactions for this embed to work properly.")
-    else:
-        commands.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
-                                 "cannot remove your reactions in direct messages, navigation in here could be a "
-                                 "little weird")
+    commands.append(discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
+                                  description=desc))
+
+    for command in commands:
+        command.description = "**__Commands__**\n*These are normal commands that can be called by stating their name.*\n\n" + command.description
+        if here:
+            command.set_footer(text="Please do not spam the reactions for this embed to work properly.")
+        else:
+            command.set_footer(
+                text="Please do not spam the reactions for this embed to work properly. Also, since I "
+                     "cannot remove your reactions in direct messages, navigation in here could be a "
+                     "little weird")
 
     if full:
         desc = "**__Management Commands__**\n*These are commands to manage the bot and its automations.*\n\n"
@@ -341,4 +361,4 @@ def command_list(client, full=False, here=False):
         management = False
         misc = False
 
-    return [specialities, commands, management, misc]
+    return [specialities, commands[0], commands[1], management, misc]
