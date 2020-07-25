@@ -12,8 +12,6 @@ with open("config/config.json", "r") as file:
     Config = json.load(file)
 
 
-
-
 # Github Update Embed Formats
 async def run(data, client):
     embed = "Debug"
@@ -63,29 +61,31 @@ def push(data):
 
     desc = ""
     for commit in commits:
-        desc = desc + "[`" + commit["id"][:7] + "`](" + commit["url"] + ") " + commit["message"].split("\n")[0] + " - " + commit["committer"]["name"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
+        desc = desc + "[`" + commit["id"][:7] + "`](" + commit["url"] + ") " + commit["message"].split("\n")[
+            0] + " - " + commit["committer"]["name"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(
+            len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
 
     commitLength = len(commits)
     while len(desc) > 2030:
         commitLength -= 1
         desc = ""
         for commit in commits[:commitLength]:
-            desc = desc + "[`" + commit["id"][:7] + "`](" + commit["url"] + ") " + commit["message"].split("\n")[0] + " - " + commit["committer"]["name"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
+            desc = desc + "[`" + commit["id"][:7] + "`](" + commit["url"] + ") " + commit["message"].split("\n")[
+                0] + " - " + commit["committer"]["name"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(
+                len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
 
     if commitLength != len(commits):
         desc = desc + "\n And " + str(len(commits) - commitLength) + " more..."
-    embed = discord.Embed(title= forced + "Pushed " + str(len(data["commits"])) + " commit(s) to " + repo_full_name,
+    embed = discord.Embed(title=forced + "Pushed " + str(len(data["commits"])) + " commit(s) to " + repo_full_name,
                           colour=colour, url=data["compare"],
                           description=desc)
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
-
     return embed
 
 
 def contributer_added(data):
-
     embed = discord.Embed(title=str("__**" + data["member"]["login"] + "**__ has been added to the Repository !"),
                           colour=Config["action colours"]["Green"], url=data["repository"]["html_url"], description=" ")
 
@@ -148,6 +148,7 @@ def create(data):
 
     return embed
 
+
 def delete(data):
     ref_type = data["ref"].split("/")[1]
     ref_name = data["ref"].split("/")[2]
@@ -158,21 +159,21 @@ def delete(data):
 
     return embed
 
-def release(data):
 
+def release(data):
     if data["release"]["prerelease"]:
         state = "pre-release"
     else:
         state = "release"
-    embed = discord.Embed(title= "A new " + state + " for " + data["repository"]["name"] + " is available !",
+    embed = discord.Embed(title="A new " + state + " for " + data["repository"]["name"] + " is available !",
                           colour=Config["action colours"]["Green"], url=data["release"]["html_url"])
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
     return embed
 
-def issue(data):
 
+def issue(data):
     colour = Config["action colours"]["Orange"]
     action = data["action"]
     if action == "opened":
@@ -180,8 +181,10 @@ def issue(data):
     elif action == "deleted":
         colour = Config["action colours"]["Red"]
 
-    embed = discord.Embed(title=data["action"].capitalize() + " issue #" + str(data["issue"]["number"]) + " in " + data["repository"]["full_name"],
-                          colour=colour, url=data["issue"]["html_url"])
+    embed = discord.Embed(
+        title=data["action"].capitalize() + " issue #" + str(data["issue"]["number"]) + " in " + data["repository"][
+            "full_name"],
+        colour=colour, url=data["issue"]["html_url"])
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
     return embed
@@ -253,9 +256,8 @@ def desc(full_desc):
 
 # Generic Bot Embed Formats
 def command_list(client, full=False, here=False):
-
     desc = "**__GitHook__**\n*I fetch payloads from Github and show relevant info in* " + client.get_channel(
-                        client.config["githook channel"]).mention + "\n\n"
+        client.config["githook channel"]).mention + "\n\n"
 
     desc = desc + "**__Special Commands__**\n*These are special commands doing something else than just replying with a predetermined answer.*\n\n"
 
@@ -265,8 +267,8 @@ def command_list(client, full=False, here=False):
     desc = desc + "**__Known Crashes__**\n*The bot respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*\n\n"
 
     for command in client.config["known crashes"]:
-        desc = desc + "**" + command["name"] + "**\nError:\n```" + command["crash"] + "```Response:\n```" + command["response"] + "```"
-
+        desc = desc + "**" + command["name"] + "**\nError:\n```" + command["crash"] + "```Response:\n```" + command[
+            "response"] + "```"
 
     desc = desc + "\n**__Media Only Channels__**\n*These channels only allow users to post files (inc. images).*\n"
     for id in client.config["media only channels"]:
@@ -279,8 +281,8 @@ def command_list(client, full=False, here=False):
         specialities.set_footer(text="Please do not spam the reactions for this embed to work properly.")
     else:
         specialities.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
-                             "cannot remove your reactions in direct messages, navigation in here could be a "
-                             "little weird")
+                                     "cannot remove your reactions in direct messages, navigation in here could be a "
+                                     "little weird")
 
     desc = "**__Commands__**\n*These are normal commands that can be called by stating their name.*\n\n"
 
@@ -289,33 +291,36 @@ def command_list(client, full=False, here=False):
             byPM = " (By Direct Message)"
         else:
             byPM = ""
-        desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command["response"]+ "```" + byPM + "\n"
+        desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command[
+            "response"] + "```" + byPM + "\n"
 
     commands = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
-                                 description=desc)
+                             description=desc)
 
     if here:
         commands.set_footer(text="Please do not spam the reactions for this embed to work properly.")
     else:
         commands.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
-                             "cannot remove your reactions in direct messages, navigation in here could be a "
-                             "little weird")
+                                 "cannot remove your reactions in direct messages, navigation in here could be a "
+                                 "little weird")
 
     if full:
         desc = "**__Management Commands__**\n*These are commands to manage the bot and its automations.*\n\n"
 
         for command in client.config["management commands"]:
-            desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command["response"] + "```\n"
+            desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command[
+                "response"] + "```\n"
 
         management = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
-                                 description=desc)
+                                   description=desc)
 
         if here:
             management.set_footer(text="Please do not spam the reactions for this embed to work properly.")
         else:
-            management.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
-                                 "cannot remove your reactions in direct messages, navigation in here could be a "
-                                 "little weird")
+            management.set_footer(
+                text="Please do not spam the reactions for this embed to work properly. Also, since I "
+                     "cannot remove your reactions in direct messages, navigation in here could be a "
+                     "little weird")
 
         desc = "**__Miscellaneous commands__**\n*It's all in the title*\n\n"
 
@@ -325,7 +330,7 @@ def command_list(client, full=False, here=False):
         desc = desc + "\n**__Additional information__**\nThis info is relevant if you are an engineer or above, which you should be if you are seeing this page.\n\n```*You can react to any of the bot's message with ❌ to remove it\n*You can add 'here' after the help command to send the embed in the channel you typed the command in. This will make the embed not be full by default, but you can override that by adding another argument, 'full'```"
 
         misc = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
-                                 description=desc)
+                             description=desc)
         if here:
             misc.set_footer(text="Please do not spam the reactions for this embed to work properly.")
         else:

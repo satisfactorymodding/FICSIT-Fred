@@ -2,6 +2,7 @@ import time
 import re
 import asyncio
 
+
 async def waitResponse(client, message, question):
     file = False
     time.sleep(0.1)
@@ -9,6 +10,7 @@ async def waitResponse(client, message, question):
 
     def check(message2):
         return message2.author == message.author
+
     try:
         response = await client.wait_for('message', timeout=60.0, check=check)
         try:
@@ -20,6 +22,7 @@ async def waitResponse(client, message, question):
         raise asyncio.TimeoutError
     time.sleep(0.1)
     return response.content
+
 
 def formatDesc(desc):
     dict = {

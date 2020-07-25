@@ -24,6 +24,7 @@ assert (os.environ.get("FRED_TOKEN")), "The ENV variable 'FRED_TOKEN' isn't set"
 
 logging.basicConfig(level=logging.INFO)
 
+
 class Bot(discord.Client):
 
     def isAlive(self):
@@ -45,7 +46,7 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        self.version = "1.1.4"
+        self.version = "1.1.5"
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
@@ -74,12 +75,14 @@ class Bot(discord.Client):
             channel = " in #" + args[0].channel.name
         else:
             channel = ""
-        tbs = "```Fred v" + self.version + "\n\n" + type.__name__ + " exception handled in " + event + channel + " : " + str(value) + "\n\n"
+        tbs = "```Fred v" + self.version + "\n\n" + type.__name__ + " exception handled in " + event + channel + " : " + str(
+            value) + "\n\n"
         for string in traceback.format_tb(tb):
             tbs = tbs + string
         tbs = tbs + "```"
         print(tbs.replace("```", ""))
         await self.get_channel(720683767135469590).send(tbs)
+
     async def on_ready(self):
         logging.info(str(self.config))
         self.modchannel = self.get_channel(self.config["mod channel"])
@@ -89,10 +92,10 @@ class Bot(discord.Client):
         # if embed != "Debug":
         #     await self.modchannel.send(content=None, embed=embed)
         print('We have logged in as {0.user}'.format(self))
+
     async def send_embed(self, embed_item):
         channel = self.get_channel(self.config["githook channel"])
         await channel.send(content=None, embed=embed_item)
-
 
     async def check_queue(self):
         await self.wait_until_ready()
@@ -132,16 +135,20 @@ class Bot(discord.Client):
         for automation in self.config["media only channels"]:
             if message.channel.id == automation and len(message.embeds) == 0 and len(
                     message.attachments) == 0:
-                await message.author.send("Hi " + message.author.name + ", the channel '" + self.get_channel(automation).name
-                                          + "' you just tried to message in has been flagged as a 'Media Only' "
-                                            "channel. This means you must attach a file in order to "
-                                            "post there.")
+                await message.author.send(
+                    "Hi " + message.author.name + ", the channel '" + self.get_channel(automation).name
+                    + "' you just tried to message in has been flagged as a 'Media Only' "
+                      "channel. This means you must attach a file in order to "
+                      "post there.")
                 await message.delete()
                 return
 
         # Command handling
         if message.content.startswith(self.config["prefix"]):
-            await Commands.handleCommand(self, message, message.content.lower().lstrip(self.config["prefix"]).split(" ")[0],message.content.lower().replace(self.config["prefix"], "").split(" ")[1:], authorised)
+            await Commands.handleCommand(self, message,
+                                         message.content.lower().lstrip(self.config["prefix"]).split(" ")[0],
+                                         message.content.lower().replace(self.config["prefix"], "").split(" ")[1:],
+                                         authorised)
 
             if authorised:
                 return
@@ -156,12 +163,13 @@ class Bot(discord.Client):
                     if keyword in message.content.lower():
                         for word in automation["additional words"]:
                             if word in message.content.lower():
-                                await message.channel.send(str(automation["response"].format(user=message.author.mention)))
+                                await message.channel.send(
+                                    str(automation["response"].format(user=message.author.mention)))
                                 return
 
         # Crash Responses
 
-        #attachments
+        # attachments
         if message.attachments or "https://cdn.discordapp.com/attachments/" in message.content:
             try:
                 file = await message.attachments[0].to_file()
@@ -179,22 +187,25 @@ class Bot(discord.Client):
             if (".log" in name or ".txt" in name):
                 data = file.read().decode("utf-8")
 
-            #images
+            # images
             else:
                 try:
                     image = Image.open(file)
                     image = image.convert(mode="L")
                     ratioTo8k = 4320 / image.height
                     if ratioTo8k > 1:
-                        image = image.resize((round(image.width * ratioTo8k), round(image.height * ratioTo8k)), Image.LANCZOS)
+                        image = image.resize((round(image.width * ratioTo8k), round(image.height * ratioTo8k)),
+                                             Image.LANCZOS)
                     data = image_to_string(image, lang="eng")
                 except:
                     data = ""
 
-        #Pastebin links
+        # Pastebin links
         elif "https://pastebin.com/" in message.content:
             try:
-                data = urlopen("https://pastebin.com/raw/" + message.content.split("https://pastebin.com/")[1].split(" ")[0]).read().decode("utf-8")
+                data = urlopen(
+                    "https://pastebin.com/raw/" + message.content.split("https://pastebin.com/")[1].split(" ")[
+                        0]).read().decode("utf-8")
             except:
                 data = ""
         else:
@@ -219,9 +230,9 @@ class Bot(discord.Client):
         }
       }
     }"""
-            data = requests.post("https://api.ficsit.app/v2/query", json={'query': query})
-            data = json.loads(data.text)
-            sml_versions = data["data"]["getSMLVersions"]["sml_versions"]
+            r = requests.post("https://api.ficsit.app/v2/query", json={'query': query})
+            rData = json.loads(r.text)
+            sml_versions = rData["data"]["getSMLVersions"]["sml_versions"]
             for i in range(0, len(sml_versions) - 1):
                 if sml_versions[i]["satisfactory_version"] > CL:
                     continue
@@ -236,6 +247,7 @@ class Bot(discord.Client):
             if crash["crash"].lower() in data:
                 await message.channel.send(str(crash["response"].format(user=message.author.mention)))
                 return
+
 
 client = Bot()
 client.run(os.environ.get("FRED_TOKEN"))

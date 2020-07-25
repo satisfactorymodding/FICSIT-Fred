@@ -30,7 +30,6 @@ def start_listener(bot):
         async def do_CONNECT(self):
             self.send_response(200)
 
-
         def do_POST(self):
             if not all(x in self.headers for x in [CONTENT_TYPE, CONTENT_LEN, EVENT_TYPE]):
                 self.send_response(417)
@@ -65,7 +64,6 @@ def start_listener(bot):
 
     class HTTPServerV6(HTTPServer):
         address_family = socket.AF_INET6
-
 
     # Run Github webhook handling server
     try:

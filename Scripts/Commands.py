@@ -12,9 +12,11 @@ import io
 
 logging.basicConfig(level=logging.INFO)
 
+
 async def handleCommand(client, message, command, args, authorised):
     # Logging
-    logging.info("Handling command:\nMessage: " + message.content + "\nCommand: " + command + "\nArguments: " + str(args) + "\nAuthorisation: " + str(authorised))
+    logging.info("Handling command:\nMessage: " + message.content + "\nCommand: " + command + "\nArguments: " + str(
+        args) + "\nAuthorisation: " + str(authorised))
     # Normal Commands
     global full
     for automation in client.config["commands"]:
@@ -64,7 +66,7 @@ async def handleCommand(client, message, command, args, authorised):
         except:
             if not here:
                 await message.channel.send("I was unable to send you a direct message. Please check your discord "
-                                          "settings regarding those !")
+                                           "settings regarding those !")
             return
         page = 0
         await helpMessage.add_reaction("1️⃣")
@@ -73,9 +75,11 @@ async def handleCommand(client, message, command, args, authorised):
             await helpMessage.add_reaction("3️⃣")
             await helpMessage.add_reaction("4️⃣")
         ready = True
+
         def check(reaction, user):
             if ready and reaction.message.id == helpMessage.id and not user.bot:
                 return True
+
         try:
             while True:
                 reaction = await client.wait_for("reaction_add", check=check, timeout=240.0)
@@ -101,7 +105,6 @@ async def handleCommand(client, message, command, args, authorised):
         except asyncio.TimeoutError:
             pass
         return
-
 
     if command == "mod":
         if len(args) < 1:
@@ -170,24 +173,24 @@ async def handleCommand(client, message, command, args, authorised):
                 name = await Helper.waitResponse(client, message, "What is the response's name e.g. ``apple``")
 
             keywords = await Helper.waitResponse(client, message, "What keywords would you like to add? e.g. "
-                                                                          "``apple banana 110838934644211712`` (The "
-                                                                          "last is a Discord User ID to grab pings)")
+                                                                  "``apple banana 110838934644211712`` (The "
+                                                                  "last is a Discord User ID to grab pings)")
             keywords = keywords.split(" ")
 
             additional_words = await Helper.waitResponse(client, message, "What additional words would you "
-                                                                                  "like to add? e.g. ``apple banana "
-                                                                                  "carrot 110838934644211712`` (The "
-                                                                                  "last is a Discord User ID to grab "
-                                                                                  "pings)")
+                                                                          "like to add? e.g. ``apple banana "
+                                                                          "carrot 110838934644211712`` (The "
+                                                                          "last is a Discord User ID to grab "
+                                                                          "pings)")
 
             response = await Helper.waitResponse(client, message, "What response do you want it to provide? "
-                                                                          "e.g. ``Thanks for saying my keywords {"
-                                                                          "user}`` (use {user} to ping the person "
-                                                                          "saying the command (required))")
+                                                                  "e.g. ``Thanks for saying my keywords {"
+                                                                  "user}`` (use {user} to ping the person "
+                                                                  "saying the command (required))")
 
             ignore_members = await Helper.waitResponse(client, message, "Do you want it to ignore members ("
-                                                                                "and only target non-members)? e.g. "
-                                                                                "``True`` or ``False``")
+                                                                        "and only target non-members)? e.g. "
+                                                                        "``True`` or ``False``")
 
             client.config["automated responses"].append(
                 {"name": name, "keywords": keywords, "additional words": additional_words, "response": response,
@@ -203,7 +206,7 @@ async def handleCommand(client, message, command, args, authorised):
                     id = args[2]
                 except:
                     id = await Helper.waitResponse(client, message, "What is the ID for the channel? e.g. "
-                                                                            "``709509235028918334``")
+                                                                    "``709509235028918334``")
 
             client.config["media only channels"].append(id)
             json.dump(client.config, open("config/config.json", "w"))
@@ -216,13 +219,14 @@ async def handleCommand(client, message, command, args, authorised):
             except:
                 command = await Helper.waitResponse(client, message, "What is the command? e.g. ``install``")
 
-            for scommand in (client.config["commands"] + client.config["special commands"] + client.config["management commands"] + client.config["miscellaneous commands"]):
+            for scommand in (client.config["commands"] + client.config["special commands"] + client.config[
+                "management commands"] + client.config["miscellaneous commands"]):
                 if command == scommand["command"]:
                     await message.channel.send("This command already exists !")
                     return
 
             response = await Helper.waitResponse(client, message, "What is the response? e.g. ``Hello there`` "
-                                                                          "or an image or link to an image")
+                                                                  "or an image or link to an image")
 
             byPM = await Helper.waitResponse(client, message, "Should the response be sent by dm ? (True or False)")
 
@@ -231,7 +235,6 @@ async def handleCommand(client, message, command, args, authorised):
             except:
                 await message.channel.send("You didn't respond with a valid boolean. Defaulting to False")
                 byPM = False
-
 
             client.config["commands"].append(
                 {"command": command, "response": response, "byPM": byPM})
@@ -243,7 +246,7 @@ async def handleCommand(client, message, command, args, authorised):
                 name = args[1]
             except:
                 name = await Helper.waitResponse(client, message, "What would you like to name this known "
-                                                                          "crash? e.g. ``CommandDave``")
+                                                                  "crash? e.g. ``CommandDave``")
             name = name.lower()
             crash = await Helper.waitResponse(client, message,
                                               "What is the string to search for in the crash logs ? e.g. \"Assertion failed: ObjectA == nullptr\"")
@@ -343,7 +346,7 @@ async def handleCommand(client, message, command, args, authorised):
             nb = 24
             for x in range(0, nb):
                 for item in list:
-                    if item > first + datetime.timedelta(days=x*30):
+                    if item > first + datetime.timedelta(days=x * 30):
                         break
                     count += 1
                 countlist.append(count)
@@ -369,7 +372,7 @@ async def handleCommand(client, message, command, args, authorised):
             nb = 24
             for x in range(0, nb):
                 for item in list:
-                    if item > first + datetime.timedelta(days=x*30):
+                    if item > first + datetime.timedelta(days=x * 30):
                         break
                     count += 1
                 countlist.append(count)
@@ -428,7 +431,8 @@ async def handleCommand(client, message, command, args, authorised):
             try:
                 id = args[0]
             except:
-                id = await Helper.waitResponse(client, message,"What is the ID for the channel? e.g. ``709509235028918334``")
+                id = await Helper.waitResponse(client, message,
+                                               "What is the ID for the channel? e.g. ``709509235028918334``")
         client.config["githook channel"] = id
         json.dump(client.config, open("config/config.json", "w"))
         await message.channel.send(
@@ -444,10 +448,9 @@ async def handleCommand(client, message, command, args, authorised):
             await message.author.create_dm()
         try:
             await message.author.dm_channel.send(content=None,
-                                       file=discord.File(open("config/config.json", "r"), filename="config.json"))
+                                                 file=discord.File(open("config/config.json", "r"),
+                                                                   filename="config.json"))
             await message.add_reaction("✅")
         except:
             await message.channel("I was unable to send you a direct message. Please check your discord "
                                   "settings regarding those !")
-
-
