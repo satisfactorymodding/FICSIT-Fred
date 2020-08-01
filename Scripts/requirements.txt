@@ -6,3 +6,4 @@ requests
 matplotlib
 algoliasearch
 packaging
+jellyfish

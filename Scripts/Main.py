@@ -7,7 +7,7 @@ import json
 import threading
 import Commands
 import time
-from PIL import Image
+from PIL import Image, ImageEnhance
 from pytesseract import image_to_string
 import io
 from urllib.request import urlopen
@@ -19,6 +19,7 @@ import inspect
 import textwrap
 import zipfile
 from packaging import version
+import jellyfish
 
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
@@ -75,6 +76,8 @@ class Bot(discord.Client):
         type, value, tb = sys.exc_info()
         if event == "on_message":
             channel = " in #" + args[0].channel.name
+            await args[0].channel.send(
+                "```An error occured, sorry for the inconvenience. Feyko has been notified of the error.```")
         else:
             channel = ""
         tbs = "```Fred v" + self.version + "\n\n" + type.__name__ + " exception handled in " + event + channel + " : " + str(
@@ -88,11 +91,7 @@ class Bot(discord.Client):
     async def on_ready(self):
         logging.info(str(self.config))
         self.modchannel = self.get_channel(self.config["mod channel"])
-        # with open("payload.txt", "r+") as file:
-        #     data = json.load(file)
-        # embed = await CreateEmbed.run(data, self)
-        # if embed != "Debug":
-        #     await self.modchannel.send(content=None, embed=embed)
+        assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
         print('We have logged in as {0.user}'.format(self))
 
     async def send_embed(self, embed_item):
@@ -204,22 +203,31 @@ class Bot(discord.Client):
                     with zip.open("metadata.json") as metadataFile:
                         metadata = json.load(metadataFile)
                         CL = int(metadata["selectedInstall"]["version"])
-                        sml_version = metadata["smlVersion"]
-                        smb_version = metadata["bootstrapperVersion"]
-                        hasMetadata = True
+                        if len(metadata["installedMods"]) > 0:
+                            sml_version = metadata["smlVersion"]
+                            smb_version = metadata["bootstrapperVersion"]
+                            hasMetadata = True
 
             # images
             else:
                 try:
                     image = Image.open(file)
-                    image = image.convert(mode="L")
-                    ratioTo8k = 4320 / image.height
-                    if ratioTo8k > 1:
-                        image = image.resize((round(image.width * ratioTo8k), round(image.height * ratioTo8k)),
+                    ratio = 4320 / image.height
+                    if ratio > 1:
+                        image = image.resize((round(image.width * ratio), round(image.height * ratio)),
                                              Image.LANCZOS)
+
+                    enhancerContrast = ImageEnhance.Contrast(image)
+
+                    image = enhancerContrast.enhance(2)
+                    enhancerSharpness = ImageEnhance.Sharpness(image)
+                    image = enhancerSharpness.enhance(10)
+
                     data = image_to_string(image, lang="eng")
+
                 except:
                     data = ""
+
 
         # Pastebin links
         elif "https://pastebin.com/" in message.content:
@@ -264,16 +272,18 @@ class Bot(discord.Client):
                     if sml_versions[i]["version"] == sml_version:
                         if version.parse(sml_versions[i]["bootstrap_version"]) > version.parse(smb_version):
                             await message.channel.send(
-                                "Your SMBootstrapper version is wrong. Please update it to " + sml_versions[i][
-                                    "bootstrap_version"] + ". This can often be done by switch to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
+                                "Hi " + message.author.mention + " ! Your SMBootstrapper version is wrong. Please update it to " +
+                                sml_versions[i][
+                                    "bootstrap_version"] + ". This can often be done by switching to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
                 if sml_versions[i]["satisfactory_version"] > CL:
                     continue
                 else:
                     latest = sml_versions[i]
                     break
             if latest["version"] != sml_version:
-                await message.channel.send("Your SML version is wrong. Please update it to " + latest[
-                    "version"] + ". This can often be done by switch to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
+                await message.channel.send(
+                    "Hi " + message.author.mention + " ! Your SML version is wrong. Please update it to " + latest[
+                        "version"] + ". This can often be done by switching to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
 
         data = data.lower()
         try:
@@ -281,10 +291,11 @@ class Bot(discord.Client):
         except:
             pass
         for crash in self.config["known crashes"]:
-            if crash["crash"].lower() in data:
-                await message.channel.send(str(crash["response"].format(user=message.author.mention)))
-                return
-
+            for line in data.split("\n"):
+                if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(crash["crash"]) * 0.1:
+                    print(jellyfish.levenshtein_distance(line, crash["crash"].lower()))
+                    await message.channel.send(str(crash["response"].format(user=message.author.mention)))
+                    return
 
 client = Bot()
 client.run(os.environ.get("FRED_TOKEN"))
