@@ -116,7 +116,7 @@ async def handleCommand(client, message, command, args, authorised):
                                        "the full description of the mod.")
             return
         args = [" ".join(args)]
-        result, desc = CreateEmbed.mod(args[0])
+        result, desc = CreateEmbed.mod(args)
         if result is None:
             await message.channel.send("No mods found!")
         elif isinstance(result, str):
