@@ -49,7 +49,7 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        self.version = "1.2.2"
+        self.version = "1.2.3"
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
@@ -133,16 +133,17 @@ class Bot(discord.Client):
             authorised = False
 
         # Media Only Channels
-        for automation in self.config["media only channels"]:
-            if message.channel.id == automation and len(message.embeds) == 0 and len(
-                    message.attachments) == 0:
-                await message.author.send(
-                    "Hi " + message.author.name + ", the channel '" + self.get_channel(automation).name
-                    + "' you just tried to message in has been flagged as a 'Media Only' "
-                      "channel. This means you must attach a file in order to "
-                      "post there.")
-                await message.delete()
-                return
+        if authorised != 2:
+            for automation in self.config["media only channels"]:
+                if not message.channel.id == automation and len(message.embeds) == 0 and len(
+                        message.attachments) == 0:
+                    await message.author.send(
+                        "Hi " + message.author.name + ", the channel '" + self.get_channel(automation).name
+                        + "' you just tried to message in has been flagged as a 'Media Only' "
+                          "channel. This means you must attach a file in order to "
+                          "post there.")
+                    await message.delete()
+                    return
 
         # Command handling
         if message.content.startswith(self.config["prefix"]):
