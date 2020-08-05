@@ -49,7 +49,7 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        self.version = "1.2.3"
+        self.version = "1.2.4"
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
@@ -135,7 +135,7 @@ class Bot(discord.Client):
         # Media Only Channels
         if authorised != 2:
             for automation in self.config["media only channels"]:
-                if not message.channel.id == automation and len(message.embeds) == 0 and len(
+                if message.channel.id == automation and len(message.embeds) == 0 and len(
                         message.attachments) == 0:
                     await message.author.send(
                         "Hi " + message.author.name + ", the channel '" + self.get_channel(automation).name
@@ -144,16 +144,12 @@ class Bot(discord.Client):
                           "post there.")
                     await message.delete()
                     return
-
         # Command handling
         if message.content.startswith(self.config["prefix"]):
             await Commands.handleCommand(self, message,
                                          message.content.lower().lstrip(self.config["prefix"]).split(" ")[0],
                                          message.content.lower().replace(self.config["prefix"], "").split(" ")[1:],
                                          authorised)
-
-            if authorised:
-                return
 
         # Run all automation tasks
 
