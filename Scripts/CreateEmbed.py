@@ -193,9 +193,8 @@ def issue(data):
 # SMR Lookup Embed Formats
 def mod(name):
     # GraphQL Queries
-
     query = str('''{
-          getMods(filter: { search: "''' + name + '''", order_by: last_version_date, order:desc}) {
+          getMods(filter: { search: "''' + name + '''", order_by: last_version_date, order:desc, limit:100}) {
             mods {
               name
               authors {
@@ -221,9 +220,16 @@ def mod(name):
             break
     if isinstance(data, list):
         if len(data) > 1:
+            cut = False
+            print(len(data))
+            if len(data) > 10:
+                cut = len(data) - 10
+                data = data[:10]
             desc = ""
             for mod in data:
                 desc = desc + "" + mod["name"] + "[™](" + str("https://ficsit.app/mod/" + mod["id"]) + ")\n"
+            if cut:
+                desc += "\n*And " + str(cut) + " more...*"
             embed = discord.Embed(title="Multiple mods found:",
                                   colour=Config["action colours"]["Light Blue"],
                                   description=desc)
