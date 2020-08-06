@@ -30,12 +30,16 @@ async def handleCommand(client, message, command, args, authorised):
                     await user.create_dm()
                 try:
                     await user.dm_channel.send(automation["response"])
+                    if len(args) == 0:
+                        await message.delete()
                     await message.add_reaction("✅")
                 except:
                     await message.channel("I was unable to send the direct message. Please check your discord "
                                           "settings regarding those if you are the target !")
             else:
                 await message.channel.send(automation["response"])
+                if len(args) == 0:
+                    await message.delete()
             return
 
     if command == "help":
