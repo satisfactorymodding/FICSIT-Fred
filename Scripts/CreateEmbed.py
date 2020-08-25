@@ -194,7 +194,7 @@ def issue(data):
 def mod(name):
     # GraphQL Queries
     query = str('''{
-          getMods(filter: { search: "''' + name + '''", order_by: last_version_date, order:desc, limit:100}) {
+          getMods(filter: { search: "''' + name + '''", order_by: search, order:desc, limit:100}) {
             mods {
               name
               authors {

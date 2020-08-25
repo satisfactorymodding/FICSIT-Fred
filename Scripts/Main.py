@@ -20,19 +20,17 @@ import textwrap
 import zipfile
 from packaging import version
 import jellyfish
+import logstash
 
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
 assert (os.environ.get("FRED_TOKEN")), "The ENV variable 'FRED_TOKEN' isn't set"
 
-logging.basicConfig(level=logging.INFO)
-
-
 class Bot(discord.Client):
 
-    def isAlive(self):
+    async def isAlive(self):
         try:
-            user = self.get_user(227473074616795137)
+            user = await self.fetch_user(227473074616795137)
             queue = not self.queue_checker.done()
         except:
             return False
@@ -49,7 +47,15 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        self.version = "1.2.6"
+        if os.environ.get("FRED_LOG_HOST"):
+            self.logger = logging.getLogger("python-logstash-logger")
+            self.logger.addHandler(logstash.TCPLogstashHandler("localhost", 5000, version=1))
+        else:
+            self.logger = logging.Logger("logger")
+        self.logger.setLevel(logging.INFO)
+        print(self.logger.getEffectiveLevel())
+        self.version = "1.3.0"
+        self.running = True
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
@@ -89,7 +95,7 @@ class Bot(discord.Client):
         await self.get_channel(720683767135469590).send(tbs)
 
     async def on_ready(self):
-        logging.info(str(self.config))
+        self.logger.info(str(self.config))
         self.modchannel = self.get_channel(self.config["mod channel"])
         assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
         print('We have logged in as {0.user}'.format(self))
@@ -119,7 +125,7 @@ class Bot(discord.Client):
 
     async def on_message(self, message):
         time.sleep(0.1)
-        if message.author.bot:
+        if message.author.bot or not self.running:
             return
         if isinstance(message.channel, discord.DMChannel):
             await message.channel.send("I do not allow commands to be used by direct message, please use an "
@@ -129,6 +135,8 @@ class Bot(discord.Client):
             authorised = True
             if message.author.permissions_in(self.modchannel).send_messages:
                 authorised = 2
+        if message.author.id == 227473074616795137:
+            authorised = 2
         else:
             authorised = False
 
@@ -290,7 +298,6 @@ class Bot(discord.Client):
         for crash in self.config["known crashes"]:
             for line in data.split("\n"):
                 if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(crash["crash"]) * 0.1:
-                    print(jellyfish.levenshtein_distance(line, crash["crash"].lower()))
                     await message.channel.send(str(crash["response"].format(user=message.author.mention)))
                     return
 

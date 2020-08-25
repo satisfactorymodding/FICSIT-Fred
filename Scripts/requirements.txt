@@ -7,3 +7,4 @@ matplotlib
 algoliasearch
 packaging
 jellyfish
+python-logstash

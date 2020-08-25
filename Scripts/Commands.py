@@ -9,14 +9,15 @@ import logging
 from algoliasearch.search_client import SearchClient
 import requests
 import io
-
-logging.basicConfig(level=logging.INFO)
+import os
+import sys
 
 
 async def handleCommand(client, message, command, args, authorised):
     # Logging
-    logging.info("Handling command:\nMessage: " + message.content + "\nCommand: " + command + "\nArguments: " + str(
-        args) + "\nAuthorisation: " + str(authorised))
+    client.logger.info(
+        "Handling command:\nMessage: " + message.content + "\nCommand: " + command + "\nArguments: " + str(
+            args) + "\nAuthorisation: " + str(authorised))
     # Normal Commands
     global full
     for automation in client.config["commands"]:
@@ -399,6 +400,7 @@ async def handleCommand(client, message, command, args, authorised):
             with open("Growth.png", "rb") as image:
                 await message.channel.send(content=None, file=discord.File(image))
             return
+
     if authorised != 2:
         return
 
