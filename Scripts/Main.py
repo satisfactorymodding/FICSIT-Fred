@@ -47,14 +47,13 @@ class Bot(discord.Client):
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
-        if os.environ.get("FRED_LOG_HOST"):
+        if os.environ.get("FRED_LOG_HOST") and os.environ.get("FRED_LOG_PORT"):
             self.logger = logging.getLogger("python-logstash-logger")
-            self.logger.addHandler(logstash.TCPLogstashHandler("localhost", 5000, version=1))
+            self.logger.addHandler(logstash.TCPLogstashHandler(os.environ.get("FRED_LOG_HOST"), os.environ.get("FRED_LOG_PORT"), version=1))
         else:
             self.logger = logging.Logger("logger")
         self.logger.setLevel(logging.INFO)
-        print(self.logger.getEffectiveLevel())
-        self.version = "1.3.0"
+        self.version = "1.3.1"
         self.running = True
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
