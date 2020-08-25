@@ -50,10 +50,11 @@ class Bot(discord.Client):
         if os.environ.get("FRED_LOG_HOST") and os.environ.get("FRED_LOG_PORT"):
             self.logger = logging.getLogger("python-logstash-logger")
             self.logger.addHandler(logstash.TCPLogstashHandler(os.environ.get("FRED_LOG_HOST"), os.environ.get("FRED_LOG_PORT"), version=1))
+            self.logger.addHandler(logging.StreamHandler())
         else:
             self.logger = logging.Logger("logger")
         self.logger.setLevel(logging.INFO)
-        self.version = "1.3.1"
+        self.version = "1.3.2"
         self.running = True
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
