@@ -1,32 +1,36 @@
-import WebhookListener
-import discord
-import os
 import asyncio
-import CreateEmbed
-import json
-import threading
-import Commands
-import time
-from PIL import Image, ImageEnhance
-from pytesseract import image_to_string
-import io
-from urllib.request import urlopen
-import logging
-import requests
-import sys
-import traceback
 import inspect
+import io
+import json
+import logging
+import os
+import sys
 import textwrap
+import threading
+import time
+import traceback
 import zipfile
-from packaging import version
+from urllib.request import urlopen
+
+import cogs.test
+import cogs.commands as Commands
+import cogs.webhooklistener as WebhookListener
+import discord
+import discord.ext.commands
 import jellyfish
+import libraries.createembed as CreateEmbed
 import logstash
+import requests
+from PIL import Image, ImageEnhance
+from packaging import version
+from pytesseract import image_to_string
 
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
 assert (os.environ.get("FRED_TOKEN")), "The ENV variable 'FRED_TOKEN' isn't set"
 
-class Bot(discord.Client):
+
+class Bot(discord.ext.commands.Bot):
 
     async def isAlive(self):
         try:
@@ -41,20 +45,24 @@ class Bot(discord.Client):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        with open("config/config.json", "r") as file:
+        with open("../config/config.json", "r") as file:
             self.config = json.load(file)
+        self.command_prefix = self.config["prefix"]
+        self.add_cog(Commands.Commands(self))
         self.git_listener = threading.Thread(target=WebhookListener.start_listener, args=[self])
         self.git_listener.daemon = True
         self.git_listener.start()
         self.queue_checker = self.loop.create_task(self.check_queue())
         if os.environ.get("FRED_LOG_HOST") and os.environ.get("FRED_LOG_PORT"):
             self.logger = logging.getLogger("python-logstash-logger")
-            self.logger.addHandler(logstash.TCPLogstashHandler(os.environ.get("FRED_LOG_HOST"), os.environ.get("FRED_LOG_PORT"), version=1))
+            self.logger.addHandler(
+                logstash.TCPLogstashHandler(os.environ.get("FRED_LOG_HOST"), os.environ.get("FRED_LOG_PORT"),
+                                            version=1))
             self.logger.addHandler(logging.StreamHandler())
         else:
             self.logger = logging.Logger("logger")
         self.logger.setLevel(logging.INFO)
-        self.version = "1.3.2"
+        self.version = "2.0.0"
         self.running = True
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
@@ -92,7 +100,7 @@ class Bot(discord.Client):
             tbs = tbs + string
         tbs = tbs + "```"
         print(tbs.replace("```", ""))
-        await self.get_channel(720683767135469590).send(tbs)
+        await self.get_channel(748229790825185311).send(tbs)
 
     async def on_ready(self):
         self.logger.info(str(self.config))
@@ -140,6 +148,7 @@ class Bot(discord.Client):
         else:
             authorised = False
 
+        await self.process_commands(message)
         # Media Only Channels
         if authorised != 2:
             for automation in self.config["media only channels"]:
@@ -152,26 +161,8 @@ class Bot(discord.Client):
                           "post there.")
                     await message.delete()
                     return
-        # Command handling
-        if message.content.startswith(self.config["prefix"]):
-            await Commands.handleCommand(self, message,
-                                         message.content.lower().lstrip(self.config["prefix"]).split(" ")[0],
-                                         message.content.lower().replace(self.config["prefix"], "").split(" ")[1:],
-                                         authorised)
 
         # Run all automation tasks
-
-        # Automated Responses
-        for automation in self.config["automated responses"]:
-            if len(message.author.roles) > 1 and automation["ignore members"] is False or len(
-                    message.author.roles) == 1:
-                for keyword in automation["keywords"]:
-                    if keyword in message.content.lower():
-                        for word in automation["additional words"]:
-                            if word in message.content.lower():
-                                await message.channel.send(
-                                    str(automation["response"].format(user=message.author.mention)))
-                                return
 
         # Crash Responses
 
@@ -301,5 +292,6 @@ class Bot(discord.Client):
                     await message.channel.send(str(crash["response"].format(user=message.author.mention)))
                     return
 
-client = Bot()
+
+client = Bot("?")
 client.run(os.environ.get("FRED_TOKEN"))

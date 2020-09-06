@@ -1,0 +1,34 @@
+version: '3'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.0
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - cluster.name=cluster
+      - discovery.type=single-node
+    healthcheck:
+      test: "if [[ $$(curl -fsSL 'http://localhost:9200/_cat/health?h=status' | sed -r 's/^[[:space:]]+|[[:space:]]+$$//g') != 'red' ]]; then exit 0; else exit 1; fi"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.9.0
+    environment:
+      SERVER_NAME: localhost
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      ENTERPRISESEARCH_HOST: http://enterprisesearch:3002
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.9.0
+    ports:
+      - 5000:5000
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./pipeline.conf:/usr/share/logstash/pipeline/pipeline.conf

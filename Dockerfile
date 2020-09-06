@@ -2,12 +2,12 @@ FROM python:3.8.3
 
 COPY . /app
 
-WORKDIR /app/Scripts
+WORKDIR /app/bot
 RUN apt-get update -y
 RUN apt-get install -y tesseract-ocr
 
-RUN pip install -r requirements.txt
+RUN pip install -r ../requirements.txt
 
-VOLUME /app/Scripts/config/
+VOLUME /app/config
 
-CMD python ./Main.py
+CMD python ./bot.py

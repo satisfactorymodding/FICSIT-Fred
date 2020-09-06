@@ -2,13 +2,13 @@ import discord
 import datetime
 import requests
 import json
-import Helper
+import libraries.helper as Helper
 import os
 import shutil
 
-if not os.path.exists("config/config.json"):
-    shutil.copyfile("../config_example.json", "config/config.json")
-with open("config/config.json", "r") as file:
+if not os.path.exists("../config/config.json"):
+    shutil.copyfile("../config/config_example.json", "../config/config.json")
+with open("../config/config.json", "r") as file:
     Config = json.load(file)
 
 
