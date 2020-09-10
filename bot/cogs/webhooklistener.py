@@ -1,26 +1,49 @@
-def start_listener(bot):
-    from http.server import BaseHTTPRequestHandler, HTTPServer
-    import json
-    import sys
-    import socket
-    import os
+import socketserver
+import traceback
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import json
+import sys
+import socket
+import os
+from typing import Tuple
 
-    global bot_ref
-    bot_ref = bot
+import discord.ext.commands as commands
 
-    # handle POST events from github server
-    # We should also make sure to ignore requests from the IRC, which can clutter
-    # the output with errors
-    CONTENT_TYPE = 'content-type'
-    CONTENT_LEN = 'content-length'
-    EVENT_TYPE = 'x-github-event'
 
-    class MyHandler(BaseHTTPRequestHandler):
+class Githook(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        # Run Github webhook handling server
+        try:
+            server = HTTPServerV6((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MakeGithookHandler(bot))
+            server.serve_forever()
+        except Exception as e:
+            print("Failed to run the githook server")
+            type, value, tb = sys.exc_info()
+            tbs = ""
+            for string in traceback.format_tb(tb):
+                tbs = tbs + string
+            self.bot.logger.error(tbs)
+
+
+# handle POST events from github server
+# We should also make sure to ignore requests from the IRC, which can clutter
+# the output with errors
+CONTENT_TYPE = 'content-type'
+CONTENT_LEN = 'content-length'
+EVENT_TYPE = 'x-github-event'
+
+def MakeGithookHandler(bot):
+    class GithookHandler(BaseHTTPRequestHandler):
+        def __init__(self, bot, request: bytes, client_address: Tuple[str, int], server: socketserver.BaseServer):
+            super().__init__(request, client_address, server)
+            self.bot = bot
+
         async def do_GET(self):
             if self.path == "/readiness":
                 self.send_response(200)
             elif self.path == "/liveness":
-                if bot_ref.isAlive():
+                if self.bot.isAlive():
                     self.send_response(200)
                 else:
                     self.send_response(503)
@@ -56,19 +79,13 @@ def start_listener(bot):
             self.end_headers()
             self.wfile.write(bytes('FICSIT-Fred received the payload', 'utf-8'))
             print("Got a POST with good data")
-            # Save that shit!
-            with open("queue.txt", "w") as file:
-                json.dump(data, file)
-            print("saved")
+            # Send that shit !
+            bot.githook_send(data)
             return
+    return GithookHandler
 
-    class HTTPServerV6(HTTPServer):
-        address_family = socket.AF_INET6
+class HTTPServerV6(ThreadingHTTPServer):
+    address_family = socket.AF_INET6
 
-    # Run Github webhook handling server
-    try:
-        server = HTTPServerV6((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MyHandler)
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("Exiting")
-        server.socket.close()
+
+

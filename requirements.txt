@@ -1,0 +1,10 @@
+discord
+asyncio
+Pillow
+pytesseract
+requests
+matplotlib
+algoliasearch
+packaging
+jellyfish
+python-logstash-async

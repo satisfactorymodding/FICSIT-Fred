@@ -1,8 +1,8 @@
 import discord
 import asyncio
-import libraries.createembed as CreateEmbed
+import librairies.createembed as CreateEmbed
 import json
-import libraries.helper as Helper
+import librairies.helper as Helper
 import matplotlib.pyplot as plt
 import datetime
 import logging
@@ -106,6 +106,7 @@ class Commands(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid sub command passed...')
             return
+        print(type(ctx))
 
     @commands.group()
     @commands.check(t3_only)
@@ -242,70 +243,6 @@ class Commands(commands.Cog):
             else:
                 index += 1
         await ctx.send("Crash could not be found!")
-
-    @commands.command()
-    @commands.check(t3_only)
-    async def members(self, ctx):
-        async with ctx.typing():
-            list = []
-            async for member in ctx.guild.fetch_members():
-                list.append(member.joined_at)
-            list.sort()
-            first = list[0]
-            last = list[len(list) - 1]
-            count = 0
-            countlist = []
-            nb = 24
-            for x in range(0, nb):
-                for item in list:
-                    if item > first + datetime.timedelta(days=x * 30):
-                        break
-                    count += 1
-                countlist.append(count)
-                count = 0
-
-            plt.plot(range(0, nb), countlist)
-            with open("Countlist.png", "wb") as image:
-                plt.savefig(image, format="PNG")
-                plt.clf()
-            with open("Countlist.png", "rb") as image:
-                await ctx.send(content=None, file=discord.File(image))
-
-    @commands.command()
-    @commands.check(t3_only)
-    async def growth(self, ctx):
-        async with ctx.typing():
-            list = []
-            async for member in ctx.guild.fetch_members():
-                list.append(member.joined_at)
-            list.sort()
-            first = list[0]
-            last = list[len(list) - 1]
-            count = 0
-            countlist = []
-            nb = 24
-            for x in range(0, nb):
-                for item in list:
-                    if item > first + datetime.timedelta(days=x * 30):
-                        break
-                    count += 1
-                countlist.append(count)
-                count = 0
-
-            growth = []
-            for x in range(0, nb):
-                try:
-                    ratio = (countlist[x] - countlist[x - 1]) / countlist[x - 1]
-                    growth.append(ratio * 100)
-                except IndexError:
-                    growth.append(100)
-
-            plt.plot(range(0, nb), growth)
-            with open("Growth.png", "wb") as image:
-                plt.savefig(image, format="PNG")
-                plt.clf()
-            with open("Growth.png", "rb") as image:
-                await ctx.send(content=None, file=discord.File(image))
 
     @commands.command()
     @commands.check(t3_only)
