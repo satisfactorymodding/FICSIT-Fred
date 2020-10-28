@@ -28,7 +28,9 @@ class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        await ctx.send(error)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -45,6 +47,10 @@ class Commands(commands.Cog):
     @commands.command()
     async def version(self, ctx):
         await ctx.send(self.bot.version)
+
+    @commands.command()
+    async def help(self, ctx):
+        await ctx.send("Sorry, this command is temporarily unavailable")
 
     @commands.command()
     async def mod(self, ctx, *args):
@@ -106,7 +112,6 @@ class Commands(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid sub command passed...')
             return
-        print(type(ctx))
 
     @commands.group()
     @commands.check(t3_only)
@@ -115,8 +120,8 @@ class Commands(commands.Cog):
             await ctx.send('Invalid sub command passed...')
             return
 
-    @add.command()
-    async def mediaonly(self, ctx, *args):
+    @add.command(name="mediaonly")
+    async def addmediaonly(self, ctx, *args):
         if ctx.message.channel_mentions:
             id = ctx.message.channel_mentions[0].id
         else:
@@ -130,8 +135,8 @@ class Commands(commands.Cog):
         json.dump(self.bot.config, open("../config/config.json", "w"))
         await ctx.send("Media only channel " + self.bot.get_channel(int(id)).mention + " added!")
 
-    @add.command()
-    async def command(self, ctx, *args):
+    @add.command(name="command")
+    async def addcommand(self, ctx, *args):
         if args:
             command = args[0]
         else:
@@ -156,8 +161,8 @@ class Commands(commands.Cog):
         json.dump(self.bot.config, open("../config/config.json", "w"))
         await ctx.send("Command '" + command + "' added!")
 
-    @add.command()
-    async def crash(self, ctx, *args):
+    @add.command(name="crash")
+    async def addcrash(self, ctx, *args):
         if len(args) > 3:
             ctx.send("Please put your parameters between double quotes `\"`.")
             return
@@ -185,8 +190,8 @@ class Commands(commands.Cog):
         json.dump(self.bot.config, open("../config/config.json", "w"))
         await ctx.send("Known crash '" + name + "' added!")
 
-    @remove.command()
-    async def mediaonly(self, ctx, *args):
+    @remove.command(name="mediaonly")
+    async def removemediaonly(self, ctx, *args):
         if ctx.message.channel_mentions:
             id = ctx.message.channel_mentions[0].id
         else:
@@ -207,8 +212,8 @@ class Commands(commands.Cog):
                 index += 1
         await ctx.send("Media Only Channel could not be found!")
 
-    @remove.command()
-    async def command(self, ctx, *args):
+    @remove.command(name="command")
+    async def removecommand(self, ctx, *args):
         if args:
             command = args[0]
         else:
@@ -226,8 +231,8 @@ class Commands(commands.Cog):
                 index += 1
         await ctx.send("Command could not be found!")
 
-    @remove.command()
-    async def crash(self, ctx, *args):
+    @remove.command(name="crash")
+    async def removecrash(self, ctx, *args):
         if args:
             name = args[0]
         else:
@@ -246,6 +251,20 @@ class Commands(commands.Cog):
 
     @commands.command()
     @commands.check(t3_only)
+    async def saveconfig(self, ctx, *args):
+        if not ctx.author.dm_channel:
+            await ctx.author.create_dm()
+        try:
+            await ctx.author.dm_channel.send(content=None,
+                                             file=discord.File(open("../config/config.json", "r"),
+                                                               filename="config.json"))
+            await ctx.message.add_reaction("✅")
+        except:
+            await ctx.send("I was unable to send you a direct message. Please check your discord "
+                           "settings regarding those !")
+
+    @commands.command()
+    @commands.check(mod_only)
     async def engineers(self, ctx, *args):
         if ctx.message.channel_mentions:
             id = ctx.message.channel_mentions[0].id
@@ -261,7 +280,7 @@ class Commands(commands.Cog):
             "The filter channel for the engineers is now " + self.bot.get_channel(int(id)).mention + "!")
 
     @commands.command()
-    @commands.check(t3_only)
+    @commands.check(mod_only)
     async def moderators(self, ctx, *args):
         if ctx.message.channel_mentions:
             id = ctx.message.channel_mentions[0].id
@@ -277,7 +296,7 @@ class Commands(commands.Cog):
             "The filter channel for the moderators is now " + self.bot.get_channel(int(id)).mention + "!")
 
     @commands.command()
-    @commands.check(t3_only)
+    @commands.check(mod_only)
     async def githook(self, ctx, *args):
         if ctx.message.channel_mentions:
             id = ctx.message.channel_mentions[0].id
@@ -293,7 +312,7 @@ class Commands(commands.Cog):
             "The channel for the github hooks is now " + self.bot.get_channel(int(id)).mention + "!")
 
     @commands.command()
-    @commands.check(t3_only)
+    @commands.check(mod_only)
     async def prefix(self, ctx, *args):
         if not args:
             await ctx.send("Please specify a prefix")
@@ -303,16 +322,4 @@ class Commands(commands.Cog):
         json.dump(self.bot.config, open("../config/config.json", "w"))
         await ctx.send("Prefix changed to " + args[0])
 
-    @commands.command()
-    @commands.check(t3_only)
-    async def saveconfig(self, ctx, *args):
-        if not ctx.author.dm_channel:
-            await ctx.author.create_dm()
-        try:
-            await ctx.author.dm_channel.send(content=None,
-                                                 file=discord.File(open("../config/config.json", "r"),
-                                                                   filename="config.json"))
-            await ctx.message.add_reaction("✅")
-        except:
-            await ctx.send("I was unable to send you a direct message. Please check your discord "
-                           "settings regarding those !")
+

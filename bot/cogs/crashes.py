@@ -17,7 +17,9 @@ class Crashes(commands.Cog):
     async def process_message(self, message):
         hasMetadata = False
         sml_version = ""
+        smb_version = ""
         CL = 0
+        path = ""
 
         # attachments
         if message.attachments or "https://cdn.discordapp.com/attachments/" in message.content:
@@ -51,6 +53,7 @@ class Crashes(commands.Cog):
                         if len(metadata["installedMods"]) > 0:
                             sml_version = metadata["smlVersion"]
                             smb_version = metadata["bootstrapperVersion"]
+                            path = metadata["selectedInstall"]["installLocation"]
                             hasMetadata = True
 
             # images
@@ -67,7 +70,6 @@ class Crashes(commands.Cog):
                     image = enhancerContrast.enhance(2)
                     enhancerSharpness = ImageEnhance.Sharpness(image)
                     image = enhancerSharpness.enhance(10)
-
                     data = image_to_string(image, lang="eng")
 
                 except:
@@ -97,7 +99,22 @@ class Crashes(commands.Cog):
                 CL = int(data[:200000].split("-CL-")[1].split("\n")[0])
             except:
                 CL = 0
+            try:
+                path = data[:100000].split("Game root directory: ")[1].split("\n")[0]
+            except:
+                path = ""
 
+        versionInfo = ""
+        if CL:
+            versionInfo += "CL : " + str(CL) + "\n"
+        if sml_version:
+            versionInfo += "SML : " + sml_version + "\n"
+        if smb_version:
+            versionInfo += "SMB : " + smb_version + "\n"
+        if path:
+            versionInfo += "Path : " + path + "\n"
+        if versionInfo:
+            await message.channel.send(versionInfo)
         if CL and sml_version:
             # Check the right SML for that CL
             query = """{
@@ -135,8 +152,10 @@ class Crashes(commands.Cog):
             file.close()
         except:
             pass
+        data = data[len(data) - 100000:]
         for crash in self.bot.config["known crashes"]:
             for line in data.split("\n"):
+                if line.startswith("["): line = line[80:]
                 if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(crash["crash"]) * 0.1:
                     await message.channel.send(str(crash["response"].format(user=message.author.mention)))
                     return

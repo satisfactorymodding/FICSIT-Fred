@@ -221,7 +221,6 @@ def mod(name):
     if isinstance(data, list):
         if len(data) > 1:
             cut = False
-            print(len(data))
             if len(data) > 10:
                 cut = len(data) - 10
                 data = data[:10]

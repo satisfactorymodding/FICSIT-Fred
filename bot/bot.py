@@ -58,6 +58,7 @@ class Bot(discord.ext.commands.Bot):
         self.Crashes = self.get_cog("Crashes")
         self.version = "2.0.0"
         self.running = True
+        self.loop = asyncio.get_event_loop()
         source = inspect.getsource(discord.abc.Messageable.send)
         source = textwrap.dedent(source)
         assert ("content = str(content) if content is not None else None" in source)
@@ -80,12 +81,17 @@ class Bot(discord.ext.commands.Bot):
         exec(source, globals())
         discord.abc.Messageable.send = new_send
 
+
+    async def on_ready(self):
+        self.logger.info(str(self.config))
+        self.modchannel = self.get_channel(self.config["mod channel"])
+        assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
+        print('We have logged in as {0.user}'.format(self))
+
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
         if event == "on_message":
             channel = " in #" + args[0].channel.name
-            await args[0].channel.send(
-                "```An error occured, sorry for the inconvenience. Feyko has been notified of the error.```")
         else:
             channel = ""
         tbs = "```Fred v" + self.version + "\n\n" + type.__name__ + " exception handled in " + event + channel + " : " + str(
@@ -95,12 +101,6 @@ class Bot(discord.ext.commands.Bot):
         tbs = tbs + "```"
         print(tbs.replace("```", ""))
         await self.get_channel(748229790825185311).send(tbs)
-
-    async def on_ready(self):
-        self.logger.info(str(self.config))
-        self.modchannel = self.get_channel(self.config["mod channel"])
-        assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
-        print('We have logged in as {0.user}'.format(self))
 
     async def githook_send(self, data):
         embed = await CreateEmbed.run(data, self)
@@ -124,5 +124,5 @@ class Bot(discord.ext.commands.Bot):
             await self.Crashes.process_message(message)
 
 
-client = Bot("?")
+client = Bot("?", help_command=None)
 client.run(os.environ.get("FRED_TOKEN"))

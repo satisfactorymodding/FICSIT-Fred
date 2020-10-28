@@ -7,7 +7,7 @@ class MediaOnly(commands.Cog):
 
     async def process_message(self, message):
         if message.author.permissions_in(self.bot.get_channel(self.bot.config["filter channel"])).send_messages or message.author.id == 227473074616795137:
-            return
+            pass
         for automation in self.bot.config["media only channels"]:
             if message.channel.id == automation and len(message.embeds) == 0 and len(
                     message.attachments) == 0:

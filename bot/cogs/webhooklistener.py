@@ -1,22 +1,30 @@
 import socketserver
 import traceback
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer, HTTPServer
 import json
 import sys
 import socket
 import os
 from typing import Tuple
-
+import threading
 import discord.ext.commands as commands
+import asyncio
+
+def runServer(self, bot):
+    server = HTTPServer((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MakeGithookHandler(bot))
+    server.serve_forever()
 
 
 class Githook(commands.Cog):
+
     def __init__(self, bot):
         self.bot = bot
         # Run Github webhook handling server
         try:
-            server = HTTPServerV6((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MakeGithookHandler(bot))
-            server.serve_forever()
+            list = [bot, bot]
+            daemon = threading.Thread(target=runServer, args=list)
+            daemon.daemon = True
+            daemon.start()
         except Exception as e:
             print("Failed to run the githook server")
             type, value, tb = sys.exc_info()
@@ -25,7 +33,6 @@ class Githook(commands.Cog):
                 tbs = tbs + string
             self.bot.logger.error(tbs)
 
-
 # handle POST events from github server
 # We should also make sure to ignore requests from the IRC, which can clutter
 # the output with errors
@@ -33,24 +40,22 @@ CONTENT_TYPE = 'content-type'
 CONTENT_LEN = 'content-length'
 EVENT_TYPE = 'x-github-event'
 
-def MakeGithookHandler(bot):
-    class GithookHandler(BaseHTTPRequestHandler):
-        def __init__(self, bot, request: bytes, client_address: Tuple[str, int], server: socketserver.BaseServer):
-            super().__init__(request, client_address, server)
-            self.bot = bot
 
-        async def do_GET(self):
+def MakeGithookHandler(bot):
+    class MyGithookHandler(BaseHTTPRequestHandler):
+
+        def do_GET(self):
             if self.path == "/readiness":
                 self.send_response(200)
             elif self.path == "/liveness":
-                if self.bot.isAlive():
+                if bot.isAlive():
                     self.send_response(200)
                 else:
                     self.send_response(503)
             else:
                 self.send_response(200)
 
-        async def do_CONNECT(self):
+        def do_CONNECT(self):
             self.send_response(200)
 
         def do_POST(self):
@@ -78,14 +83,12 @@ def MakeGithookHandler(bot):
             self.send_header('content-type', 'text/html')
             self.end_headers()
             self.wfile.write(bytes('FICSIT-Fred received the payload', 'utf-8'))
-            print("Got a POST with good data")
             # Send that shit !
-            bot.githook_send(data)
+            asyncio.run_coroutine_threadsafe(bot.githook_send(data), bot.loop)
             return
-    return GithookHandler
 
-class HTTPServerV6(ThreadingHTTPServer):
+    return MyGithookHandler
+
+
+class HTTPServerV6(HTTPServer):
     address_family = socket.AF_INET6
-
-
-
