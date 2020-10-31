@@ -30,6 +30,11 @@ class Commands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
+            for automation in self.bot.config["commands"]:
+                if command == automation["command"]:
+                    return
         await ctx.send(error)
 
     @commands.Cog.listener()
@@ -38,7 +43,6 @@ class Commands(commands.Cog):
             return
         if message.content.startswith(self.bot.command_prefix):
             command = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
-            args = message.content.lower().replace(self.bot.config["prefix"], "").split(" ")[1:]
             for automation in self.bot.config["commands"]:
                 if command == automation["command"]:
                     await message.channel.send(automation["response"])
