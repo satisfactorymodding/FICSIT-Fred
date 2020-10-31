@@ -16,13 +16,13 @@ from discord.ext import commands
 
 
 async def t3_only(ctx):
-    return (ctx.author.permissions_in(ctx.bot.get_channel(ctx.bot.config["filter channel"])).send_messages or
-            ctx.author.id == 227473074616795137)
+    return (ctx.author.id == 227473074616795137 or
+            ctx.author.permissions_in(ctx.bot.get_channel(int(ctx.bot.config["filter channel"]))).send_messages)
 
 
 async def mod_only(ctx):
-    return (ctx.author.permissions_in(ctx.bot.modchannel).send_messages or
-            ctx.author.id == 227473074616795137)
+    return (ctx.author.id == 227473074616795137 or
+            ctx.author.permissions_in(ctx.bot.modchannel).send_messages)
 
 class Commands(commands.Cog):
     def __init__(self, bot):
@@ -278,7 +278,7 @@ class Commands(commands.Cog):
             else:
                 id = await Helper.waitResponse(self.bot, ctx.message,
                                                "What is the ID for the channel? e.g. ``709509235028918334``")
-        self.bot.config["filter channel"] = id
+        self.bot.config["filter channel"] = int(id)
         json.dump(self.bot.config, open("../config/config.json", "w"))
         await ctx.send(
             "The filter channel for the engineers is now " + self.bot.get_channel(int(id)).mention + "!")
@@ -294,7 +294,7 @@ class Commands(commands.Cog):
             else:
                 id = await Helper.waitResponse(self.bot, ctx.message,
                                                "What is the ID for the channel? e.g. ``709509235028918334``")
-        self.bot.config["mod channel"] = id
+        self.bot.config["mod channel"] = int(id)
         json.dump(self.bot.config, open("../config/config.json", "w"))
         await ctx.send(
             "The filter channel for the moderators is now " + self.bot.get_channel(int(id)).mention + "!")

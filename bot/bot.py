@@ -56,7 +56,7 @@ class Bot(discord.ext.commands.Bot):
         self.MediaOnly = self.get_cog("MediaOnly")
         self.add_cog(cogs.crashes.Crashes(self))
         self.Crashes = self.get_cog("Crashes")
-        self.version = "2.0.0"
+        self.version = "2.0.1"
         self.running = True
         self.loop = asyncio.get_event_loop()
         source = inspect.getsource(discord.abc.Messageable.send)
@@ -84,7 +84,7 @@ class Bot(discord.ext.commands.Bot):
 
     async def on_ready(self):
         self.logger.info(str(self.config))
-        self.modchannel = self.get_channel(self.config["mod channel"])
+        self.modchannel = self.get_channel(int(self.config["mod channel"]))
         assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
         print('We have logged in as {0.user}'.format(self))
 
