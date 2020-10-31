@@ -11,7 +11,7 @@ import discord.ext.commands as commands
 import asyncio
 
 def runServer(self, bot):
-    server = HTTPServer((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MakeGithookHandler(bot))
+    server = HTTPServerV6((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MakeGithookHandler(bot))
     server.serve_forever()
 
 
