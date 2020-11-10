@@ -100,9 +100,17 @@ class Crashes(commands.Cog):
             except:
                 CL = 0
             try:
-                path = data[:100000].split("Game root directory: ")[1].split("\n")[0]
+                path = data[:100000].split("LogInit: Base Directory: ")[1].split("\n")[0]
             except:
                 path = ""
+        try:
+            launcherid = data[:100000].split("LogInit: Launcher ID: ")[1].split("\n")[0]
+        except:
+            launcherid = ""
+        try:
+            commandline = data[:100000].split("LogInit: Command Line: ")[1].split("\n")[0]
+        except:
+            commandline = ""
 
         versionInfo = ""
         if CL:
@@ -113,6 +121,10 @@ class Crashes(commands.Cog):
             versionInfo += "SMB : " + smb_version + "\n"
         if path:
             versionInfo += "Path : " + path + "\n"
+        if launcherid:
+            versionInfo += "Launcher ID : " + launcherid + "\n"
+        if commandline:
+            versionInfo += "Command Line : " + commandline + "\n"
         if versionInfo:
             await message.channel.send(versionInfo)
         if CL and sml_version:

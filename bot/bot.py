@@ -38,6 +38,7 @@ class Bot(discord.ext.commands.Bot):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         with open("../config/config.json", "r") as file:
             self.config = json.load(file)
         self.command_prefix = self.config["prefix"]
@@ -56,7 +57,7 @@ class Bot(discord.ext.commands.Bot):
         self.MediaOnly = self.get_cog("MediaOnly")
         self.add_cog(cogs.crashes.Crashes(self))
         self.Crashes = self.get_cog("Crashes")
-        self.version = "2.0.1"
+        self.version = "2.1.1"
         self.running = True
         self.loop = asyncio.get_event_loop()
         source = inspect.getsource(discord.abc.Messageable.send)
@@ -87,6 +88,7 @@ class Bot(discord.ext.commands.Bot):
         self.modchannel = self.get_channel(int(self.config["mod channel"]))
         assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
         print('We have logged in as {0.user}'.format(self))
+
 
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
