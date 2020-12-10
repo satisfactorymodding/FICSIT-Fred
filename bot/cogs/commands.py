@@ -106,8 +106,8 @@ class Commands(commands.Cog):
         yamlf = io.BytesIO(yaml.content)
         version = str(yamlf.read()).split("version: ")[1].split("\\")[0]
 
-        self.bot = SearchClient.create('BH4D9OD16A', '53b3a8362ea7b391f63145996cfe8d82')
-        index = self.bot.init_index('ficsit')
+        search = SearchClient.create('BH4D9OD16A', '53b3a8362ea7b391f63145996cfe8d82')
+        index = search.init_index('ficsit')
         query = index.search(args + " " + version)
         await ctx.send("This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
 

@@ -57,7 +57,7 @@ class Bot(discord.ext.commands.Bot):
         self.MediaOnly = self.get_cog("MediaOnly")
         self.add_cog(cogs.crashes.Crashes(self))
         self.Crashes = self.get_cog("Crashes")
-        self.version = "2.1.1"
+        self.version = "2.1.2"
         self.running = True
         self.loop = asyncio.get_event_loop()
         source = inspect.getsource(discord.abc.Messageable.send)
