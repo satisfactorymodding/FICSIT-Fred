@@ -37,17 +37,13 @@ class Crashes(commands.Cog):
                     name = ""
             # .log or .txt Files
             if ".log" in name or ".txt" in name:
-                data = file.read().decode("utf-8")
+                data = file.read().decode("utf-8", errors="ignore")
 
             # SMM Debug file
-            elif ".zip" in name and "SMMDebug" in name:
-                with zipfile.ZipFile(file) as zip:
-                    try:
-                        data = zip.open("FactoryGame.log").read().decode("utf-8")
-                    except KeyError:
-                        data = ""
-                        pass
-                    with zip.open("metadata.json") as metadataFile:
+            elif name.endswith(".zip"):
+                with zipfile.ZipFile(file) as file:
+                    data = file.open("FactoryGame.log").read().decode("utf-8") if "FactoryGame.log" in file.namelist() else ""
+                    with file.open("metadata.json") as metadataFile:
                         metadata = json.load(metadataFile)
                         if metadata["selectedInstall"]:
                             CL = int(metadata["selectedInstall"]["version"])
@@ -57,16 +53,22 @@ class Crashes(commands.Cog):
                             path = metadata["selectedInstall"]["installLocation"]
                             hasMetadata = True
                             "Resolved imports successfully; Calling DllMain"
-                    try:
-                        bootLog = zip.open("pre-launch-debug.log").readlines()
+
+                    if "pre-launch-debug.log" in file.namelist():
+                        bootLog = file.open("pre-launch-debug.log").readlines()
+                        for crash in self.bot.config["known crashes"]:
+                            for line in bootLog:
+                                if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(
+                                        crash["crash"]) * 0.1:
+                                    await message.channel.send(
+                                        str(crash["response"].format(user=message.author.mention)))
+                                    return
                         if bootLog[-1] == b'Resolved imports successfully; Calling DllMain\r\n':
                             message.channel.send("Hi " + message.author.mention + "! This is a known crash, albeit we "
                                                                                   "do not know what causes it. We do "
                                                                                   "know how to get around it though, "
                                                                                   "so try launching the game directly "
                                                                                   "via its .exe. Hope it works !")
-                    except KeyError:
-                        pass
 
             # images
             else:
