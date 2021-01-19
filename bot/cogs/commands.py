@@ -45,7 +45,7 @@ class Commands(commands.Cog):
         if message.content.startswith(self.bot.command_prefix):
             command = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             for automation in self.bot.config["commands"]:
-                if command == automation["command"]:
+                if command.lower() == automation["command"].lower():
                     await message.channel.send(automation["response"])
                     return
 

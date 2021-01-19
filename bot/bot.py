@@ -12,6 +12,7 @@ import cogs.commands as Commands
 import cogs.webhooklistener as WebhookListener
 import cogs.mediaonly
 import cogs.crashes
+import cogs.noshorturl
 import discord
 import discord.ext.commands
 
@@ -42,7 +43,6 @@ class Bot(discord.ext.commands.Bot):
         with open("../config/config.json", "r") as file:
             self.config = json.load(file)
         self.command_prefix = self.config["prefix"]
-
         if os.environ.get("FRED_LOG_HOST") and os.environ.get("FRED_LOG_PORT"):
             self.logger = logging.getLogger("python-logstash-logger")
             self.logger.addHandler(
@@ -54,10 +54,12 @@ class Bot(discord.ext.commands.Bot):
         self.add_cog(Commands.Commands(self))
         self.add_cog(WebhookListener.Githook(self))
         self.add_cog(cogs.mediaonly.MediaOnly(self))
+        self.add_cog(cogs.noshorturl.NoShortUrl(self))
         self.MediaOnly = self.get_cog("MediaOnly")
         self.add_cog(cogs.crashes.Crashes(self))
         self.Crashes = self.get_cog("Crashes")
-        self.version = "2.1.2"
+        self.NoShortUrl = self.get_cog("NoShortUrl")
+        self.version = "2.2.0"
         self.running = True
         self.loop = asyncio.get_event_loop()
         source = inspect.getsource(discord.abc.Messageable.send)
@@ -121,6 +123,8 @@ class Bot(discord.ext.commands.Bot):
             return
 
         removed = await self.MediaOnly.process_message(message)
+        if not removed:
+            removed = await self.NoShortUrl.process_message(message)
         if not removed:
             await self.process_commands(message)
             await self.Crashes.process_message(message)

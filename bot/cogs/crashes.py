@@ -49,12 +49,24 @@ class Crashes(commands.Cog):
                         pass
                     with zip.open("metadata.json") as metadataFile:
                         metadata = json.load(metadataFile)
-                        CL = int(metadata["selectedInstall"]["version"])
+                        if metadata["selectedInstall"]:
+                            CL = int(metadata["selectedInstall"]["version"])
                         if len(metadata["installedMods"]) > 0:
                             sml_version = metadata["smlVersion"]
                             smb_version = metadata["bootstrapperVersion"]
                             path = metadata["selectedInstall"]["installLocation"]
                             hasMetadata = True
+                            "Resolved imports successfully; Calling DllMain"
+                    try:
+                        bootLog = zip.open("pre-launch-debug.log").readlines()
+                        if bootLog[-1] == b'Resolved imports successfully; Calling DllMain\r\n':
+                            message.channel.send("Hi " + message.author.mention + "! This is a known crash, albeit we "
+                                                                                  "do not know what causes it. We do "
+                                                                                  "know how to get around it though, "
+                                                                                  "so try launching the game directly "
+                                                                                  "via its .exe. Hope it works !")
+                    except KeyError:
+                        pass
 
             # images
             else:
