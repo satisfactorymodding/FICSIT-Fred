@@ -11,6 +11,7 @@ import requests
 import io
 import os
 import sys
+import typing
 
 
 from discord.ext import commands
@@ -137,7 +138,7 @@ class Commands(commands.Cog):
                                                                           "``709509235028918334``")
 
         self.bot.config["media only channels"].append(id)
-        json.dump(self.bot.config, open("../config/config.json", "w"))
+        self.bot.save_config()
         await ctx.send("Media only channel " + self.bot.get_channel(int(id)).mention + " added!")
 
     @add.command(name="command")
@@ -161,9 +162,8 @@ class Commands(commands.Cog):
             response = await Helper.waitResponse(self.bot, ctx.message, "What is the response? e.g. ``Hello there`` "
                                                                         "or an image or link to an image")
 
-        self.bot.config["commands"].append(
-            {"command": command, "response": response})
-        json.dump(self.bot.config, open("../config/config.json", "w"))
+        self.bot.config["commands"].append({"command": command, "response": response})
+        self.bot.save_config()
         await ctx.send("Command '" + command + "' added!")
 
     @add.command(name="crash")
@@ -192,8 +192,31 @@ class Commands(commands.Cog):
                                                  "keywords {user}`` (use {user} to ping the user)")
 
         self.bot.config["known crashes"].append({"name": name, "crash": crash, "response": response})
-        json.dump(self.bot.config, open("../config/config.json", "w"))
+        self.bot.save_config()
         await ctx.send("Known crash '" + name + "' added!")
+
+    @add.command(name="dialogflow")
+    async def dialogflow(self, ctx, id: str, response: typing.Union[str, bool], has_followup: bool, *args):
+        if len(args) == 0:
+            data = False
+        else:
+            data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
+                
+        if response == True:
+            await ctx.send("Response should be a string or False (use the response from dialogflow)")
+            return
+        
+        for dialogflowReply in self.bot.config["dialogflow"]:
+            if dialogflowReply["id"] == id and (dialogflowReply["data"] == data):                
+                should_delete = await Helper.waitResponse(self.bot, ctx.message, "Dialogflow response with this parameters already exists. Do you want to replace it? (Yes/No)")
+                should_delete = should_delete.lower()
+                if should_delete == 'no' or should_delete == 'n' or should_delete == 'false':
+                    return
+                await self.removedialogflow(ctx, id, *args)
+        
+        self.bot.config["dialogflow"].append({"id": id, "data": data, "response": response, "has_followup": has_followup})
+        self.bot.save_config()
+        await ctx.send("Dialogflow response for '" + id + "' (" + (json.dumps(data) if data else 'any data') + ") added!")
 
     @remove.command(name="mediaonly")
     async def removemediaonly(self, ctx, *args):
@@ -210,7 +233,7 @@ class Commands(commands.Cog):
         for response in self.bot.config["media only channels"]:
             if response == id:
                 del self.bot.config["media only channels"][index]
-                json.dump(self.bot.config, open("../config/config.json", "w"))
+                self.bot.save_config()
                 await ctx.send("Media Only Channel removed!")
                 return
             else:
@@ -229,7 +252,7 @@ class Commands(commands.Cog):
         for response in self.bot.config["commands"]:
             if response["command"].lower() == command:
                 del self.bot.config["commands"][index]
-                json.dump(self.bot.config, open("../config/config.json", "w"))
+                self.bot.save_config()
                 await ctx.send("Command removed!")
                 return
             else:
@@ -247,12 +270,27 @@ class Commands(commands.Cog):
         for crash in self.bot.config["known crashes"]:
             if crash["name"].lower() == name.lower():
                 del self.bot.config["known crashes"][index]
-                json.dump(self.bot.config, open("../config/config.json", "w"))
+                self.bot.save_config()
                 await ctx.send("Crash removed!")
                 return
-            else:
-                index += 1
+            index += 1
         await ctx.send("Crash could not be found!")
+
+    @remove.command(name="dialogflow")
+    async def removedialogflow(self, ctx, id: str, *args):
+        if len(args) == 0:
+            data = False
+        else:
+            data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
+
+        index = 0
+        for dialogflowReply in self.bot.config["dialogflow"]:
+            if dialogflowReply["id"] == id and (dialogflowReply["data"] == data):
+                del self.bot.config["dialogflow"][index]
+                self.bot.save_config()
+                await ctx.send("Dialogflow reply deleted")
+                return
+            index += 1
 
     @commands.command()
     @commands.check(t3_only)
@@ -280,7 +318,7 @@ class Commands(commands.Cog):
                 id = await Helper.waitResponse(self.bot, ctx.message,
                                                "What is the ID for the channel? e.g. ``709509235028918334``")
         self.bot.config["filter channel"] = int(id)
-        json.dump(self.bot.config, open("../config/config.json", "w"))
+        self.bot.save_config()
         await ctx.send(
             "The filter channel for the engineers is now " + self.bot.get_channel(int(id)).mention + "!")
 
@@ -296,7 +334,7 @@ class Commands(commands.Cog):
                 id = await Helper.waitResponse(self.bot, ctx.message,
                                                "What is the ID for the channel? e.g. ``709509235028918334``")
         self.bot.config["mod channel"] = int(id)
-        json.dump(self.bot.config, open("../config/config.json", "w"))
+        self.bot.save_config()
         await ctx.send(
             "The filter channel for the moderators is now " + self.bot.get_channel(int(id)).mention + "!")
 
@@ -312,7 +350,7 @@ class Commands(commands.Cog):
                 id = await Helper.waitResponse(self.bot, ctx.message,
                                                "What is the ID for the channel? e.g. ``709509235028918334``")
         self.bot.config["githook channel"] = id
-        json.dump(self.bot.config, open("../config/config.json", "w"))
+        self.bot.save_config()
         await ctx.send(
             "The channel for the github hooks is now " + self.bot.get_channel(int(id)).mention + "!")
 
@@ -324,7 +362,7 @@ class Commands(commands.Cog):
             return
         self.bot.config["prefix"] = args[0]
         self.bot.command_prefix = args[0]
-        json.dump(self.bot.config, open("../config/config.json", "w"))
+        self.bot.save_config()
         await ctx.send("Prefix changed to " + args[0])
 
 
