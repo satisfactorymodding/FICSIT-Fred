@@ -129,13 +129,13 @@ class Commands(commands.Cog):
     @add.command(name="mediaonly")
     async def addmediaonly(self, ctx, *args):
         if ctx.message.channel_mentions:
-            id = ctx.message.channel_mentions[0].id
+            id = int(ctx.message.channel_mentions[0].id)
         else:
-            if len(args) > 1:
-                id = args[0]
+            if len(args) > 0:
+                id = int(args[0])
             else:
-                id = await Helper.waitResponse(self.bot, ctx.ctx.message, "What is the ID for the channel? e.g. "
-                                                                          "``709509235028918334``")
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``"))
 
         self.bot.config["media only channels"].append(id)
         self.bot.save_config()
@@ -196,7 +196,7 @@ class Commands(commands.Cog):
         await ctx.send("Known crash '" + name + "' added!")
 
     @add.command(name="dialogflow")
-    async def dialogflow(self, ctx, id: str, response: typing.Union[str, bool], has_followup: bool, *args):
+    async def dialogflow(self, ctx, id: str, response: typing.Union[bool, str], has_followup: bool, *args):
         if len(args) == 0:
             data = False
         else:
@@ -221,13 +221,13 @@ class Commands(commands.Cog):
     @add.command(name="dialogflowChannel")
     async def adddialogflowchannel(self, ctx, *args):
         if ctx.message.channel_mentions:
-            id = ctx.message.channel_mentions[0].id
+            id = int(ctx.message.channel_mentions[0].id)
         else:
-            if len(args) > 1:
-                id = args[0]
+            if len(args) > 0:
+                id = int(args[0])
             else:
-                id = await Helper.waitResponse(self.bot, ctx.ctx.message, "What is the ID for the channel? e.g. "
-                                                                          "``709509235028918334``")
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``"))
 
         self.bot.config["dialogflow_channels"].append(id)
         self.bot.save_config()
@@ -236,13 +236,13 @@ class Commands(commands.Cog):
     @add.command(name="dialogflowRole")
     async def adddialogflowrole(self, ctx, *args):
         if ctx.message.role_mentions:
-            id = ctx.message.role_mentions[0].id
+            id = int(ctx.message.role_mentions[0].id)
         else:
-            if len(args) > 1:
-                id = args[0]
+            if len(args) > 0:
+                id = int(args[0])
             else:
-                id = await Helper.waitResponse(self.bot, ctx.ctx.message, "What is the ID for the role? e.g. "
-                                                                          "``809710343533232129``")
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``"))
 
         self.bot.config["dialogflow_exception_roles"].append(id)
         self.bot.save_config()
@@ -251,13 +251,13 @@ class Commands(commands.Cog):
     @remove.command(name="mediaonly")
     async def removemediaonly(self, ctx, *args):
         if ctx.message.channel_mentions:
-            id = ctx.message.channel_mentions[0].id
+            id = int(ctx.message.channel_mentions[0].id)
         else:
-            if len(args) > 1:
-                id = args[0]
+            if len(args) > 0:
+                id = int(args[0])
             else:
-                id = await Helper.waitResponse(self.bot, ctx.ctx.message, "What is the ID for the channel? e.g. "
-                                                                          "``709509235028918334``")
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``"))
 
         index = 0
         for response in self.bot.config["media only channels"]:
@@ -325,13 +325,13 @@ class Commands(commands.Cog):
     @remove.command(name="dialogflowChannel")
     async def removedialogflowchannel(self, ctx, *args):
         if ctx.message.channel_mentions:
-            id = ctx.message.channel_mentions[0].id
+            id = int(ctx.message.channel_mentions[0].id)
         else:
-            if len(args) > 1:
-                id = args[0]
+            if len(args) > 0:
+                id = int(args[0])
             else:
-                id = await Helper.waitResponse(self.bot, ctx.ctx.message, "What is the ID for the channel? e.g. "
-                                                                          "``709509235028918334``")
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``"))
         index = 0
         for channel in self.bot.config["dialogflow_channels"]:
             if channel == id:
@@ -346,13 +346,13 @@ class Commands(commands.Cog):
     @remove.command(name="dialogflowRole")
     async def removedialogflowrole(self, ctx, *args):
         if ctx.message.role_mentions:
-            id = ctx.message.role_mentions[0].id
+            id = int(ctx.message.role_mentions[0].id)
         else:
-            if len(args) > 1:
-                id = args[0]
+            if len(args) > 0:
+                id = int(args[0])
             else:
-                id = await Helper.waitResponse(self.bot, ctx.ctx.message, "What is the ID for the role? e.g. "
-                                                                          "``809710343533232129``")
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``"))
         index = 0
         for channel in self.bot.config["dialogflow_exception_roles"]:
             if channel == id:
@@ -382,13 +382,13 @@ class Commands(commands.Cog):
     @commands.check(mod_only)
     async def engineers(self, ctx, *args):
         if ctx.message.channel_mentions:
-            id = ctx.message.channel_mentions[0].id
+            id = int(ctx.message.channel_mentions[0].id)
         else:
             if args:
-                id = args[0]
+                id = int(args[0])
             else:
-                id = await Helper.waitResponse(self.bot, ctx.message,
-                                               "What is the ID for the channel? e.g. ``709509235028918334``")
+                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                                               "What is the ID for the channel? e.g. ``709509235028918334``"))
         self.bot.config["filter channel"] = int(id)
         self.bot.save_config()
         await ctx.send(
@@ -398,13 +398,13 @@ class Commands(commands.Cog):
     @commands.check(mod_only)
     async def moderators(self, ctx, *args):
         if ctx.message.channel_mentions:
-            id = ctx.message.channel_mentions[0].id
+            id = int(ctx.message.channel_mentions[0].id)
         else:
             if args:
-                id = args[0]
+                id = int(args[0])
             else:
-                id = await Helper.waitResponse(self.bot, ctx.message,
-                                               "What is the ID for the channel? e.g. ``709509235028918334``")
+                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                                               "What is the ID for the channel? e.g. ``709509235028918334``"))
         self.bot.config["mod channel"] = int(id)
         self.bot.save_config()
         await ctx.send(
@@ -414,13 +414,13 @@ class Commands(commands.Cog):
     @commands.check(mod_only)
     async def githook(self, ctx, *args):
         if ctx.message.channel_mentions:
-            id = ctx.message.channel_mentions[0].id
+            id = int(ctx.message.channel_mentions[0].id)
         else:
             if args:
-                id = args[0]
+                id = int(args[0])
             else:
-                id = await Helper.waitResponse(self.bot, ctx.message,
-                                               "What is the ID for the channel? e.g. ``709509235028918334``")
+                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                                               "What is the ID for the channel? e.g. ``709509235028918334``"))
         self.bot.config["githook channel"] = id
         self.bot.save_config()
         await ctx.send(
