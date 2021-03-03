@@ -8,3 +8,4 @@ algoliasearch
 packaging
 jellyfish
 python-logstash-async
+google-cloud-dialogflow

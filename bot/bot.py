@@ -13,6 +13,7 @@ import cogs.webhooklistener as WebhookListener
 import cogs.mediaonly
 import cogs.crashes
 import cogs.noshorturl
+import cogs.dialogflow
 import discord
 import discord.ext.commands
 
@@ -22,6 +23,7 @@ from logstash_async.handler import AsynchronousLogstashHandler
 assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
 assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
 assert (os.environ.get("FRED_TOKEN")), "The ENV variable 'FRED_TOKEN' isn't set"
+assert (os.environ.get("DIALOGFLOW_AUTH")), "The ENV variable 'DIALOGFLOW_AUTH' isn't set"
 
 
 class Bot(discord.ext.commands.Bot):
@@ -54,11 +56,13 @@ class Bot(discord.ext.commands.Bot):
         self.add_cog(Commands.Commands(self))
         self.add_cog(WebhookListener.Githook(self))
         self.add_cog(cogs.mediaonly.MediaOnly(self))
-        self.add_cog(cogs.noshorturl.NoShortUrl(self))
-        self.MediaOnly = self.get_cog("MediaOnly")
         self.add_cog(cogs.crashes.Crashes(self))
+        self.add_cog(cogs.noshorturl.NoShortUrl(self))
+        self.add_cog(cogs.dialogflow.DialogFlow(self))
+        self.MediaOnly = self.get_cog("MediaOnly")
         self.Crashes = self.get_cog("Crashes")
         self.NoShortUrl = self.get_cog("NoShortUrl")
+        self.DialogFlow = self.get_cog("DialogFlow")
         self.version = "2.3.0"
         self.running = True
         self.loop = asyncio.get_event_loop()
@@ -128,6 +132,10 @@ class Bot(discord.ext.commands.Bot):
         if not removed:
             await self.process_commands(message)
             await self.Crashes.process_message(message)
+            await self.DialogFlow.process_message(message)
+    
+    def save_config(self):
+        json.dump(self.config, open("../config/config.json", "w"), indent=4)
 
 
 client = Bot("?", help_command=None)
