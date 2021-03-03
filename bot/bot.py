@@ -63,7 +63,7 @@ class Bot(discord.ext.commands.Bot):
         self.Crashes = self.get_cog("Crashes")
         self.NoShortUrl = self.get_cog("NoShortUrl")
         self.DialogFlow = self.get_cog("DialogFlow")
-        self.version = "2.3.0"
+        self.version = "2.4.0"
         self.running = True
         self.loop = asyncio.get_event_loop()
         source = inspect.getsource(discord.abc.Messageable.send)
