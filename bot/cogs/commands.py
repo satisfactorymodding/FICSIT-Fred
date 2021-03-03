@@ -218,6 +218,36 @@ class Commands(commands.Cog):
         self.bot.save_config()
         await ctx.send("Dialogflow response for '" + id + "' (" + (json.dumps(data) if data else 'any data') + ") added!")
 
+    @add.command(name="dialogflowChannel")
+    async def adddialogflowchannel(self, ctx, *args):
+        if ctx.message.channel_mentions:
+            id = ctx.message.channel_mentions[0].id
+        else:
+            if len(args) > 1:
+                id = args[0]
+            else:
+                id = await Helper.waitResponse(self.bot, ctx.ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``")
+
+        self.bot.config["dialogflow_channels"].append(id)
+        self.bot.save_config()
+        await ctx.send("Dialogflow channel " + self.bot.get_channel(int(id)).mention + " added!")
+
+    @add.command(name="dialogflowRole")
+    async def adddialogflowrole(self, ctx, *args):
+        if ctx.message.role_mentions:
+            id = ctx.message.role_mentions[0].id
+        else:
+            if len(args) > 1:
+                id = args[0]
+            else:
+                id = await Helper.waitResponse(self.bot, ctx.ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``")
+
+        self.bot.config["dialogflow_exception_roles"].append(id)
+        self.bot.save_config()
+        await ctx.send("Dialogflow role " + ctx.message.guild.get_role(int(id)).name + " added!")
+
     @remove.command(name="mediaonly")
     async def removemediaonly(self, ctx, *args):
         if ctx.message.channel_mentions:
@@ -291,6 +321,48 @@ class Commands(commands.Cog):
                 await ctx.send("Dialogflow reply deleted")
                 return
             index += 1
+
+    @remove.command(name="dialogflowChannel")
+    async def removedialogflowchannel(self, ctx, *args):
+        if ctx.message.channel_mentions:
+            id = ctx.message.channel_mentions[0].id
+        else:
+            if len(args) > 1:
+                id = args[0]
+            else:
+                id = await Helper.waitResponse(self.bot, ctx.ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``")
+        index = 0
+        for channel in self.bot.config["dialogflow_channels"]:
+            if channel == id:
+                del self.bot.config["dialogflow_channels"][index]
+                self.bot.save_config()
+                await ctx.send("Dialogflow Channel removed!")
+                return
+            else:
+                index += 1
+        await ctx.send("Dialogflow channel could not be found!")
+
+    @remove.command(name="dialogflowRole")
+    async def removedialogflowrole(self, ctx, *args):
+        if ctx.message.role_mentions:
+            id = ctx.message.role_mentions[0].id
+        else:
+            if len(args) > 1:
+                id = args[0]
+            else:
+                id = await Helper.waitResponse(self.bot, ctx.ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``")
+        index = 0
+        for channel in self.bot.config["dialogflow_exception_roles"]:
+            if channel == id:
+                del self.bot.config["dialogflow_exception_roles"][index]
+                self.bot.save_config()
+                await ctx.send("Dialogflow role removed!")
+                return
+            else:
+                index += 1
+        await ctx.send("Dialogflow role could not be found!")
 
     @commands.command()
     @commands.check(t3_only)
