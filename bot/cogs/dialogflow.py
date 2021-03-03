@@ -9,6 +9,7 @@ import json
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH))
 DIALOGFLOW_PROJECT_ID = DIALOGFLOW_AUTH['project_id']
+SESSION_LIFETIME = 10 * 60 # 10 minutes to avoid repeated false positives
 
 class DialogFlow(commands.Cog):
     def __init__(self, bot):
@@ -58,7 +59,7 @@ class DialogFlow(commands.Cog):
                         return message2.author == message.author and message2.channel == message.channel
 
                     try:
-                        response = await self.bot.wait_for('message', timeout=60.0, check=check)
+                        response = await self.bot.wait_for('message', timeout=SESSION_LIFETIME, check=check)
                     except asyncio.TimeoutError:
                         del self.session_ids[message.author.id]
                 else:
