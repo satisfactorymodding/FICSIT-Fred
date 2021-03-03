@@ -19,6 +19,9 @@
         696718959193489438,
         562121682538594314
     ],
+    "dialogflow": [],
+    "dialogflow_channels": [],
+    "dialogflow_exception_roles": [],
     "commands": [
         {
             "command": "docs",
