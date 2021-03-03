@@ -13,7 +13,6 @@ import os
 import sys
 import typing
 
-
 from discord.ext import commands
 
 
@@ -25,6 +24,7 @@ async def t3_only(ctx):
 async def mod_only(ctx):
     return (ctx.author.id == 227473074616795137 or
             ctx.author.permissions_in(ctx.bot.modchannel).send_messages)
+
 
 class Commands(commands.Cog):
     def __init__(self, bot):
@@ -111,6 +111,41 @@ class Commands(commands.Cog):
         index = search.init_index('ficsit')
         query = index.search(args + " " + version)
         await ctx.send("This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
+
+    @commands.group()
+    @commands.check(t3_only)
+    async def DF(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await ctx.send('Invalid sub command passed...')
+            return
+
+    @DF.command(name="setstate")
+    async def dialogflowSetState(self, ctx, *args):
+        if len(args) > 0:
+            data = args[0]
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message, "Should the NLP be on or off ?")
+        if data.lower() in ["0", "false", "no", "off"]:
+            self.bot.config["dialogflow state"] = False
+            await ctx.send("The NLP is now off !")
+        else:
+            self.bot.config["dialogflow state"] = True
+            await ctx.send("The NLP is now on !")
+        self.bot.save_config()
+
+    @DF.command(name="setdebug")
+    async def dialogflowSetDebug(self, ctx, *args):
+        if len(args) > 0:
+            data = args[0]
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message, "Should the NLP be in debugging mode ?")
+        if data.lower() in ["0", "false", "no", "off"]:
+            self.bot.config["dialogflow debug state"] = False
+            await ctx.send("The NLP debugging mode is now off !")
+        else:
+            self.bot.config["dialogflow debug state"] = True
+            await ctx.send("The NLP debugging mode is now on !")
+        self.bot.save_config()
 
     @commands.group()
     @commands.check(t3_only)
@@ -201,22 +236,25 @@ class Commands(commands.Cog):
             data = False
         else:
             data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
-                
+
         if response == True:
             await ctx.send("Response should be a string or False (use the response from dialogflow)")
             return
-        
+
         for dialogflowReply in self.bot.config["dialogflow"]:
-            if dialogflowReply["id"] == id and (dialogflowReply["data"] == data):                
-                should_delete = await Helper.waitResponse(self.bot, ctx.message, "Dialogflow response with this parameters already exists. Do you want to replace it? (Yes/No)")
+            if dialogflowReply["id"] == id and (dialogflowReply["data"] == data):
+                should_delete = await Helper.waitResponse(self.bot, ctx.message,
+                                                          "Dialogflow response with this parameters already exists. Do you want to replace it? (Yes/No)")
                 should_delete = should_delete.lower()
                 if should_delete == 'no' or should_delete == 'n' or should_delete == 'false':
                     return
                 await self.removedialogflow(ctx, id, *args)
-        
-        self.bot.config["dialogflow"].append({"id": id, "data": data, "response": response, "has_followup": has_followup})
+
+        self.bot.config["dialogflow"].append(
+            {"id": id, "data": data, "response": response, "has_followup": has_followup})
         self.bot.save_config()
-        await ctx.send("Dialogflow response for '" + id + "' (" + (json.dumps(data) if data else 'any data') + ") added!")
+        await ctx.send(
+            "Dialogflow response for '" + id + "' (" + (json.dumps(data) if data else 'any data') + ") added!")
 
     @add.command(name="dialogflowChannel")
     async def adddialogflowchannel(self, ctx, *args):
@@ -388,7 +426,7 @@ class Commands(commands.Cog):
                 id = int(args[0])
             else:
                 id = int(await Helper.waitResponse(self.bot, ctx.message,
-                                               "What is the ID for the channel? e.g. ``709509235028918334``"))
+                                                   "What is the ID for the channel? e.g. ``709509235028918334``"))
         self.bot.config["filter channel"] = int(id)
         self.bot.save_config()
         await ctx.send(
@@ -404,7 +442,7 @@ class Commands(commands.Cog):
                 id = int(args[0])
             else:
                 id = int(await Helper.waitResponse(self.bot, ctx.message,
-                                               "What is the ID for the channel? e.g. ``709509235028918334``"))
+                                                   "What is the ID for the channel? e.g. ``709509235028918334``"))
         self.bot.config["mod channel"] = int(id)
         self.bot.save_config()
         await ctx.send(
@@ -420,7 +458,7 @@ class Commands(commands.Cog):
                 id = int(args[0])
             else:
                 id = int(await Helper.waitResponse(self.bot, ctx.message,
-                                               "What is the ID for the channel? e.g. ``709509235028918334``"))
+                                                   "What is the ID for the channel? e.g. ``709509235028918334``"))
         self.bot.config["githook channel"] = id
         self.bot.save_config()
         await ctx.send(
@@ -436,5 +474,3 @@ class Commands(commands.Cog):
         self.bot.command_prefix = args[0]
         self.bot.save_config()
         await ctx.send("Prefix changed to " + args[0])
-
-
