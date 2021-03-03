@@ -161,6 +161,13 @@ class Commands(commands.Cog):
             await ctx.send('Invalid sub command passed...')
             return
 
+    @commands.group()
+    @commands.check(t3_only)
+    async def modify(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await ctx.send('Invalid sub command passed...')
+            return
+
     @add.command(name="mediaonly")
     async def addmediaonly(self, ctx, *args):
         if ctx.message.channel_mentions:
@@ -174,7 +181,29 @@ class Commands(commands.Cog):
 
         self.bot.config["media only channels"].append(id)
         self.bot.save_config()
-        await ctx.send("Media only channel " + self.bot.get_channel(int(id)).mention + " added!")
+        await ctx.send("Media only channel " + self.bot.get_channel(int(id)).mention + " added !")
+
+    @remove.command(name="mediaonly")
+    async def removemediaonly(self, ctx, *args):
+        if ctx.message.channel_mentions:
+            id = int(ctx.message.channel_mentions[0].id)
+        else:
+            if len(args) > 0:
+                id = int(args[0])
+            else:
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``"))
+
+        index = 0
+        for response in self.bot.config["media only channels"]:
+            if response == id:
+                del self.bot.config["media only channels"][index]
+                self.bot.save_config()
+                await ctx.send("Media Only Channel removed !")
+                return
+            else:
+                index += 1
+        await ctx.send("Media Only Channel could not be found !")
 
     @add.command(name="command")
     async def addcommand(self, ctx, *args):
@@ -199,7 +228,72 @@ class Commands(commands.Cog):
 
         self.bot.config["commands"].append({"command": command, "response": response})
         self.bot.save_config()
-        await ctx.send("Command '" + command + "' added!")
+        await ctx.send("Command '" + command + "' added !")
+
+    @remove.command(name="command")
+    async def removecommand(self, ctx, *args):
+        if args:
+            command = args[0]
+        else:
+            command = await Helper.waitResponse(self.bot, ctx.message, "What is the command? e.g. ``install``")
+
+        command = command.lower()
+        index = 0
+        for response in self.bot.config["commands"]:
+            if response["command"].lower() == command:
+                del self.bot.config["commands"][index]
+                self.bot.save_config()
+                await ctx.send("Command removed !")
+                return
+            else:
+                index += 1
+        await ctx.send("Command could not be found !")
+
+    @modify.command(name="command")
+    async def modifycommand(self, ctx, *args):
+        if args:
+            command = args[0]
+        else:
+            command = await Helper.waitResponse(self.bot, ctx.message, "What is the command to modify ? e.g. ``install``")
+
+        for scommand in (self.bot.config["special commands"] + self.bot.config[
+            "management commands"] + self.bot.config["miscellaneous commands"]):
+            if command == scommand["command"]:
+                await ctx.send("This command is special and cannot be modified")
+                return
+
+
+
+        command = command.lower()
+        index = 0
+        for response in self.bot.config["commands"]:
+            if response["command"].lower() == command:
+                break
+            else:
+                index += 1
+        commandfound = not (index == len(self.bot.config["commands"]))
+        if not commandfound:
+            createcommand = await Helper.waitResponse(self.bot, ctx.message, "Command could not be found ! Do you want to create it ?")
+            if createcommand.lower() in ["0", "false", "no", "off"]:
+                await ctx.send("Understood. Aborting")
+                return
+        if len(args) == 2:
+            response = args[1]
+        elif len(args) > 1:
+            response = " ".join(args[1:])
+        else:
+            response = await Helper.waitResponse(self.bot, ctx.message, "What is the response? e.g. ``Hello there`` "
+                                                                        "or an image or link to an image")
+
+        if not commandfound:
+            self.bot.config["commands"].append({"command": command, "response": response})
+            self.bot.save_config()
+            await ctx.send("Command '" + command + "' added !")
+        else:
+            self.bot.config["commands"][index]["response"] = response
+            self.bot.save_config()
+            await ctx.send("Command '" + command + "' modified !")
+
 
     @add.command(name="crash")
     async def addcrash(self, ctx, *args):
@@ -230,8 +324,25 @@ class Commands(commands.Cog):
         self.bot.save_config()
         await ctx.send("Known crash '" + name + "' added!")
 
+    @remove.command(name="crash")
+    async def removecrash(self, ctx, *args):
+        if args:
+            name = args[0]
+        else:
+            name = await Helper.waitResponse(self.bot, ctx.message, "Which known crash do you want to remove ?")
+
+        index = 0
+        for crash in self.bot.config["known crashes"]:
+            if crash["name"].lower() == name.lower():
+                del self.bot.config["known crashes"][index]
+                self.bot.save_config()
+                await ctx.send("Crash removed!")
+                return
+            index += 1
+        await ctx.send("Crash could not be found!")
+
     @add.command(name="dialogflow")
-    async def dialogflow(self, ctx, id: str, response: typing.Union[bool, str], has_followup: bool, *args):
+    async def adddialogflow(self, ctx, id: str, response: typing.Union[bool, str], has_followup: bool, *args):
         if len(args) == 0:
             data = False
         else:
@@ -256,94 +367,6 @@ class Commands(commands.Cog):
         await ctx.send(
             "Dialogflow response for '" + id + "' (" + (json.dumps(data) if data else 'any data') + ") added!")
 
-    @add.command(name="dialogflowChannel")
-    async def adddialogflowchannel(self, ctx, *args):
-        if ctx.message.channel_mentions:
-            id = int(ctx.message.channel_mentions[0].id)
-        else:
-            if len(args) > 0:
-                id = int(args[0])
-            else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
-                                                                          "``709509235028918334``"))
-
-        self.bot.config["dialogflow_channels"].append(id)
-        self.bot.save_config()
-        await ctx.send("Dialogflow channel " + self.bot.get_channel(int(id)).mention + " added!")
-
-    @add.command(name="dialogflowRole")
-    async def adddialogflowrole(self, ctx, *args):
-        if ctx.message.role_mentions:
-            id = int(ctx.message.role_mentions[0].id)
-        else:
-            if len(args) > 0:
-                id = int(args[0])
-            else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
-                                                                          "``809710343533232129``"))
-
-        self.bot.config["dialogflow_exception_roles"].append(id)
-        self.bot.save_config()
-        await ctx.send("Dialogflow role " + ctx.message.guild.get_role(int(id)).name + " added!")
-
-    @remove.command(name="mediaonly")
-    async def removemediaonly(self, ctx, *args):
-        if ctx.message.channel_mentions:
-            id = int(ctx.message.channel_mentions[0].id)
-        else:
-            if len(args) > 0:
-                id = int(args[0])
-            else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
-                                                                          "``709509235028918334``"))
-
-        index = 0
-        for response in self.bot.config["media only channels"]:
-            if response == id:
-                del self.bot.config["media only channels"][index]
-                self.bot.save_config()
-                await ctx.send("Media Only Channel removed!")
-                return
-            else:
-                index += 1
-        await ctx.send("Media Only Channel could not be found!")
-
-    @remove.command(name="command")
-    async def removecommand(self, ctx, *args):
-        if args:
-            command = args[0]
-        else:
-            command = await Helper.waitResponse(self.bot, ctx.message, "What is the command? e.g. ``install``")
-
-        command = command.lower()
-        index = 0
-        for response in self.bot.config["commands"]:
-            if response["command"].lower() == command:
-                del self.bot.config["commands"][index]
-                self.bot.save_config()
-                await ctx.send("Command removed!")
-                return
-            else:
-                index += 1
-        await ctx.send("Command could not be found!")
-
-    @remove.command(name="crash")
-    async def removecrash(self, ctx, *args):
-        if args:
-            name = args[0]
-        else:
-            name = await Helper.waitResponse(self.bot, ctx.message, "Which known crash do you want to remove?")
-
-        index = 0
-        for crash in self.bot.config["known crashes"]:
-            if crash["name"].lower() == name.lower():
-                del self.bot.config["known crashes"][index]
-                self.bot.save_config()
-                await ctx.send("Crash removed!")
-                return
-            index += 1
-        await ctx.send("Crash could not be found!")
-
     @remove.command(name="dialogflow")
     async def removedialogflow(self, ctx, id: str, *args):
         if len(args) == 0:
@@ -359,6 +382,21 @@ class Commands(commands.Cog):
                 await ctx.send("Dialogflow reply deleted")
                 return
             index += 1
+
+    @add.command(name="dialogflowChannel")
+    async def adddialogflowchannel(self, ctx, *args):
+        if ctx.message.channel_mentions:
+            id = int(ctx.message.channel_mentions[0].id)
+        else:
+            if len(args) > 0:
+                id = int(args[0])
+            else:
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``"))
+
+        self.bot.config["dialogflow_channels"].append(id)
+        self.bot.save_config()
+        await ctx.send("Dialogflow channel " + self.bot.get_channel(int(id)).mention + " added!")
 
     @remove.command(name="dialogflowChannel")
     async def removedialogflowchannel(self, ctx, *args):
@@ -380,6 +418,21 @@ class Commands(commands.Cog):
             else:
                 index += 1
         await ctx.send("Dialogflow channel could not be found!")
+
+    @add.command(name="dialogflowRole")
+    async def adddialogflowrole(self, ctx, *args):
+        if ctx.message.role_mentions:
+            id = int(ctx.message.role_mentions[0].id)
+        else:
+            if len(args) > 0:
+                id = int(args[0])
+            else:
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``"))
+
+        self.bot.config["dialogflow_exception_roles"].append(id)
+        self.bot.save_config()
+        await ctx.send("Dialogflow role " + ctx.message.guild.get_role(int(id)).name + " added!")
 
     @remove.command(name="dialogflowRole")
     async def removedialogflowrole(self, ctx, *args):
