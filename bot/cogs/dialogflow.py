@@ -38,7 +38,10 @@ class DialogFlow(commands.Cog):
             self.session_ids[message.author.id] = session_id
         
         session = session_client.session_path(DIALOGFLOW_PROJECT_ID, session_id)
-        
+
+        if not message.content:
+            return
+
         text_input = dialogflow.TextInput(text=message.content[0:256], language_code='en')
 
         query_input = dialogflow.QueryInput(text=text_input)

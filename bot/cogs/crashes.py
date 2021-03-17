@@ -47,7 +47,7 @@ class Crashes(commands.Cog):
                         metadata = json.load(metadataFile)
                         if metadata["selectedInstall"]:
                             CL = int(metadata["selectedInstall"]["version"])
-                        if len(metadata["installedMods"]) > 0:
+                        if "installedMods" in metadata and len(metadata["installedMods"]) > 0:
                             sml_version = metadata["smlVersion"]
                             smb_version = metadata["bootstrapperVersion"]
                             path = metadata["selectedInstall"]["installLocation"]
