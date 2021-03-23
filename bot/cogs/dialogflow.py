@@ -55,7 +55,7 @@ class DialogFlow(commands.Cog):
         for dialogflowReply in self.bot.config["dialogflow"]:
             if dialogflowReply["id"] == intent_id and (not dialogflowReply["data"] or dialogflowReply["data"] == response_data):
                 if not dialogflowReply["response"]:
-                    await message.channel.send(response_text)
+                    await message.channel.send(message.author.mention + " : " + response_text)
                 else:
                     if dialogflowReply["response"].startswith(self.bot.command_prefix):
                         command = dialogflowReply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]

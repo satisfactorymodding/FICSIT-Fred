@@ -1,12 +1,10 @@
 import asyncio
 import inspect
-import io
 import json
 import logging
 import os
 import sys
 import textwrap
-import time
 import traceback
 import cogs.commands as Commands
 import cogs.webhooklistener as WebhookListener
@@ -41,7 +39,6 @@ class Bot(discord.ext.commands.Bot):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         with open("../config/config.json", "r") as file:
             self.config = json.load(file)
         self.command_prefix = self.config["prefix"]
@@ -63,8 +60,7 @@ class Bot(discord.ext.commands.Bot):
         self.Crashes = self.get_cog("Crashes")
         self.NoShortUrl = self.get_cog("NoShortUrl")
         self.DialogFlow = self.get_cog("DialogFlow")
-
-        self.version = "2.5.1"
+        self.version = "2.5.2"
         self.running = True
         self.loop = asyncio.get_event_loop()
         source = inspect.getsource(discord.abc.Messageable.send)

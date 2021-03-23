@@ -9,7 +9,6 @@ from urllib.request import urlopen
 import io
 import json
 
-
 class Crashes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -74,7 +73,7 @@ class Crashes(commands.Cog):
             else:
                 try:
                     image = Image.open(file)
-                    ratio = 4320 / image.height
+                    ratio = 2160 / image.height
                     if ratio > 1:
                         image = image.resize((round(image.width * ratio), round(image.height * ratio)),
                                              Image.LANCZOS)
@@ -84,7 +83,7 @@ class Crashes(commands.Cog):
                     image = enhancerContrast.enhance(2)
                     enhancerSharpness = ImageEnhance.Sharpness(image)
                     image = enhancerSharpness.enhance(10)
-                    data = image_to_string(image, lang="eng")
+                    data = image_to_string(image)
 
                 except:
                     data = ""
