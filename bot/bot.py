@@ -1,10 +1,8 @@
 import asyncio
-import inspect
 import json
 import logging
 import os
 import sys
-import textwrap
 import traceback
 import cogs.commands as Commands
 import cogs.webhooklistener as WebhookListener
@@ -32,13 +30,9 @@ class Bot(discord.ext.commands.Bot):
     async def isAlive(self):
         try:
             user = await self.fetch_user(227473074616795137)
-            queue = not self.queue_checker.done()
         except:
             return False
-        if user and queue:
-            return True
-        else:
-            return False
+        return user
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
