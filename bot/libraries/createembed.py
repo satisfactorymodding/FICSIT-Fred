@@ -2,7 +2,7 @@ import discord
 import datetime
 import requests
 import json
-import librairies.helper as Helper
+import libraries.helper as Helper
 import os
 import shutil
 

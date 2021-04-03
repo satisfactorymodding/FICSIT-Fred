@@ -1,8 +1,8 @@
 import discord
 import asyncio
-import librairies.createembed as CreateEmbed
+import libraries.createembed as CreateEmbed
 import json
-import librairies.helper as Helper
+import libraries.helper as Helper
 import matplotlib.pyplot as plt
 import datetime
 import logging

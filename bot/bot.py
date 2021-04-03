@@ -14,14 +14,17 @@ import cogs.noshorturl
 import cogs.dialogflow
 import discord
 import discord.ext.commands
-
-import librairies.createembed as CreateEmbed
+import sqlobject as sql
+import config
+import libraries.createembed as CreateEmbed
 from logstash_async.handler import AsynchronousLogstashHandler
 
-assert (os.environ.get("FRED_IP")), "The ENV variable 'FRED_IP' isn't set"
-assert (os.environ.get("FRED_PORT")), "The ENV variable 'FRED_PORT' isn't set"
-assert (os.environ.get("FRED_TOKEN")), "The ENV variable 'FRED_TOKEN' isn't set"
-assert (os.environ.get("DIALOGFLOW_AUTH")), "The ENV variable 'DIALOGFLOW_AUTH' isn't set"
+ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
+           "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
+           "FRED_SQL_HOST"]
+
+for var in ENVVARS:
+    assert (os.environ.get(var)), "The ENV variable '{}' isn't set".format(var)
 
 
 class Bot(discord.ext.commands.Bot):
@@ -42,6 +45,39 @@ class Bot(discord.ext.commands.Bot):
         with open("../config/config.json", "r") as file:
             self.config = json.load(file)
         self.command_prefix = self.config["prefix"]
+        self.setup_logger()
+        self.setup_DB()
+        self.setup_cogs()
+        self.version = "2.6.0"
+        self.running = True
+        self.loop = asyncio.get_event_loop()
+
+    async def on_ready(self):
+        self.logger.info(str(self.config))
+        self.modchannel = self.get_channel(int(self.config["mod channel"]))
+        assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
+        print('We have logged in as {0.user}'.format(self))
+
+    async def on_reaction_add(self, reaction, user):
+        if not user.bot and reaction.emoji == "❌":
+            await reaction.message.delete()
+
+    def setup_DB(self):
+        self.logger.info("Connecting to the database")
+        user = os.environ.get("FRED_SQL_USER")
+        password = os.environ.get("FRED_SQL_PASSWORD")
+        host = os.environ.get("FRED_SQL_HOST")
+        dbname = os.environ.get("FRED_SQL_DB")
+        connection = sql.connectionForURI("postgresql://{}:{}@{}:5432/{}".format(user, password, host, dbname))
+        sql.sqlhub.processConnection = connection
+        try:
+            config.Commands.get(0)
+        except sql.dberrors.ProgrammingError:
+            print("The tables are missing from the DB. Creating them and populating with the config file")
+            config.create_missing_tables()
+            config.convert_old_config()
+
+    def setup_logger(self):
         if os.environ.get("FRED_LOG_HOST") and os.environ.get("FRED_LOG_PORT"):
             self.logger = logging.getLogger("python-logstash-logger")
             self.logger.addHandler(
@@ -50,6 +86,8 @@ class Bot(discord.ext.commands.Bot):
         else:
             self.logger = logging.Logger("logger")
         self.logger.setLevel(logging.INFO)
+
+    def setup_cogs(self):
         self.add_cog(Commands.Commands(self))
         self.add_cog(WebhookListener.Githook(self))
         self.add_cog(cogs.mediaonly.MediaOnly(self))
@@ -60,38 +98,6 @@ class Bot(discord.ext.commands.Bot):
         self.Crashes = self.get_cog("Crashes")
         self.NoShortUrl = self.get_cog("NoShortUrl")
         self.DialogFlow = self.get_cog("DialogFlow")
-        self.version = "2.5.2"
-        self.running = True
-        self.loop = asyncio.get_event_loop()
-        source = inspect.getsource(discord.abc.Messageable.send)
-        source = textwrap.dedent(source)
-        assert ("content = str(content) if content is not None else None" in source)
-        source = source.replace("def send", "def new_send")
-        source = source.replace("isinstance(file, File)", "isinstance(file, discord.File)")
-        r = """
-    async def check_delete(ret=ret):
-        def check(reaction, user):
-            if reaction.message.id == ret.id and not user.bot and reaction.emoji == "❌":
-                return True
-        try:
-            await client.wait_for("reaction_add", check=check, timeout=60.0)
-            await ret.delete()
-        except asyncio.TimeoutError:
-            pass
-    asyncio.create_task(check_delete(ret))
-    return ret
-                """
-        source = source.replace("return ret", r)
-        exec(source, globals())
-        discord.abc.Messageable.send = new_send
-
-
-    async def on_ready(self):
-        self.logger.info(str(self.config))
-        self.modchannel = self.get_channel(int(self.config["mod channel"]))
-        assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
-        print('We have logged in as {0.user}'.format(self))
-
 
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
@@ -130,9 +136,6 @@ class Bot(discord.ext.commands.Bot):
             await self.process_commands(message)
             await self.Crashes.process_message(message)
             await self.DialogFlow.process_message(message)
-    
-    def save_config(self):
-        json.dump(self.config, open("../config/config.json", "w"), indent=4)
 
 
 client = Bot("?", help_command=None)
