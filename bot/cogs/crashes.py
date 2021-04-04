@@ -9,6 +9,9 @@ from urllib.request import urlopen
 import io
 import json
 
+import config
+
+
 class Crashes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -53,9 +56,10 @@ class Crashes(commands.Cog):
                             hasMetadata = True
                             "Resolved imports successfully; Calling DllMain"
 
+                    # TODO Optimise this so it doesn't ask for all the data, if possible
                     if "pre-launch-debug.log" in file.namelist():
                         bootLog = file.open("pre-launch-debug.log").readlines()
-                        for crash in self.bot.config["known crashes"]:
+                        for crash in config.Crashes.fetch_all():
                             for line in bootLog:
                                 if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(
                                         crash["crash"]) * 0.1:
@@ -178,7 +182,7 @@ class Crashes(commands.Cog):
         except:
             pass
         data = data[len(data) - 100000:]
-        for crash in self.bot.config["known crashes"]:
+        for crash in config.Crashes.fetch_all():
             for line in data.split("\n"):
                 if line.startswith("["): line = line[80:]
                 if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(crash["crash"]) * 0.1:

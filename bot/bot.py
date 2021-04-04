@@ -36,19 +36,16 @@ class Bot(discord.ext.commands.Bot):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        with open("../config/config.json", "r") as file:
-            self.config = json.load(file)
-        self.command_prefix = self.config["prefix"]
         self.setup_logger()
         self.setup_DB()
+        self.command_prefix = config.Misc.get_prefix()
         self.setup_cogs()
         self.version = "2.6.0"
         self.running = True
         self.loop = asyncio.get_event_loop()
 
     async def on_ready(self):
-        self.logger.info(str(self.config))
-        self.modchannel = self.get_channel(int(self.config["mod channel"]))
+        self.modchannel = self.get_channel(config.Misc.get_mod_channel())
         assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
         print('We have logged in as {0.user}'.format(self))
 
@@ -62,10 +59,10 @@ class Bot(discord.ext.commands.Bot):
         password = os.environ.get("FRED_SQL_PASSWORD")
         host = os.environ.get("FRED_SQL_HOST")
         dbname = os.environ.get("FRED_SQL_DB")
-        connection = sql.connectionForURI("postgresql://{}:{}@{}:5432/{}".format(user, password, host, dbname))
+        self.db = connection = sql.connectionForURI("postgresql://{}:{}@{}:5432/{}".format(user, password, host, dbname))
         sql.sqlhub.processConnection = connection
         try:
-            config.Commands.get(0)
+            config.Commands.get(1)
         except sql.dberrors.ProgrammingError:
             print("The tables are missing from the DB. Creating them and populating with the config file")
             config.create_missing_tables()
@@ -112,7 +109,7 @@ class Bot(discord.ext.commands.Bot):
         if embed == "Debug":
             print("Non-supported Payload received")
         else:
-            channel = self.get_channel(self.config["githook channel"])
+            channel = self.get_channel(config.Misc.get_githook_channel())
             await channel.send(content=None, embed=embed)
 
     async def on_message(self, message):

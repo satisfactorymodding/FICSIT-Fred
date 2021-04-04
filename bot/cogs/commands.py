@@ -1,5 +1,7 @@
 import discord
 import asyncio
+
+import config
 import libraries.createembed as CreateEmbed
 import json
 import libraries.helper as Helper
@@ -18,7 +20,7 @@ from discord.ext import commands
 
 async def t3_only(ctx):
     return (ctx.author.id == 227473074616795137 or
-            ctx.author.permissions_in(ctx.bot.get_channel(int(ctx.bot.config["filter channel"]))).send_messages)
+            ctx.author.permissions_in(ctx.bot.get_channel(config.Misc.get_filter_channel())).send_messages)
 
 
 async def mod_only(ctx):
@@ -32,11 +34,11 @@ class Commands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        # We get an error about commands being found when using "runtime" commands, so we have to ignore that
         if isinstance(error, commands.CommandNotFound):
             command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
-            for automation in self.bot.config["commands"]:
-                if command == automation["command"]:
-                    return
+            if config.Commands.fetch(command):
+                return
         await ctx.send(error)
 
     @commands.Cog.listener()
@@ -44,11 +46,11 @@ class Commands(commands.Cog):
         if message.author.bot or not self.bot.running:
             return
         if message.content.startswith(self.bot.command_prefix):
-            command = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
-            for automation in self.bot.config["commands"]:
-                if command.lower() == automation["command"].lower():
-                    await message.channel.send(automation["response"])
-                    return
+            name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
+            command = config.Commands.fetch(name)
+            if command:
+                await message.channel.send(command["content"])
+                return
 
     @commands.command()
     async def version(self, ctx):

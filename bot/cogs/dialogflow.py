@@ -5,7 +5,7 @@ import os
 import uuid
 import asyncio
 import json
-
+import config
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH))
 DIALOGFLOW_PROJECT_ID = DIALOGFLOW_AUTH['project_id']
@@ -19,16 +19,17 @@ class DialogFlow(commands.Cog):
     async def process_message(self, message):
         if message.content.startswith(self.bot.command_prefix):
             return
-        if not self.bot.config["dialogflow state"]:
+        if not config.Misc.get_dialogflow_state():
             return
-        if not message.channel.id in self.bot.config["dialogflow_channels"]:
+        if not config.DialogflowChannels.fetch(message.channel.id):
             return
-        if not self.bot.config["dialogflow debug state"]:
+        if not config.Misc.get_dialogflow_debug_state():
             roles = message.author.roles[1:]
-            if len(roles) != 0 and len(roles) != len(self.bot.config["dialogflow_exception_roles"]):
+            exceptionroles = config.DialogflowExceptionRoles.fetch_all()
+            if len(roles) != 0 and len(roles) != len(exceptionroles):
                 return
             for role in roles:
-                if role.id not in self.bot.config["dialogflow_exception_roles"]:
+                if role.id not in exceptionroles:
                     return
 
         if message.author.id in self.session_ids:
@@ -51,7 +52,7 @@ class DialogFlow(commands.Cog):
         response_text = response.query_result.fulfillment_text
         response_data = response.query_result.parameters
         intent_id = response.query_result.intent.name.split('/')[-1]
-
+        # TODO After reworking the dialogflow db format, change the below code to use the db and reenable DF
         for dialogflowReply in self.bot.config["dialogflow"]:
             if dialogflowReply["id"] == intent_id and (not dialogflowReply["data"] or dialogflowReply["data"] == response_data):
                 if not dialogflowReply["response"]:
@@ -78,5 +79,3 @@ class DialogFlow(commands.Cog):
                     del self.session_ids[message.author.id]
                 
                 break
-
-      

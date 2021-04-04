@@ -1,6 +1,7 @@
 from sqlobject import *
 import json
 
+
 class ActionColours(SQLObject):
     class sqlmeta:
         table = "action_colours"
@@ -9,11 +10,29 @@ class ActionColours(SQLObject):
     colour = IntCol()
 
 
+def get_action_colour(name):
+    query = ActionColours.selectBy(name=name.lower())
+    results = list(query)
+    if len(results) > 0:
+        return query[0].colour
+    else:
+        return None
+
+
 class MediaOnlyChannels(SQLObject):
     class sqlmeta:
         table = "media_only_channels"
 
     channel_id = BigIntCol()
+
+    @staticmethod
+    def fetch(channel_id):
+        query = MediaOnlyChannels.selectBy(channel_id=channel_id)
+        results = list(query)
+        if len(results) > 0:
+            return query[0].channel_id
+        else:
+            return None
 
 
 class DialogflowChannels(SQLObject):
@@ -22,6 +41,15 @@ class DialogflowChannels(SQLObject):
 
     channel_id = BigIntCol()
 
+    @staticmethod
+    def fetch(channel_id):
+        query = DialogflowChannels.selectBy(channel_id=channel_id)
+        results = list(query)
+        if len(results) > 0:
+            return query[0].channel_id
+        else:
+            return None
+
 
 class DialogflowExceptionRoles(SQLObject):
     class sqlmeta:
@@ -29,21 +57,78 @@ class DialogflowExceptionRoles(SQLObject):
 
     role_id = BigIntCol()
 
+    @staticmethod
+    def fetch(role_id):
+        query = DialogflowExceptionRoles.selectBy(role_id=role_id)
+        results = list(query)
+        if len(results) > 0:
+            return query[0].role_id
+        else:
+            return None
+
+    @staticmethod
+    def fetch_all():
+        query = DialogflowExceptionRoles.select()
+        results = list(query)
+        return [role.role_id for role in results]
+
+
+# TODO change dialogflow format
 
 class Dialogflow(SQLObject):
     data = JSONCol()
 
+    @staticmethod
+    def fetch(name):
+        query = Dialogflow.selectBy(name=name.lower())
+        results = list(query)
+        if len(results) > 0:
+            return dict(query[0])
+        else:
+            return None
+
 
 class Commands(SQLObject):
+
     name = StringCol()
     content = StringCol()
     attachment = StringCol(default=None)
+
+    def as_dict(self):
+        return dict(name=self.name, content=self.content, attachment=self.attachment)
+
+    @staticmethod
+    def fetch(name):
+        query = Commands.selectBy(name=name.lower())
+        results = list(query)
+        if len(results) > 0:
+            return results[0].as_dict()
+        else:
+            return None
 
 
 class Crashes(SQLObject):
     name = StringCol()
     crash = StringCol()
     response = StringCol()
+
+    def as_dict(self):
+        return dict(name=self.name, response=self.response, crash=self.crash)
+
+    @staticmethod
+    def fetch(name):
+        query = Crashes.selectBy(name=name.lower())
+        results = list(query)
+        if len(results) > 0:
+            return dict(results[0])
+        else:
+            return None
+
+    @staticmethod
+    def fetch_all():
+        query = Crashes.select()
+        results = list(query)
+        return (crash.as_dict() for crash in results)
 
 
 class ReservedCommands(SQLObject):
@@ -52,17 +137,71 @@ class ReservedCommands(SQLObject):
 
     name = StringCol()
 
+    @staticmethod
+    def fetch(name):
+        query = ReservedCommands.selectBy(name=name.lower())
+        results = list(query)
+        if len(results) > 0:
+            return True
+        else:
+            return False
+
 
 class Misc(SQLObject):
     class sqlmeta:
         table = "miscellaneous"
 
     filter_channel = BigIntCol(default=None)
+
+    @staticmethod
+    def get_filter_channel():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.filter_channel)))[0].filter_channel
+
+    @staticmethod
+    def set_filter_channel(channel_id: int):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.filter_channel)))[0].filter_channel = channel_id
+
     mod_channel = BigIntCol(default=None)
+
+    @staticmethod
+    def get_mod_channel():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.mod_channel)))[0].mod_channel
+
+    @staticmethod
+    def set_mod_channel(channel_id: int):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.mod_channel)))[0].mod_channel = channel_id
+
     githook_channel = BigIntCol(default=None)
+
+    @staticmethod
+    def get_githook_channel():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.githook_channel)))[0].githook_channel
+
+    @staticmethod
+    def set_githook_channel(channel_id: int):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.githook_channel)))[0].githook_channel = channel_id
+
     prefix = StringCol(default=None)
+
+    @staticmethod
+    def get_prefix():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.prefix)))[0].prefix
+
+    @staticmethod
+    def set_prefix(prefix: str):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.prefix)))[0].prefix = prefix
+
     dialogflow_state = BoolCol(default=None)
+
+    @staticmethod
+    def get_dialogflow_state(state: bool):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_state)))[0].dialogflow_state = state
+
     dialogflow_debug_state = BoolCol(default=None)
+
+    @staticmethod
+    def get_dialogflow_debug_state(state: bool):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_debug_state)))[0].dialogflow_debug_state = state
 
 
 def create_missing_tables():

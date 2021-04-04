@@ -1,12 +1,12 @@
 import discord.ext.commands as commands
 import re
-
+from config import Misc
 class NoShortUrl(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     async def process_message(self, message):
-        if message.author.permissions_in(self.bot.get_channel(self.bot.config["filter channel"])).send_messages or message.author.id == 227473074616795137:
+        if message.author.permissions_in(self.bot.get_channel(Misc.get_filter_channel())).send_messages or message.author.id == 227473074616795137:
             return
         found = re.search(r'https?://(bit\.ly|cutt\.ly|shorturl\.at)/\S+', message.content)
         if found:
