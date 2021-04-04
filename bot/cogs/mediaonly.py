@@ -17,7 +17,7 @@ class MediaOnly(commands.Cog):
                 await message.author.create_dm()
             try:
                 await message.author.send(
-                    "Hi " + message.author.name + ", the channel '" + self.bot.get_channel(automation).name
+                    "Hi " + message.author.name + ", the channel '" + self.bot.get_channel(message.channel.id).name
                     + "' you just tried to message in has been flagged as a 'Media Only' "
                       "channel. This means you must attach a file in order to "
                       "post there. Here is your "

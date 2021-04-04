@@ -33,7 +33,8 @@ class Commands(commands.Cog):
             command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if config.Commands.fetch(command):
                 return
-        await ctx.send(error)
+        await ctx.send("I encountered an error while trying to call this command. Feyko has been notified")
+        raise error
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -41,8 +42,7 @@ class Commands(commands.Cog):
             return
         if message.content.startswith(self.bot.command_prefix):
             name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
-            command = config.Commands.fetch(name)
-            if command:
+            if command := config.Commands.fetch(name):
                 await message.channel.send(command["content"])
                 return
 
@@ -110,39 +110,6 @@ class Commands(commands.Cog):
 
     @commands.group()
     @commands.check(t3_only)
-    async def DF(self, ctx):
-        if ctx.invoked_subcommand is None:
-            await ctx.send('Invalid sub command passed...')
-            return
-
-    @DF.command(name="setstate")
-    async def dialogflowSetState(self, ctx, *args):
-        if len(args) > 0:
-            data = args[0]
-        else:
-            data = await Helper.waitResponse(self.bot, ctx.message, "Should the NLP be on or off ?")
-        if data.lower() in ["0", "false", "no", "off"]:
-            config.Misc.set_dialogflow_state(False)
-            await ctx.send("The NLP is now off !")
-        else:
-            config.Misc.set_dialogflow_state(True)
-            await ctx.send("The NLP is now on !")
-
-    @DF.command(name="setdebug")
-    async def dialogflowSetDebug(self, ctx, *args):
-        if len(args) > 0:
-            data = args[0]
-        else:
-            data = await Helper.waitResponse(self.bot, ctx.message, "Should the NLP be in debugging mode ?")
-        if data.lower() in ["0", "false", "no", "off"]:
-            config.Misc.set_dialogflow_debug_state(False)
-            await ctx.send("The NLP debugging mode is now off !")
-        else:
-            config.Misc.set_dialogflow_debug_state(True)
-            await ctx.send("The NLP debugging mode is now on !")
-
-    @commands.group()
-    @commands.check(t3_only)
     async def add(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid sub command passed...')
@@ -151,6 +118,13 @@ class Commands(commands.Cog):
     @commands.group()
     @commands.check(t3_only)
     async def remove(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await ctx.send('Invalid sub command passed...')
+            return
+
+    @commands.group()
+    @commands.check(t3_only)
+    async def set(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid sub command passed...')
             return
@@ -173,8 +147,11 @@ class Commands(commands.Cog):
                 id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
                                                                           "``709509235028918334``"))
 
-        self.bot.config["media only channels"].append(id)
-        self.bot.save_config()
+        if config.MediaOnlyChannels.fetch(id):
+            await ctx.send("This channel is already a media only channel")
+            return
+
+        config.MediaOnlyChannels(channel_id=id)
         await ctx.send("Media only channel " + self.bot.get_channel(id).mention + " added !")
 
     @remove.command(name="mediaonly")
@@ -202,8 +179,11 @@ class Commands(commands.Cog):
         else:
             command = await Helper.waitResponse(self.bot, ctx.message, "What is the command? e.g. ``install``")
 
-        if config.Commands.fetch(command) or config.ReservedCommands.fetch(command):
+        if config.Commands.fetch(command):
             await ctx.send("This command already exists !")
+            return
+        if config.ReservedCommands.fetch(command):
+            await ctx.send("This command name is reserved")
             return
 
         if len(args) == 2:
@@ -237,15 +217,16 @@ class Commands(commands.Cog):
             commandname = args[0]
         else:
             commandname = await Helper.waitResponse(self.bot, ctx.message,
-                                                "What is the command to modify ? e.g. ``install``")
+                                                    "What is the command to modify ? e.g. ``install``")
 
         if config.ReservedCommands.fetch(commandname):
             await ctx.send("This command is special and cannot be modified")
             return
 
         commandname = commandname.lower()
-        command, commandindb = config.Commands.fetch(commandname)
-        if not command:
+        query = config.Commands.selectBy(name=commandname)
+        results = list(query)
+        if not results:
             createcommand = await Helper.waitResponse(self.bot, ctx.message,
                                                       "Command could not be found ! Do you want to create it ?")
             if createcommand.lower() in ["0", "false", "no", "off"]:
@@ -259,12 +240,12 @@ class Commands(commands.Cog):
             response = await Helper.waitResponse(self.bot, ctx.message, "What is the response? e.g. ``Hello there`` "
                                                                         "or an image or link to an image")
 
-        if not command:
+        if not results:
             config.Commands(name=commandname, content=response)
-            await ctx.send("Command '" + command + "' added !")
+            await ctx.send("Command '" + commandname + "' added !")
         else:
-            commandindb.content = response
-            await ctx.send("Command '" + command + "' modified !")
+            results[0].content = response
+            await ctx.send("Command '" + commandname + "' modified !")
 
     @add.command(name="crash")
     async def addcrash(self, ctx, *args):
@@ -277,6 +258,10 @@ class Commands(commands.Cog):
             name = await Helper.waitResponse(self.bot, ctx.message, "What would you like to name this known "
                                                                     "crash? e.g. ``CommandDave``")
         name = name.lower()
+
+        if config.Crashes.fetch(name):
+            await ctx.send("A crash with this name already exists")
+            return
 
         if len(args) > 1:
             crash = args[1]
@@ -355,6 +340,9 @@ class Commands(commands.Cog):
             else:
                 id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
                                                                           "``709509235028918334``"))
+        if config.DialogflowChannels.fetch(id):
+            await ctx.send("This channel is already a dialogflow channel")
+            return
 
         config.DialogflowChannels(channel_id=id)
         await ctx.send("Dialogflow channel " + self.bot.get_channel(id).mention + " added!")
@@ -387,6 +375,10 @@ class Commands(commands.Cog):
                 id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
                                                                           "``809710343533232129``"))
 
+        if config.DialogflowExceptionRoles.fetch(id):
+            await ctx.send("This role is already a dialogflow exception role")
+            return
+
         config.DialogflowExceptionRoles(role_id=id)
         await ctx.send("Dialogflow role " + ctx.message.guild.get_role(id).name + " added!")
 
@@ -406,6 +398,62 @@ class Commands(commands.Cog):
             await ctx.send("Dialogflow role removed!")
         else:
             await ctx.send("Dialogflow role could not be found!")
+
+    @set.command(name="NLP_state")
+    async def setNLPstate(self, ctx, *args):
+        if len(args) > 0:
+            data = args[0]
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message, "Should the NLP be on or off ?")
+        if data.lower() in ["0", "false", "no", "off"]:
+            config.Misc.set_dialogflow_state(False)
+            await ctx.send("The NLP is now off !")
+        else:
+            config.Misc.set_dialogflow_state(True)
+            await ctx.send("The NLP is now on !")
+
+    @set.command(name="NLP_debug")
+    async def setNLPdebug(self, ctx, *args):
+        if len(args) > 0:
+            data = args[0]
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message, "Should the NLP be in debugging mode ?")
+        if data.lower() in ["0", "false", "no", "off"]:
+            config.Misc.set_dialogflow_debug_state(False)
+            await ctx.send("The NLP debugging mode is now off !")
+        else:
+            config.Misc.set_dialogflow_debug_state(True)
+            await ctx.send("The NLP debugging mode is now on !")
+
+    @set.command(name="welcome_message")
+    async def setwelcomemessage(self, ctx, *args):
+        if len(args) > 0:
+            data = " ".join(args)
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message, "What should the welcome message be ? (Anything "
+                                                                    "under 10 characters will completely disable the "
+                                                                    "mesage)")
+        if len(data) < 10:
+            config.Misc.set_welcome_message("")
+            await ctx.send("The welcome message is now disabled")
+        else:
+            config.Misc.set_welcome_message(data)
+            await ctx.send("The welcome message has been changed !")
+
+    @set.command(name="latest_info")
+    async def setlatestinfo(self, ctx, *args):
+        if len(args) > 0:
+            data = " ".join(args)
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message, "What should the welcome message be ? (Anything "
+                                                                    "under 10 characters will completely disable the "
+                                                                    "mesage)")
+        if len(data) < 10:
+            config.Misc.set_latest_info("")
+            await ctx.send("The latest info message is now disabled")
+        else:
+            config.Misc.set_latest_info(data)
+            await ctx.send("The latest info message has been changed !")
 
     @commands.command()
     @commands.check(t3_only)

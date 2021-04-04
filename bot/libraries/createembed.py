@@ -215,7 +215,7 @@ def mod(name):
     data = data["data"]["getMods"]["mods"]
 
     for mod in data:
-        if mod["name"].lower() == name:
+        if mod["name"].lower() == name.lower():
             data = mod
             break
     if isinstance(data, list):

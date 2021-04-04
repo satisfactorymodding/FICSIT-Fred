@@ -14,7 +14,7 @@ def get_action_colour(name):
     query = ActionColours.selectBy(name=name.lower())
     results = list(query)
     if results:
-        return query[0].colour, query[0]
+        return query[0].colour
     else:
         return None
 
@@ -30,7 +30,7 @@ class MediaOnlyChannels(SQLObject):
         query = MediaOnlyChannels.selectBy(channel_id=channel_id)
         results = list(query)
         if results:
-            return query[0].channel_id, query[0]
+            return query[0].channel_id
         else:
             return None
 
@@ -46,7 +46,7 @@ class DialogflowChannels(SQLObject):
         query = DialogflowChannels.selectBy(channel_id=channel_id)
         results = list(query)
         if results:
-            return query[0].channel_id, query[0]
+            return query[0].channel_id
         else:
             return None
 
@@ -62,7 +62,7 @@ class DialogflowExceptionRoles(SQLObject):
         query = DialogflowExceptionRoles.selectBy(role_id=role_id)
         results = list(query)
         if results:
-            return query[0].role_id, query[0]
+            return query[0].role_id
         else:
             return None
 
@@ -75,19 +75,20 @@ class DialogflowExceptionRoles(SQLObject):
 
 class Dialogflow(SQLObject):
     intent_id = StringCol()
-    data = JSONCol()
+    data = StringCol()
     response = StringCol()
     has_followup = BoolCol()
 
     def as_dict(self):
-        return dict(intent_id=self.intent_id, data=self.data, response=self.response, has_followup=self.has_followup)
+        return dict(intent_id=self.intent_id, data=json.loads(self.data), response=self.response,
+                    has_followup=self.has_followup)
 
     @staticmethod
     def fetch(intent_id, data):
         query = DialogflowExceptionRoles.selectBy(intent_id=intent_id, data=data)
         results = list(query)
         if results:
-            return query[0].as_dict(), query[0]
+            return query[0].as_dict()
         else:
             return None
 
@@ -105,7 +106,7 @@ class Commands(SQLObject):
         query = Commands.selectBy(name=name.lower())
         results = list(query)
         if results:
-            return results[0].as_dict(), results[0]
+            return results[0].as_dict()
         else:
             return None
 
@@ -123,7 +124,7 @@ class Crashes(SQLObject):
         query = Crashes.selectBy(name=name.lower())
         results = list(query)
         if results:
-            return results[0].as_dict(), results[0]
+            return results[0].as_dict()
         else:
             return None
 
@@ -154,7 +155,30 @@ class Misc(SQLObject):
     class sqlmeta:
         table = "miscellaneous"
 
+    welcome_message = StringCol(default=None)
+    latest_info = StringCol(default=None)
     filter_channel = BigIntCol(default=None)
+    mod_channel = BigIntCol(default=None)
+    githook_channel = BigIntCol(default=None)
+    prefix = StringCol(default=None)
+    dialogflow_state = BoolCol(default=None)
+    dialogflow_debug_state = BoolCol(default=None)
+
+    @staticmethod
+    def get_welcome_message():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.welcome_message)))[0].welcome_message
+
+    @staticmethod
+    def set_welcome_message(welcome_message):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.welcome_message)))[0].welcome_message = welcome_message
+
+    @staticmethod
+    def get_latest_info():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.latest_info)))[0].latest_info
+
+    @staticmethod
+    def set_latest_info(latest_info):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.latest_info)))[0].latest_info = latest_info
 
     @staticmethod
     def get_filter_channel():
@@ -164,8 +188,6 @@ class Misc(SQLObject):
     def set_filter_channel(channel_id: int):
         list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.filter_channel)))[0].filter_channel = channel_id
 
-    mod_channel = BigIntCol(default=None)
-
     @staticmethod
     def get_mod_channel():
         return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.mod_channel)))[0].mod_channel
@@ -173,8 +195,6 @@ class Misc(SQLObject):
     @staticmethod
     def set_mod_channel(channel_id: int):
         list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.mod_channel)))[0].mod_channel = channel_id
-
-    githook_channel = BigIntCol(default=None)
 
     @staticmethod
     def get_githook_channel():
@@ -184,8 +204,6 @@ class Misc(SQLObject):
     def set_githook_channel(channel_id: int):
         list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.githook_channel)))[0].githook_channel = channel_id
 
-    prefix = StringCol(default=None)
-
     @staticmethod
     def get_prefix():
         return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.prefix)))[0].prefix
@@ -194,8 +212,6 @@ class Misc(SQLObject):
     def set_prefix(prefix: str):
         list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.prefix)))[0].prefix = prefix
 
-    dialogflow_state = BoolCol(default=None)
-
     @staticmethod
     def get_dialogflow_state():
         return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_state)))[0].dialogflow_state
@@ -203,8 +219,6 @@ class Misc(SQLObject):
     @staticmethod
     def set_dialogflow_state(state: bool):
         list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_state)))[0].dialogflow_state = state
-
-    dialogflow_debug_state = BoolCol(default=None)
 
     @staticmethod
     def get_dialogflow_debug_state():
@@ -233,6 +247,9 @@ def create_missing_tables():
 
 def convert_old_config():
     reservedcommands = ["management commands", "special commands", "miscellaneous commands"]
+
+    Misc(welcome_message="")
+    Misc(latest_info="")
 
     with open("../config/config.json", "r") as file:
         cfg = json.load(file)
@@ -267,7 +284,7 @@ def convert_old_config():
                         i["response"] = None
                     if not i["data"]:
                         i["data"] = None
-                    Dialogflow(intent_id=i["id"], data=i["data"], response=i["response"],
+                    Dialogflow(intent_id=i["id"], data=json.dumps(i["data"]).replace("'", '"'), response=i["response"],
                                has_followup=i["has_followup"])
             elif k == "commands":
                 for i in v:

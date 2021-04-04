@@ -7,10 +7,13 @@ import asyncio
 import json
 import config
 from sqlobject.sqlbuilder import *
+
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
-session_client = dialogflow.SessionsClient(credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH))
+session_client = dialogflow.SessionsClient(
+    credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH))
 DIALOGFLOW_PROJECT_ID = DIALOGFLOW_AUTH['project_id']
-SESSION_LIFETIME = 10 * 60 # 10 minutes to avoid repeated false positives
+SESSION_LIFETIME = 10 * 60  # 10 minutes to avoid repeated false positives
+
 
 class DialogFlow(commands.Cog):
     def __init__(self, bot):
@@ -38,7 +41,7 @@ class DialogFlow(commands.Cog):
         else:
             session_id = uuid.uuid4()
             self.session_ids[message.author.id] = session_id
-        
+
         session = session_client.session_path(DIALOGFLOW_PROJECT_ID, session_id)
 
         if not message.content:
@@ -53,14 +56,14 @@ class DialogFlow(commands.Cog):
         response_text = response.query_result.fulfillment_text
         response_data = response.query_result.parameters
         intent_id = response.query_result.intent.name.split('/')[-1]
-
         query = config.Dialogflow.select(
             "dialogflow.intent_id = '{}' AND ((dialogflow.data IS NULL) OR dialogflow.data = '{}')"
-                .format(intent_id, response_data))
+                .format(intent_id, str(dict(response_data)).replace("'", '"')))
         results = list(query)
         if not len(results):
             return
         dialogflowReply = results[0].as_dict()
+
         if not dialogflowReply["response"]:
             await message.channel.send(message.author.mention + " : " + response_text)
         else:

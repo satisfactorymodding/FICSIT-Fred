@@ -1,15 +1,10 @@
 import asyncio
-import json
 import logging
 import os
 import sys
 import traceback
 import cogs.commands as Commands
-import cogs.webhooklistener as WebhookListener
-import cogs.mediaonly
-import cogs.crashes
-import cogs.noshorturl
-import cogs.dialogflow
+from cogs import commands, crashes, dialogflow, mediaonly, noshorturl, webhooklistener, welcome
 import discord
 import discord.ext.commands
 import sqlobject as sql
@@ -59,13 +54,14 @@ class Bot(discord.ext.commands.Bot):
         password = os.environ.get("FRED_SQL_PASSWORD")
         host = os.environ.get("FRED_SQL_HOST")
         dbname = os.environ.get("FRED_SQL_DB")
-        self.db = connection = sql.connectionForURI("postgresql://{}:{}@{}:5432/{}".format(user, password, host, dbname))
+        self.db = connection = sql.connectionForURI(
+            "postgresql://{}:{}@{}:5432/{}".format(user, password, host, dbname))
         sql.sqlhub.processConnection = connection
+        config.create_missing_tables()
         try:
             config.Commands.get(1)
-        except sql.dberrors.ProgrammingError:
-            self.logger.warning("The tables are missing from the DB. Creating them and populating with the config file")
-            config.create_missing_tables()
+        except:
+            self.logger.warning("There is no registered command. Populating the database with the old config file")
             config.convert_old_config()
 
     def setup_logger(self):
@@ -80,11 +76,12 @@ class Bot(discord.ext.commands.Bot):
 
     def setup_cogs(self):
         self.add_cog(Commands.Commands(self))
-        self.add_cog(WebhookListener.Githook(self))
-        self.add_cog(cogs.mediaonly.MediaOnly(self))
-        self.add_cog(cogs.crashes.Crashes(self))
-        self.add_cog(cogs.noshorturl.NoShortUrl(self))
-        self.add_cog(cogs.dialogflow.DialogFlow(self))
+        self.add_cog(webhooklistener.Githook(self))
+        self.add_cog(mediaonly.MediaOnly(self))
+        self.add_cog(crashes.Crashes(self))
+        self.add_cog(noshorturl.NoShortUrl(self))
+        self.add_cog(dialogflow.DialogFlow(self))
+        self.add_cog(welcome.Welcome(self))
         self.MediaOnly = self.get_cog("MediaOnly")
         self.Crashes = self.get_cog("Crashes")
         self.NoShortUrl = self.get_cog("NoShortUrl")
@@ -120,6 +117,7 @@ class Bot(discord.ext.commands.Bot):
                                        "appropriate channel in the Modding Discord instead.")
             return
 
+        # TODO make the dialogflow and crash responses exclusive
         removed = await self.MediaOnly.process_message(message)
         if not removed:
             removed = await self.NoShortUrl.process_message(message)
@@ -129,5 +127,8 @@ class Bot(discord.ext.commands.Bot):
             await self.DialogFlow.process_message(message)
 
 
-client = Bot("?", help_command=None)
+intents = discord.Intents.default()
+intents.members = True
+
+client = Bot("?", help_command=None, intents=intents)
 client.run(os.environ.get("FRED_TOKEN"))
