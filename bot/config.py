@@ -13,8 +13,8 @@ class ActionColours(SQLObject):
 def get_action_colour(name):
     query = ActionColours.selectBy(name=name.lower())
     results = list(query)
-    if len(results) > 0:
-        return query[0].colour
+    if results:
+        return query[0].colour, query[0]
     else:
         return None
 
@@ -29,8 +29,8 @@ class MediaOnlyChannels(SQLObject):
     def fetch(channel_id):
         query = MediaOnlyChannels.selectBy(channel_id=channel_id)
         results = list(query)
-        if len(results) > 0:
-            return query[0].channel_id
+        if results:
+            return query[0].channel_id, query[0]
         else:
             return None
 
@@ -45,8 +45,8 @@ class DialogflowChannels(SQLObject):
     def fetch(channel_id):
         query = DialogflowChannels.selectBy(channel_id=channel_id)
         results = list(query)
-        if len(results) > 0:
-            return query[0].channel_id
+        if results:
+            return query[0].channel_id, query[0]
         else:
             return None
 
@@ -61,8 +61,8 @@ class DialogflowExceptionRoles(SQLObject):
     def fetch(role_id):
         query = DialogflowExceptionRoles.selectBy(role_id=role_id)
         results = list(query)
-        if len(results) > 0:
-            return query[0].role_id
+        if results:
+            return query[0].role_id, query[0]
         else:
             return None
 
@@ -82,8 +82,17 @@ class Dialogflow(SQLObject):
     def as_dict(self):
         return dict(intent_id=self.intent_id, data=self.data, response=self.response, has_followup=self.has_followup)
 
-class Commands(SQLObject):
+    @staticmethod
+    def fetch(intent_id, data):
+        query = DialogflowExceptionRoles.selectBy(intent_id=intent_id, data=data)
+        results = list(query)
+        if results:
+            return query[0].as_dict(), query[0]
+        else:
+            return None
 
+
+class Commands(SQLObject):
     name = StringCol()
     content = StringCol()
     attachment = StringCol(default=None)
@@ -95,8 +104,8 @@ class Commands(SQLObject):
     def fetch(name):
         query = Commands.selectBy(name=name.lower())
         results = list(query)
-        if len(results) > 0:
-            return results[0].as_dict()
+        if results:
+            return results[0].as_dict(), results[0]
         else:
             return None
 
@@ -113,8 +122,8 @@ class Crashes(SQLObject):
     def fetch(name):
         query = Crashes.selectBy(name=name.lower())
         results = list(query)
-        if len(results) > 0:
-            return dict(results[0])
+        if results:
+            return results[0].as_dict(), results[0]
         else:
             return None
 
@@ -135,7 +144,7 @@ class ReservedCommands(SQLObject):
     def fetch(name):
         query = ReservedCommands.selectBy(name=name.lower())
         results = list(query)
-        if len(results) > 0:
+        if results:
             return True
         else:
             return False
@@ -188,13 +197,21 @@ class Misc(SQLObject):
     dialogflow_state = BoolCol(default=None)
 
     @staticmethod
-    def get_dialogflow_state(state: bool):
+    def get_dialogflow_state():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_state)))[0].dialogflow_state
+
+    @staticmethod
+    def set_dialogflow_state(state: bool):
         list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_state)))[0].dialogflow_state = state
 
     dialogflow_debug_state = BoolCol(default=None)
 
     @staticmethod
-    def get_dialogflow_debug_state(state: bool):
+    def get_dialogflow_debug_state():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_debug_state)))[0].dialogflow_debug_state
+
+    @staticmethod
+    def set_dialogflow_debug_state(state: bool):
         list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_debug_state)))[0].dialogflow_debug_state = state
 
 
@@ -250,7 +267,8 @@ def convert_old_config():
                         i["response"] = None
                     if not i["data"]:
                         i["data"] = None
-                    Dialogflow(intent_id=i["id"], data=i["data"], response=i["response"], has_followup=i["has_followup"])
+                    Dialogflow(intent_id=i["id"], data=i["data"], response=i["response"],
+                               has_followup=i["has_followup"])
             elif k == "commands":
                 for i in v:
                     Commands(name=i["command"], content=i["response"])
