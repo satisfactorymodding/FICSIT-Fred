@@ -3,8 +3,7 @@ import logging
 import os
 import sys
 import traceback
-import cogs.commands as Commands
-from cogs import commands, crashes, dialogflow, mediaonly, noshorturl, webhooklistener, welcome
+from cogs import commands, crashes, dialogflow, mediaonly, noshorturl, webhooklistener, welcome, levelling
 import discord
 import discord.ext.commands
 import sqlobject as sql
@@ -75,13 +74,14 @@ class Bot(discord.ext.commands.Bot):
         self.logger.setLevel(logging.INFO)
 
     def setup_cogs(self):
-        self.add_cog(Commands.Commands(self))
+        self.add_cog(commands.Commands(self))
         self.add_cog(webhooklistener.Githook(self))
         self.add_cog(mediaonly.MediaOnly(self))
         self.add_cog(crashes.Crashes(self))
         self.add_cog(noshorturl.NoShortUrl(self))
         self.add_cog(dialogflow.DialogFlow(self))
         self.add_cog(welcome.Welcome(self))
+        self.add_cog(levelling.Levelling(self))
         self.MediaOnly = self.get_cog("MediaOnly")
         self.Crashes = self.get_cog("Crashes")
         self.NoShortUrl = self.get_cog("NoShortUrl")
@@ -113,8 +113,15 @@ class Bot(discord.ext.commands.Bot):
         if message.author.bot or not self.running:
             return
         if isinstance(message.channel, discord.DMChannel):
-            await message.channel.send("I do not allow commands to be used by direct message, please use an "
-                                       "appropriate channel in the Modding Discord instead.")
+            if message.content.lower() == "start":
+                config.Users.fetch(message.author.id).rankup_notifications = True
+                await message.channel.send("You will now receive rank changes notifications !")
+            elif message.content.lower() == "stop":
+                config.Users.fetch(message.author.id).rankup_notifications = False
+                await message.channel.send("You will no longer receive rank changes notifications !")
+            else:
+                await message.channel.send("I do not allow commands other than 'start' and 'stop' to be used by direct "
+                                           "message, please use an appropriate channel in the Modding Discord instead.")
             return
 
         # TODO make the dialogflow and crash responses exclusive

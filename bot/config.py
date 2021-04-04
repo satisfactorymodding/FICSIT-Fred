@@ -2,6 +2,56 @@ from sqlobject import *
 import json
 
 
+class RankRoles(SQLObject):
+    class sqlmeta:
+        table = "rank_roles"
+
+    rank = IntCol()
+    role_id = BigIntCol()
+
+    @staticmethod
+    def fetch_by_rank(rank):
+        query = RankRoles.select(RankRoles.q.rank <= rank).orderBy("-rank")
+        results = list(query)
+        if results:
+            return results[0].role_id
+        else:
+            return None
+
+    @staticmethod
+    def fetch_by_role(role_id):
+        query = RankRoles.selectBy(role_id=role_id)
+        results = list(query)
+        if results:
+            return results[0].rank
+        else:
+            return None
+
+
+class Users(SQLObject):
+    user_id = BigIntCol()
+    full_name = StringCol()
+    message_count = IntCol()
+    xp_count = IntCol()
+    rank = IntCol()
+    rank_role_id = BigIntCol()
+    rankup_notifications = BoolCol(default=True)
+
+    def as_dict(self):
+        return dict(user_id=self.user_id, message_count=self.message_count, xp_count=self.xp_count,
+                    rank_role_id=self.rank_role_id, rank=self.rank, full_name=self.full_name,
+                    rankup_notifications=self.rankup_notifications)
+
+    @staticmethod
+    def fetch(user_id):
+        query = Users.selectBy(user_id=user_id)
+        results = list(query)
+        if results:
+            return results[0]
+        else:
+            return None
+
+
 class ActionColours(SQLObject):
     class sqlmeta:
         table = "action_colours"
@@ -80,7 +130,7 @@ class Dialogflow(SQLObject):
     has_followup = BoolCol()
 
     def as_dict(self):
-        return dict(intent_id=self.intent_id, data=json.loads(self.data), response=self.response,
+        return dict(intent_id=self.intent_id, data=json.loads(str(self.data)), response=self.response,
                     has_followup=self.has_followup)
 
     @staticmethod
@@ -163,6 +213,51 @@ class Misc(SQLObject):
     prefix = StringCol(default=None)
     dialogflow_state = BoolCol(default=None)
     dialogflow_debug_state = BoolCol(default=None)
+    base_rank_value = IntCol(default=None)
+    rank_value_multiplier = FloatCol(default=None)
+    xp_gain_value = IntCol(default=None)
+    xp_gain_delay = IntCol(default=None)
+    main_guild_id = BigIntCol(default=None)
+
+    @staticmethod
+    def get_main_guild_id():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.main_guild_id)))[0].main_guild_id
+
+    @staticmethod
+    def set_main_guild_id(main_guild_id):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.main_guild_id)))[0].main_guild_id = main_guild_id
+
+    @staticmethod
+    def get_xp_gain_value():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.xp_gain_value)))[0].xp_gain_value
+
+    @staticmethod
+    def set_xp_gain_value(xp_gain_value):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.xp_gain_value)))[0].xp_gain_value = xp_gain_value
+
+    @staticmethod
+    def get_xp_gain_delay():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.xp_gain_delay)))[0].xp_gain_delay
+
+    @staticmethod
+    def set_xp_gain_delay(xp_gain_delay):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.xp_gain_delay)))[0].xp_gain_delay = xp_gain_delay
+
+    @staticmethod
+    def get_base_rank_value():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.base_rank_value)))[0].base_rank_value
+
+    @staticmethod
+    def set_base_rank_value(base_rank_value):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.base_rank_value)))[0].base_rank_value = base_rank_value
+
+    @staticmethod
+    def get_rank_value_multiplier():
+        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.rank_value_multiplier)))[0].rank_value_multiplier
+
+    @staticmethod
+    def set_rank_value_multiplier(rank_value_multiplier):
+        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.rank_value_multiplier)))[0].rank_value_multiplier = rank_value_multiplier
 
     @staticmethod
     def get_welcome_message():
@@ -231,6 +326,8 @@ class Misc(SQLObject):
 
 def create_missing_tables():
     tables = {
+        "users": Users,
+        "rank_roles": RankRoles,
         "action_colours": ActionColours,
         "media_only_channels": MediaOnlyChannels,
         "dialogflow_channels": DialogflowChannels,
@@ -250,6 +347,11 @@ def convert_old_config():
 
     Misc(welcome_message="")
     Misc(latest_info="")
+    Misc(base_rank_value=300)
+    Misc(rank_value_multiplier=1.2)
+    Misc(xp_gain_value=1)
+    Misc(xp_gain_delay=2)
+    Misc(main_guild_id=319164249333039114)
 
     with open("../config/config.json", "r") as file:
         cfg = json.load(file)

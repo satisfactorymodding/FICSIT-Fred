@@ -1,3 +1,5 @@
+import os
+from datetime import datetime
 import discord
 import asyncio
 import config
@@ -399,6 +401,49 @@ class Commands(commands.Cog):
         else:
             await ctx.send("Dialogflow role could not be found!")
 
+    @add.command(name="rank_role")
+    async def adddrankrole(self, ctx, *args):
+        if ctx.message.role_mentions:
+            id = int(ctx.message.role_mentions[0].id)
+            if args:
+                rank = int(args[0])
+        else:
+            if len(args) > 0:
+                id = int(args[0])
+                if len(args) > 1:
+                    rank = int(args[1])
+                else:
+                    rank = int(
+                        await Helper.waitResponse(self.bot, ctx.message, "What is the rank for the role ? e.g. 5"))
+            else:
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``"))
+                rank = int(await Helper.waitResponse(self.bot, ctx.message, "What is the rank for the role ? e.g. 5"))
+
+        if config.DialogflowExceptionRoles.fetch(id):
+            await ctx.send("This role is already a rank role")
+            return
+
+        config.RankRoles(role_id=id, rank=rank)
+        await ctx.send("Rank role " + ctx.message.guild.get_role(id).name + " added!")
+
+    @remove.command(name="rank_role")
+    async def removerankrole(self, ctx, *args):
+        if ctx.message.role_mentions:
+            id = int(ctx.message.role_mentions[0].id)
+        else:
+            if len(args) > 0:
+                id = int(args[0])
+            else:
+                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``"))
+
+        if config.RankRoles.fetch_by_role(id):
+            config.RankRoles.deleteBy(role_id=id)
+            await ctx.send("Rank role removed!")
+        else:
+            await ctx.send("Rank role could not be found!")
+
     @set.command(name="NLP_state")
     async def setNLPstate(self, ctx, *args):
         if len(args) > 0:
@@ -454,6 +499,62 @@ class Commands(commands.Cog):
         else:
             config.Misc.set_latest_info(data)
             await ctx.send("The latest info message has been changed !")
+
+    @set.command(name="base_rank_value")
+    async def setbaserankvalue(self, ctx, *args):
+        if len(args) > 0:
+            data = args[0]
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message,
+                                             "What should be the rank value of the first rank ? e.g. '300'")
+        data = int(data)
+
+        config.Misc.set_base_rank_value(data)
+        await ctx.send("The base rank value has been changed !")
+
+    @set.command(name="rank_value_multiplier")
+    async def setrankvaluemultiplier(self, ctx, *args):
+        if len(args) > 0:
+            data = args[0]
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message,
+                                             "By how much should the rank value be multiplied from one rank to the "
+                                             "next ? e.g. '1.2'")
+        data = float(data)
+
+        config.Misc.set_rank_value_multiplier(data)
+        await ctx.send("The rank value multiplier has been changed !")
+
+    @set.command(name="xp_gain_value")
+    async def setxpgainvalue(self, ctx, *args):
+        if len(args) > 0:
+            data = args[0]
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message,
+                                             "How much xp should someone get for each message ? e.g '1'")
+        data = int(data)
+
+        config.Misc.set_xp_gain_value(data)
+        await ctx.send("The xp gain value has been changed !")
+
+    @set.command(name="xp_gain_delay")
+    async def setxpgaindelay(self, ctx, *args):
+        if len(args) > 0:
+            data = args[0]
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message,
+                                             "How long should the xp gain delay be ? e.g '5' will mean that if "
+                                             "someone sends a message and one again 4 seconds later, the second one "
+                                             "will not give any xp")
+        data = int(data)
+
+        config.Misc.set_xp_gain_delay(data)
+        await ctx.send("The xp gain delay has been changed !")
+
+    @set.command(name="main_guild")
+    async def setmainguild(self, ctx, *args):
+        config.Misc.set_main_guild_id(ctx.guild.id)
+        await ctx.send("The main guild is now this one !")
 
     @commands.command()
     @commands.check(t3_only)
