@@ -64,7 +64,7 @@ class Bot(discord.ext.commands.Bot):
         try:
             config.Commands.get(1)
         except sql.dberrors.ProgrammingError:
-            print("The tables are missing from the DB. Creating them and populating with the config file")
+            self.logger.warning("The tables are missing from the DB. Creating them and populating with the config file")
             config.create_missing_tables()
             config.convert_old_config()
 

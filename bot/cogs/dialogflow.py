@@ -6,6 +6,7 @@ import uuid
 import asyncio
 import json
 import config
+from sqlobject.sqlbuilder import *
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH))
 DIALOGFLOW_PROJECT_ID = DIALOGFLOW_AUTH['project_id']
@@ -52,30 +53,32 @@ class DialogFlow(commands.Cog):
         response_text = response.query_result.fulfillment_text
         response_data = response.query_result.parameters
         intent_id = response.query_result.intent.name.split('/')[-1]
-        # TODO After reworking the dialogflow db format, change the below code to use the db and reenable DF
-        for dialogflowReply in self.bot.config["dialogflow"]:
-            if dialogflowReply["id"] == intent_id and (not dialogflowReply["data"] or dialogflowReply["data"] == response_data):
-                if not dialogflowReply["response"]:
-                    await message.channel.send(message.author.mention + " : " + response_text)
-                else:
-                    if dialogflowReply["response"].startswith(self.bot.command_prefix):
-                        command = dialogflowReply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]
-                        for automation in self.bot.config["commands"]:
-                            if command.lower() == automation["command"].lower():
-                                await message.channel.send(automation["response"])
-                        
-                    else:
-                        await message.channel.send(dialogflowReply["response"])
 
-                if dialogflowReply["has_followup"]:
-                    def check(message2):
-                        return message2.author == message.author and message2.channel == message.channel
+        query = config.Dialogflow.select(
+            "dialogflow.intent_id = '{}' AND ((dialogflow.data IS NULL) OR dialogflow.data = '{}')"
+                .format(intent_id, response_data))
+        results = list(query)
+        if not len(results):
+            return
+        dialogflowReply = results[0].as_dict()
+        if not dialogflowReply["response"]:
+            await message.channel.send(message.author.mention + " : " + response_text)
+        else:
+            if dialogflowReply["response"].startswith(self.bot.command_prefix):
+                commandname = dialogflowReply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]
+                if command := config.Commands.fetch(commandname):
+                    await message.channel.send(command["response"])
 
-                    try:
-                        response = await self.bot.wait_for('message', timeout=SESSION_LIFETIME, check=check)
-                    except asyncio.TimeoutError:
-                        del self.session_ids[message.author.id]
-                else:
-                    del self.session_ids[message.author.id]
-                
-                break
+            else:
+                await message.channel.send(dialogflowReply["response"])
+
+        if dialogflowReply["has_followup"]:
+            def check(message2):
+                return message2.author == message.author and message2.channel == message.channel
+
+            try:
+                response = await self.bot.wait_for('message', timeout=SESSION_LIFETIME, check=check)
+            except asyncio.TimeoutError:
+                del self.session_ids[message.author.id]
+        else:
+            del self.session_ids[message.author.id]

@@ -73,20 +73,14 @@ class DialogflowExceptionRoles(SQLObject):
         return [role.role_id for role in results]
 
 
-# TODO change dialogflow format
-
 class Dialogflow(SQLObject):
+    intent_id = StringCol()
     data = JSONCol()
+    response = StringCol()
+    has_followup = BoolCol()
 
-    @staticmethod
-    def fetch(name):
-        query = Dialogflow.selectBy(name=name.lower())
-        results = list(query)
-        if len(results) > 0:
-            return dict(query[0])
-        else:
-            return None
-
+    def as_dict(self):
+        return dict(intent_id=self.intent_id, data=self.data, response=self.response, has_followup=self.has_followup)
 
 class Commands(SQLObject):
 
@@ -252,7 +246,11 @@ def convert_old_config():
                 Misc(dialogflow_debug_state=v)
             elif k == "dialogflow":
                 for i in v:
-                    Dialogflow(data=i)
+                    if not i["response"]:
+                        i["response"] = None
+                    if not i["data"]:
+                        i["data"] = None
+                    Dialogflow(intent_id=i["id"], data=i["data"], response=i["response"], has_followup=i["has_followup"])
             elif k == "commands":
                 for i in v:
                     Commands(name=i["command"], content=i["response"])
