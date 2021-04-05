@@ -205,123 +205,24 @@ class Misc(SQLObject):
     class sqlmeta:
         table = "miscellaneous"
 
-    welcome_message = StringCol(default=None)
-    latest_info = StringCol(default=None)
-    filter_channel = BigIntCol(default=None)
-    mod_channel = BigIntCol(default=None)
-    githook_channel = BigIntCol(default=None)
-    prefix = StringCol(default=None)
-    dialogflow_state = BoolCol(default=None)
-    dialogflow_debug_state = BoolCol(default=None)
-    base_rank_value = IntCol(default=None)
-    rank_value_multiplier = FloatCol(default=None)
-    xp_gain_value = IntCol(default=None)
-    xp_gain_delay = IntCol(default=None)
-    main_guild_id = BigIntCol(default=None)
+    key = StringCol()
+    value = JSONCol()
 
     @staticmethod
-    def get_main_guild_id():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.main_guild_id)))[0].main_guild_id
+    def fetch(key):
+        query = Misc.selectBy(key=key)
+        results = list(query)
+        if results:
+            return results[0].value
+        else:
+            return None
 
     @staticmethod
-    def set_main_guild_id(main_guild_id):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.main_guild_id)))[0].main_guild_id = main_guild_id
-
-    @staticmethod
-    def get_xp_gain_value():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.xp_gain_value)))[0].xp_gain_value
-
-    @staticmethod
-    def set_xp_gain_value(xp_gain_value):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.xp_gain_value)))[0].xp_gain_value = xp_gain_value
-
-    @staticmethod
-    def get_xp_gain_delay():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.xp_gain_delay)))[0].xp_gain_delay
-
-    @staticmethod
-    def set_xp_gain_delay(xp_gain_delay):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.xp_gain_delay)))[0].xp_gain_delay = xp_gain_delay
-
-    @staticmethod
-    def get_base_rank_value():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.base_rank_value)))[0].base_rank_value
-
-    @staticmethod
-    def set_base_rank_value(base_rank_value):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.base_rank_value)))[0].base_rank_value = base_rank_value
-
-    @staticmethod
-    def get_rank_value_multiplier():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.rank_value_multiplier)))[0].rank_value_multiplier
-
-    @staticmethod
-    def set_rank_value_multiplier(rank_value_multiplier):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.rank_value_multiplier)))[0].rank_value_multiplier = rank_value_multiplier
-
-    @staticmethod
-    def get_welcome_message():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.welcome_message)))[0].welcome_message
-
-    @staticmethod
-    def set_welcome_message(welcome_message):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.welcome_message)))[0].welcome_message = welcome_message
-
-    @staticmethod
-    def get_latest_info():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.latest_info)))[0].latest_info
-
-    @staticmethod
-    def set_latest_info(latest_info):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.latest_info)))[0].latest_info = latest_info
-
-    @staticmethod
-    def get_filter_channel():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.filter_channel)))[0].filter_channel
-
-    @staticmethod
-    def set_filter_channel(channel_id: int):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.filter_channel)))[0].filter_channel = channel_id
-
-    @staticmethod
-    def get_mod_channel():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.mod_channel)))[0].mod_channel
-
-    @staticmethod
-    def set_mod_channel(channel_id: int):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.mod_channel)))[0].mod_channel = channel_id
-
-    @staticmethod
-    def get_githook_channel():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.githook_channel)))[0].githook_channel
-
-    @staticmethod
-    def set_githook_channel(channel_id: int):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.githook_channel)))[0].githook_channel = channel_id
-
-    @staticmethod
-    def get_prefix():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.prefix)))[0].prefix
-
-    @staticmethod
-    def set_prefix(prefix: str):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.prefix)))[0].prefix = prefix
-
-    @staticmethod
-    def get_dialogflow_state():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_state)))[0].dialogflow_state
-
-    @staticmethod
-    def set_dialogflow_state(state: bool):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_state)))[0].dialogflow_state = state
-
-    @staticmethod
-    def get_dialogflow_debug_state():
-        return list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_debug_state)))[0].dialogflow_debug_state
-
-    @staticmethod
-    def set_dialogflow_debug_state(state: bool):
-        list(Misc.select(sqlbuilder.ISNOTNULL(Misc.q.dialogflow_debug_state)))[0].dialogflow_debug_state = state
+    def change(key, value):
+        query = Misc.selectBy(key=key)
+        results = list(query)
+        if results:
+            results[0].value = value
 
 
 def create_missing_tables():
@@ -345,13 +246,14 @@ def create_missing_tables():
 def convert_old_config():
     reservedcommands = ["management commands", "special commands", "miscellaneous commands"]
 
-    Misc(welcome_message="")
-    Misc(latest_info="")
-    Misc(base_rank_value=300)
-    Misc(rank_value_multiplier=1.2)
-    Misc(xp_gain_value=1)
-    Misc(xp_gain_delay=2)
-    Misc(main_guild_id=319164249333039114)
+    Misc(key="welcome_message", value="")
+    Misc(key="latest_info", value="")
+    Misc(key="base_rank_value", value=300)
+    Misc(key="rank_value_multiplier", value=1.2)
+    Misc(key="xp_gain_value", value=1)
+    Misc(key="xp_gain_delay", value=2)
+    Misc(key="main_guild_id", value=319164249333039114)
+    Misc(key="levelling_state", value=False)
 
     with open("../config/config.json", "r") as file:
         cfg = json.load(file)
@@ -360,13 +262,13 @@ def convert_old_config():
                 for n, c in v.items():
                     ActionColours(name=n, colour=c)
             elif k == "filter channel":
-                Misc(filter_channel=v)
+                Misc(key="filter_channel", value=v)
             elif k == "mod channel":
-                Misc(mod_channel=v)
+                Misc(key="mod_channel", value=v)
             elif k == "githook channel":
-                Misc(githook_channel=v)
+                Misc(key="githook_channel", value=v)
             elif k == "prefix":
-                Misc(prefix=v)
+                Misc(key="prefix", value=v)
             elif k == "media only channels":
                 for i in v:
                     MediaOnlyChannels(channel_id=i)
@@ -377,9 +279,9 @@ def convert_old_config():
                 for i in v:
                     DialogflowExceptionRoles(role_id=i)
             elif k == "dialogflow state":
-                Misc(dialogflow_state=v)
+                Misc(key="dialogflow_state", value=v)
             elif k == "dialogflow debug state":
-                Misc(dialogflow_debug_state=v)
+                Misc(key="dialogflow_debug_state", value=v)
             elif k == "dialogflow":
                 for i in v:
                     if not i["response"]:

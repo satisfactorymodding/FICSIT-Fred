@@ -16,7 +16,7 @@ from discord.ext import commands
 
 async def t3_only(ctx):
     return (ctx.author.id == 227473074616795137 or
-            ctx.author.permissions_in(ctx.bot.get_channel(config.Misc.get_filter_channel())).send_messages)
+            ctx.author.permissions_in(ctx.bot.get_channel(config.Misc.fetch("filter_channel"))).send_messages)
 
 
 async def mod_only(ctx):
@@ -451,10 +451,10 @@ class Commands(commands.Cog):
         else:
             data = await Helper.waitResponse(self.bot, ctx.message, "Should the NLP be on or off ?")
         if data.lower() in ["0", "false", "no", "off"]:
-            config.Misc.set_dialogflow_state(False)
+            config.Misc.change("dialogflow_state", False)
             await ctx.send("The NLP is now off !")
         else:
-            config.Misc.set_dialogflow_state(True)
+            config.Misc.change("dialogflow_state", True)
             await ctx.send("The NLP is now on !")
 
     @set.command(name="NLP_debug")
@@ -464,10 +464,10 @@ class Commands(commands.Cog):
         else:
             data = await Helper.waitResponse(self.bot, ctx.message, "Should the NLP be in debugging mode ?")
         if data.lower() in ["0", "false", "no", "off"]:
-            config.Misc.set_dialogflow_debug_state(False)
+            config.Misc.change("dialogflow_debug_state", False)
             await ctx.send("The NLP debugging mode is now off !")
         else:
-            config.Misc.set_dialogflow_debug_state(True)
+            config.Misc.change("dialogflow_debug_state", True)
             await ctx.send("The NLP debugging mode is now on !")
 
     @set.command(name="welcome_message")
@@ -479,10 +479,10 @@ class Commands(commands.Cog):
                                                                     "under 10 characters will completely disable the "
                                                                     "mesage)")
         if len(data) < 10:
-            config.Misc.set_welcome_message("")
+            config.Misc.change("welcome_message", "")
             await ctx.send("The welcome message is now disabled")
         else:
-            config.Misc.set_welcome_message(data)
+            config.Misc.change("welcome_message", data)
             await ctx.send("The welcome message has been changed !")
 
     @set.command(name="latest_info")
@@ -494,10 +494,10 @@ class Commands(commands.Cog):
                                                                     "under 10 characters will completely disable the "
                                                                     "mesage)")
         if len(data) < 10:
-            config.Misc.set_latest_info("")
+            config.Misc.change("latest_info", "")
             await ctx.send("The latest info message is now disabled")
         else:
-            config.Misc.set_latest_info(data)
+            config.Misc.change("latest_info", data)
             await ctx.send("The latest info message has been changed !")
 
     @set.command(name="base_rank_value")
@@ -509,7 +509,7 @@ class Commands(commands.Cog):
                                              "What should be the rank value of the first rank ? e.g. '300'")
         data = int(data)
 
-        config.Misc.set_base_rank_value(data)
+        config.Misc.change("base_rank_value", data)
         await ctx.send("The base rank value has been changed !")
 
     @set.command(name="rank_value_multiplier")
@@ -522,7 +522,7 @@ class Commands(commands.Cog):
                                              "next ? e.g. '1.2'")
         data = float(data)
 
-        config.Misc.set_rank_value_multiplier(data)
+        config.Misc.change("rank_value_multiplier", data)
         await ctx.send("The rank value multiplier has been changed !")
 
     @set.command(name="xp_gain_value")
@@ -534,7 +534,7 @@ class Commands(commands.Cog):
                                              "How much xp should someone get for each message ? e.g '1'")
         data = int(data)
 
-        config.Misc.set_xp_gain_value(data)
+        config.Misc.change("xp_gain_value", data)
         await ctx.send("The xp gain value has been changed !")
 
     @set.command(name="xp_gain_delay")
@@ -548,12 +548,12 @@ class Commands(commands.Cog):
                                              "will not give any xp")
         data = int(data)
 
-        config.Misc.set_xp_gain_delay(data)
+        config.Misc.change("xp_gain_delay", data)
         await ctx.send("The xp gain delay has been changed !")
 
     @set.command(name="main_guild")
     async def setmainguild(self, ctx, *args):
-        config.Misc.set_main_guild_id(ctx.guild.id)
+        config.Misc.change("main_guild_id", ctx.guild.id)
         await ctx.send("The main guild is now this one !")
 
     @commands.command()
@@ -581,7 +581,7 @@ class Commands(commands.Cog):
             else:
                 id = int(await Helper.waitResponse(self.bot, ctx.message,
                                                    "What is the ID for the channel? e.g. ``709509235028918334``"))
-        config.Misc.set_filter_channel(id)
+        config.Misc.change("filter_channel", id)
         await ctx.send(
             "The filter channel for the engineers is now " + self.bot.get_channel(int(id)).mention + "!")
 
@@ -596,7 +596,7 @@ class Commands(commands.Cog):
             else:
                 id = int(await Helper.waitResponse(self.bot, ctx.message,
                                                    "What is the ID for the channel? e.g. ``709509235028918334``"))
-        config.Misc.set_mod_channel(id)
+        config.Misc.change("mod_channel", id)
         await ctx.send(
             "The filter channel for the moderators is now " + self.bot.get_channel(int(id)).mention + "!")
 
@@ -611,7 +611,7 @@ class Commands(commands.Cog):
             else:
                 id = int(await Helper.waitResponse(self.bot, ctx.message,
                                                    "What is the ID for the channel? e.g. ``709509235028918334``"))
-        config.Misc.set_githook_channel(id)
+        config.Misc.change("githook_channel", id)
         await ctx.send(
             "The channel for the github hooks is now " + self.bot.get_channel(int(id)).mention + "!")
 
@@ -621,6 +621,6 @@ class Commands(commands.Cog):
         if not args:
             await ctx.send("Please specify a prefix")
             return
-        config.Misc.set_prefix(args[0])
+        config.Misc.change("prefix", args[0])
         self.bot.command_prefix = args[0]
         await ctx.send("Prefix changed to " + args[0])

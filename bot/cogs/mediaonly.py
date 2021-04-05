@@ -8,7 +8,7 @@ class MediaOnly(commands.Cog):
 
     async def process_message(self, message):
         if message.author.permissions_in(self.bot.get_channel(
-                config.Misc.get_filter_channel())).send_messages or message.author.id == 227473074616795137:
+                config.Misc.fetch("filter_channel"))).send_messages or message.author.id == 227473074616795137:
             return
         if len(message.embeds) > 0 or len(message.attachments) > 0:
             return

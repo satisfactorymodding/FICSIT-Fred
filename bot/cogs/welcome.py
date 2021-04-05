@@ -11,8 +11,8 @@ class Welcome(commands.Cog):
         if not member.dm_channel:
             await member.create_dm()
         try:
-            welcome = config.Misc.get_welcome_message()
-            info = config.Misc.get_latest_info()
+            welcome = config.Misc.fetch("welcome_message")
+            info = config.Misc.fetch("latest_info")
             if welcome:
                 await member.send(welcome)
             if info:

@@ -367,9 +367,9 @@ def command_list(client, full=False, here=False):
         misc = discord.Embed(title=str("What I do..."), colour=client.config["action colours"]["Purple"],
                              description=desc)
         if here:
-            misc.set_footer(text="Please do not spam the reactions for this embed to work properly.")
+            Misc.set_footer(text="Please do not spam the reactions for this embed to work properly.")
         else:
-            misc.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
+            Misc.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
                                  "cannot remove your reactions in direct messages, navigation in here could be a "
                                  "little weird")
     else:

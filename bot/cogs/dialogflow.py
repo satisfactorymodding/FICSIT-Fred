@@ -23,11 +23,11 @@ class DialogFlow(commands.Cog):
     async def process_message(self, message):
         if message.content.startswith(self.bot.command_prefix):
             return
-        if not config.Misc.get_dialogflow_state():
+        if not config.Misc.fetch("dialogflow_state"):
             return
         if not config.DialogflowChannels.fetch(message.channel.id):
             return
-        if not config.Misc.get_dialogflow_debug_state():
+        if not config.Misc.fetch("dialogflow_debug_state"):
             roles = message.author.roles[1:]
             exceptionroles = config.DialogflowExceptionRoles.fetch_all()
             if len(roles) != 0 and len(roles) != len(exceptionroles):

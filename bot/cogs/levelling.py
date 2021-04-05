@@ -41,8 +41,8 @@ class UserProfile:
             self.bot.logger.warning("There was no valid role for the rank " + str(self.rank))
 
     async def validate_rank(self):
-        expected_rank = math.log(self.xp_count / config.Misc.get_base_rank_value()) / math.log(
-            config.Misc.get_rank_value_multiplier())
+        expected_rank = math.log(self.xp_count / config.Misc.fetch("base_rank_value")) / math.log(
+            config.Misc.fetch("rank_value_multiplier"))
         if expected_rank < 0:
             expected_rank = 0
         else:
@@ -88,21 +88,22 @@ class Levelling(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.bot or isinstance(message.channel, DMChannel) or message.guild.id != config.Misc.get_main_guild_id():
+        if message.author.bot or isinstance(message.channel, DMChannel) or \
+                message.guild.id != config.Misc.fetch("main_guild_id") or not config.Misc.fetch("levelling_state"):
             return
         if DBUser := config.Users.fetch(message.author.id):
             DBUser.message_count += 1
             profile = UserProfile(DBUser, message.guild, self.bot)
             if profile.user_id in self.bot.xp_timers:
                 if datetime.now() >= self.bot.xp_timers[profile.user_id]:
-                    await profile.give_xp(config.Misc.get_xp_gain_value())
+                    await profile.give_xp(config.Misc.fetch("xp_gain_value"))
             else:
                 self.bot.xp_timers[profile.user_id] = datetime.now() + timedelta(
-                    seconds=config.Misc.get_xp_gain_delay())
-                await profile.give_xp(config.Misc.get_xp_gain_value())
+                    seconds=config.Misc.fetch("xp_gain_delay"))
+                await profile.give_xp(config.Misc.fetch("xp_gain_value"))
         else:
-            config.Users(user_id=message.author.id, message_count=1, xp_count=config.Misc.get_xp_gain_value(),
+            config.Users(user_id=message.author.id, message_count=1, xp_count=config.Misc.fetch("xp_gain_value"),
                          rank_role_id=None, rank=0,
                          full_name="{}#{}".format(message.author.name, message.author.discriminator))
             self.bot.xp_timers[message.author.id] = datetime.now() + timedelta(
-                seconds=config.Misc.get_xp_gain_delay())
+                seconds=config.Misc.fetch("xp_gain_delay"))

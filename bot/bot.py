@@ -13,7 +13,7 @@ from logstash_async.handler import AsynchronousLogstashHandler
 
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
-           "FRED_SQL_HOST"]
+           "FRED_SQL_HOST", "FRED_SQL_PORT"]
 
 for var in ENVVARS:
     assert (os.environ.get(var)), "The ENV variable '{}' isn't set".format(var)
@@ -32,14 +32,14 @@ class Bot(discord.ext.commands.Bot):
         super().__init__(*args, **kwargs)
         self.setup_logger()
         self.setup_DB()
-        self.command_prefix = config.Misc.get_prefix()
+        self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
         self.version = "2.6.0"
         self.running = True
         self.loop = asyncio.get_event_loop()
 
     async def on_ready(self):
-        self.modchannel = self.get_channel(config.Misc.get_mod_channel())
+        self.modchannel = self.get_channel(config.Misc.fetch("mod_channel"))
         assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
         print('We have logged in as {0.user}'.format(self))
 
@@ -52,9 +52,10 @@ class Bot(discord.ext.commands.Bot):
         user = os.environ.get("FRED_SQL_USER")
         password = os.environ.get("FRED_SQL_PASSWORD")
         host = os.environ.get("FRED_SQL_HOST")
+        port = os.environ.get("FRED_SQL_PORT")
         dbname = os.environ.get("FRED_SQL_DB")
         self.db = connection = sql.connectionForURI(
-            "postgresql://{}:{}@{}:5432/{}".format(user, password, host, dbname))
+            "postgresql://{}:{}@{}:{}/{}".format(user, password, host, port, dbname))
         sql.sqlhub.processConnection = connection
         config.create_missing_tables()
         try:
@@ -106,7 +107,7 @@ class Bot(discord.ext.commands.Bot):
         if embed == "Debug":
             print("Non-supported Payload received")
         else:
-            channel = self.get_channel(config.Misc.get_githook_channel())
+            channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
 
     async def on_message(self, message):
