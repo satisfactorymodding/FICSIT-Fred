@@ -7,6 +7,8 @@ from cogs import commands, crashes, dialogflow, mediaonly, noshorturl, webhookli
 import discord
 import discord.ext.commands
 import sqlobject as sql
+import psycopg2
+import psycopg2.extensions
 import config
 import libraries.createembed as CreateEmbed
 from logstash_async.handler import AsynchronousLogstashHandler
@@ -54,10 +56,24 @@ class Bot(discord.ext.commands.Bot):
         host = os.environ.get("FRED_SQL_HOST")
         port = os.environ.get("FRED_SQL_PORT")
         dbname = os.environ.get("FRED_SQL_DB")
-        self.db = connection = sql.connectionForURI(
-            "postgresql://{}:{}@{}:{}/{}".format(user, password, host, port, dbname))
-        sql.sqlhub.processConnection = connection
-        config.create_missing_tables()
+        uri = "postgresql://{}:{}@{}:{}/{}".format(user, password, host, port, dbname)
+        try:
+            connection = sql.connectionForURI(uri)
+            sql.sqlhub.processConnection = connection
+            config.create_missing_tables()
+        except sql.dberrors.OperationalError:
+            con = psycopg2.connect(dbname="postgres", user=user, password=password, host=host, port=port)
+            autocommit = psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT
+            con.set_isolation_level(autocommit)
+            cursor = con.cursor()
+            cursor.execute("CREATE DATABASE " + dbname)
+            cursor.close()
+            con.close()
+
+            connection = sql.connectionForURI(uri)
+            sql.sqlhub.processConnection = connection
+            config.create_missing_tables()
+
         try:
             config.Commands.get(1)
         except:
