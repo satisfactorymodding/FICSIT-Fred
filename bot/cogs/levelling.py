@@ -7,18 +7,19 @@ import math
 
 
 class UserProfile:
-    def __init__(self, DB_user, guild, bot):
+    def __init__(self, user_id, guild, bot):
         self.guild = guild
         self.bot = bot
-        self.DB_user = DB_user
-        self.user_id = DB_user.user_id
-        self.message_count = DB_user.message_count
-        self.xp_count = DB_user.xp_count
-        self.rank_role_id = DB_user.rank_role_id
-        self.rank = DB_user.rank
-        self.rankup_notifications = DB_user.rankup_notifications
-
+        self.user_id = user_id
         self.member = guild.get_member(self.user_id)
+        if DB_user := config.Users.fetch(self.user_id):
+            self.DB_user = DB_user
+        else:
+            self.DB_user = config.Users(user_id=user_id,
+                                        full_name="{}#{}".format(self.member.name, self.member.discriminator))
+
+        self.rank = self.DB_user.rank
+        self.xp_count = self.DB_user.xp_count
 
     async def validate_role(self):
         if not self.member:
@@ -29,16 +30,13 @@ class UserProfile:
                 self.bot.logger.warning("I was unable to validate a role because I could not get a role")
                 return
             self.DB_user.rank_role_id = role_id
-            self.rank_role_id = role_id
+            # self.rank_role_id = role_id
             if not self.member.permissions_in(self.bot.modchannel).send_messages:
                 for memberrole in self.member.roles:
                     rank = config.RankRoles.fetch_by_role(memberrole.id)
                     if rank:
                         await self.member.remove_roles(memberrole)
                 await self.member.add_roles(role)
-
-        elif self.rank > 0:
-            self.bot.logger.warning("There was no valid role for the rank " + str(self.rank))
 
     async def validate_rank(self):
         expected_rank = math.log(self.xp_count / config.Misc.fetch("base_rank_value")) / math.log(
@@ -50,13 +48,11 @@ class UserProfile:
         expected_rank = int(expected_rank)
         if expected_rank != self.rank:
             self.bot.logger.info("Correcting a mismatched rank from {} to {}".format(self.rank, expected_rank))
-            old_rank = self.rank
-            self.rank = expected_rank
             self.DB_user.rank = expected_rank
-            if self.rankup_notifications:
+            if self.DB_user.rankup_notifications:
                 if not self.member.dm_channel:
                     await self.member.create_dm()
-                if expected_rank > old_rank:
+                if expected_rank > self.rank:
                     try:
                         await self.member.dm_channel.send("You went up in rank ! Congratulations ! Look at you and "
                                                           "your shiny new role and colour\n(If you wish that I do not "
@@ -73,11 +69,22 @@ class UserProfile:
                                                           "with 'start')")
                     except:
                         pass
+            self.rank = expected_rank
         await self.validate_role()
 
     async def give_xp(self, xp):
-        self.xp_count += xp
         self.DB_user.xp_count += xp
+        self.xp_count += xp
+        await self.validate_rank()
+
+    async def take_xp(self, xp):
+        self.DB_user.xp_count -= xp
+        self.xp_count -= xp
+        await self.validate_rank()
+
+    async def set_xp(self, xp):
+        self.DB_user.xp_count = xp
+        self.xp_count = xp
         await self.validate_rank()
 
 
@@ -91,19 +98,11 @@ class Levelling(commands.Cog):
         if message.author.bot or isinstance(message.channel, DMChannel) or \
                 message.guild.id != config.Misc.fetch("main_guild_id") or not config.Misc.fetch("levelling_state"):
             return
-        if DBUser := config.Users.fetch(message.author.id):
-            DBUser.message_count += 1
-            profile = UserProfile(DBUser, message.guild, self.bot)
-            if profile.user_id in self.bot.xp_timers:
-                if datetime.now() >= self.bot.xp_timers[profile.user_id]:
-                    await profile.give_xp(config.Misc.fetch("xp_gain_value"))
-            else:
-                self.bot.xp_timers[profile.user_id] = datetime.now() + timedelta(
-                    seconds=config.Misc.fetch("xp_gain_delay"))
+        profile = UserProfile(message.author.id, message.guild, self.bot)
+        profile.DB_user.message_count += 1
+        if profile.user_id in self.bot.xp_timers:
+            if datetime.now() >= self.bot.xp_timers[profile.user_id]:
                 await profile.give_xp(config.Misc.fetch("xp_gain_value"))
         else:
-            config.Users(user_id=message.author.id, message_count=1, xp_count=config.Misc.fetch("xp_gain_value"),
-                         rank_role_id=None, rank=0,
-                         full_name="{}#{}".format(message.author.name, message.author.discriminator))
-            self.bot.xp_timers[message.author.id] = datetime.now() + timedelta(
-                seconds=config.Misc.fetch("xp_gain_delay"))
+            self.bot.xp_timers[profile.user_id] = datetime.now() + timedelta(seconds=config.Misc.fetch("xp_gain_delay"))
+            await profile.give_xp(config.Misc.fetch("xp_gain_value"))

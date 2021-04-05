@@ -31,10 +31,10 @@ class RankRoles(SQLObject):
 class Users(SQLObject):
     user_id = BigIntCol()
     full_name = StringCol()
-    message_count = IntCol()
-    xp_count = IntCol()
-    rank = IntCol()
-    rank_role_id = BigIntCol()
+    message_count = IntCol(default=0)
+    xp_count = IntCol(default=0)
+    rank = IntCol(default=0)
+    rank_role_id = BigIntCol(default=None)
     rankup_notifications = BoolCol(default=True)
 
     def as_dict(self):

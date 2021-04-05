@@ -1,8 +1,7 @@
-import os
-from datetime import datetime
 import discord
 import asyncio
 import config
+import levelling
 import libraries.createembed as CreateEmbed
 import json
 import libraries.helper as Helper
@@ -134,6 +133,13 @@ class Commands(commands.Cog):
     @commands.group()
     @commands.check(t3_only)
     async def modify(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await ctx.send('Invalid sub command passed...')
+            return
+
+    @commands.group()
+    @commands.check(mod_only)
+    async def xp(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid sub command passed...')
             return
@@ -500,6 +506,7 @@ class Commands(commands.Cog):
             config.Misc.change("latest_info", data)
             await ctx.send("The latest info message has been changed !")
 
+    @commands.check(mod_only)
     @set.command(name="base_rank_value")
     async def setbaserankvalue(self, ctx, *args):
         if len(args) > 0:
@@ -512,6 +519,7 @@ class Commands(commands.Cog):
         config.Misc.change("base_rank_value", data)
         await ctx.send("The base rank value has been changed !")
 
+    @commands.check(mod_only)
     @set.command(name="rank_value_multiplier")
     async def setrankvaluemultiplier(self, ctx, *args):
         if len(args) > 0:
@@ -525,6 +533,7 @@ class Commands(commands.Cog):
         config.Misc.change("rank_value_multiplier", data)
         await ctx.send("The rank value multiplier has been changed !")
 
+    @commands.check(mod_only)
     @set.command(name="xp_gain_value")
     async def setxpgainvalue(self, ctx, *args):
         if len(args) > 0:
@@ -537,6 +546,7 @@ class Commands(commands.Cog):
         config.Misc.change("xp_gain_value", data)
         await ctx.send("The xp gain value has been changed !")
 
+    @commands.check(mod_only)
     @set.command(name="xp_gain_delay")
     async def setxpgaindelay(self, ctx, *args):
         if len(args) > 0:
@@ -551,10 +561,102 @@ class Commands(commands.Cog):
         config.Misc.change("xp_gain_delay", data)
         await ctx.send("The xp gain delay has been changed !")
 
+    @set.command(name="levelling_state")
+    async def setlevellingstate(self, ctx, *args):
+        if len(args) > 0:
+            data = args[0]
+        else:
+            data = await Helper.waitResponse(self.bot, ctx.message, "Should the levelling system be active ?")
+        if data.lower() in ["0", "false", "no", "off"]:
+            config.Misc.change("levelling_state", False)
+            await ctx.send("The levelling system is now inactive !")
+        else:
+            config.Misc.change("levelling_state", True)
+            await ctx.send("The levelling system is now active !")
+
+    @commands.check(mod_only)
     @set.command(name="main_guild")
     async def setmainguild(self, ctx, *args):
         config.Misc.change("main_guild_id", ctx.guild.id)
         await ctx.send("The main guild is now this one !")
+
+    @xp.command(name="give")
+    async def xpgive(self, ctx, *args):
+        if ctx.message.mentions:
+            id = int(ctx.message.mentions[0].id)
+        else:
+            if len(args) > 0:
+                id = int(args[0])
+            else:
+                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                                                   "What is the ID of the person you want to give xp to ? e.g. "
+                                                   "``809710343533232129``"))
+        if len(args) > 1:
+            amount = int(args[1])
+        else:
+            amount = int(await Helper.waitResponse(self.bot, ctx.message,
+                                                   "How much xp do you want to give ? e.g. "
+                                                   "``809710343533232129``"))
+        user = ctx.guild.get_member(id)
+        if not user:
+            ctx.send("Sorry, I was unable to get the member with ID {}".format(id))
+            return
+        profile = levelling.UserProfile(id, ctx.guild, self.bot)
+        await profile.give_xp(amount)
+        await ctx.send("Gave {} xp to {}. They are now rank {} ({} xp)".format(amount, user.name, profile.rank,
+                                                                               profile.xp_count))
+
+    @xp.command(name="take")
+    async def xptake(self, ctx, *args):
+        if ctx.message.mentions:
+            id = int(ctx.message.mentions[0].id)
+        else:
+            if len(args) > 0:
+                id = int(args[0])
+            else:
+                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                                                   "What is the ID of the person you want to take xp from ? e.g. "
+                                                   "``809710343533232129``"))
+        if len(args) > 1:
+            amount = int(args[1])
+        else:
+            amount = int(await Helper.waitResponse(self.bot, ctx.message,
+                                                   "How much xp do you want to take ? e.g. "
+                                                   "``809710343533232129``"))
+        user = ctx.guild.get_member(id)
+        if not user:
+            ctx.send("Sorry, I was unable to get the member with ID {}".format(id))
+            return
+        profile = levelling.UserProfile(id, ctx.guild, self.bot)
+        await profile.take_xp(amount)
+        await ctx.send("Took {} xp from {}. They are now rank {} ({} xp)".format(amount, user.name, profile.rank,
+                                                                                 profile.xp_count))
+
+    @xp.command(name="set")
+    async def xpset(self, ctx, *args):
+        if ctx.message.mentions:
+            id = int(ctx.message.mentions[0].id)
+        else:
+            if len(args) > 0:
+                id = int(args[0])
+            else:
+                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                                                   "What is the ID of the person for which you want to set their xp "
+                                                   "count e.g. ``809710343533232129``"))
+        if len(args) > 1:
+            amount = int(args[1])
+        else:
+            amount = int(await Helper.waitResponse(self.bot, ctx.message,
+                                                   "At how much should the xp count be set ? e.g. "
+                                                   "``809710343533232129``"))
+        user = ctx.guild.get_member(id)
+        if not user:
+            ctx.send("Sorry, I was unable to get the member with ID {}".format(id))
+            return
+        profile = levelling.UserProfile(id, ctx.guild, self.bot)
+        await profile.set_xp(amount)
+        await ctx.send("Set {}'s xp count to {}. They are now rank {}".format(user.name, amount, profile.rank,
+                                                                              profile.xp_count))
 
     @commands.command()
     @commands.check(t3_only)
