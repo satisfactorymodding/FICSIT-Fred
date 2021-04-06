@@ -13,6 +13,7 @@ import config
 import libraries.createembed as CreateEmbed
 from logstash_async.handler import AsynchronousLogstashHandler
 
+
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
            "FRED_SQL_HOST", "FRED_SQL_PORT"]

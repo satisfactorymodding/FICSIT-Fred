@@ -1,4 +1,6 @@
+import asyncio
 import discord.ext.commands as commands
+import discord.ext.tasks as tasks
 import requests
 from PIL import Image, ImageEnhance
 from packaging import version
@@ -8,9 +10,8 @@ import zipfile
 from urllib.request import urlopen
 import io
 import json
-
 import config
-
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 class Crashes(commands.Cog):
     def __init__(self, bot):
@@ -87,9 +88,13 @@ class Crashes(commands.Cog):
                     image = enhancerContrast.enhance(2)
                     enhancerSharpness = ImageEnhance.Sharpness(image)
                     image = enhancerSharpness.enhance(10)
-                    data = image_to_string(image)
+                    pool = asyncio.get_running_loop()
+                    with ThreadPoolExecutor() as pool:
+                        data = await self.bot.loop.run_in_executor(pool, image_to_string, image)
 
-                except:
+
+                except Exception as e:
+                    print(e)
                     data = ""
 
 
