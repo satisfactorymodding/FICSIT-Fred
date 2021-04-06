@@ -142,29 +142,33 @@ class Bot(discord.ext.commands.Bot):
             print(e)
             return None
 
+    async def reply(self, message, content=None, **kwargs):
+        reference = message.reference or message
+        return await message.channel.send(content, reference=reference, **kwargs)
+
     async def on_message(self, message):
         if message.author.bot or not self.running:
             return
         if isinstance(message.channel, discord.DMChannel):
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
-                await message.channel.send("You will now receive rank changes notifications !")
+                await self.reply(message, "You will now receive rank changes notifications !")
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
-                await message.channel.send("You will no longer receive rank changes notifications !")
+                await self.reply(message, "You will no longer receive rank changes notifications !")
             else:
-                await message.channel.send("I do not allow commands other than 'start' and 'stop' to be used by direct "
+                await self.reply(message, "I do not allow commands other than 'start' and 'stop' to be used by direct "
                                            "message, please use an appropriate channel in the Modding Discord instead.")
             return
 
-        # TODO make the dialogflow and crash responses exclusive
         removed = await self.MediaOnly.process_message(message)
         if not removed:
             removed = await self.NoShortUrl.process_message(message)
         if not removed:
             await self.process_commands(message)
-            await self.Crashes.process_message(message)
-            await self.DialogFlow.process_message(message)
+            reacted = await self.Crashes.process_message(message)
+            if not reacted:
+                await self.DialogFlow.process_message(message)
 
 
 intents = discord.Intents.default()
