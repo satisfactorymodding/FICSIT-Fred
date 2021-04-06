@@ -57,7 +57,12 @@ class UserProfile:
             self.rank = expected_rank
         await self.validate_role()
 
+    async def increment_xp(self):
+        await self.give_xp(config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier)
+
     async def give_xp(self, xp):
+        if xp <= 0:
+            return
         self.DB_user.xp_count += xp
         self.xp_count += xp
         await self.validate_rank()
@@ -87,7 +92,7 @@ class Levelling(commands.Cog):
         profile.DB_user.message_count += 1
         if profile.user_id in self.bot.xp_timers:
             if datetime.now() >= self.bot.xp_timers[profile.user_id]:
-                await profile.give_xp(config.Misc.fetch("xp_gain_value"))
+                await profile.increment_xp()
         else:
             self.bot.xp_timers[profile.user_id] = datetime.now() + timedelta(seconds=config.Misc.fetch("xp_gain_delay"))
-            await profile.give_xp(config.Misc.fetch("xp_gain_value"))
+            await profile.increment_xp()

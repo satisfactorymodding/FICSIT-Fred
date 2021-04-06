@@ -660,6 +660,37 @@ class Commands(commands.Cog):
         await ctx.send("Took {} xp from {}. They are now rank {} ({} xp)".format(amount, user.name, profile.rank,
                                                                                  profile.xp_count))
 
+    @xp.command(name="multiplier")
+    async def xpmultiplier(self, ctx, *args):
+        if ctx.message.mentions:
+            id = int(ctx.message.mentions[0].id)
+        else:
+            if len(args) > 0:
+                id = int(args[0])
+            else:
+                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                                                   "What is the ID of the person for which you want to set their xp "
+                                                   "multiplier e.g. ``809710343533232129``"))
+        if len(args) > 1:
+            amount = int(args[1])
+        else:
+            amount = int(await Helper.waitResponse(self.bot, ctx.message,
+                                                   "At how much should the xp multiplier be set ? e.g. "
+                                                   "``809710343533232129``"))
+        user = ctx.guild.get_member(id)
+        if not user:
+            ctx.send("Sorry, I was unable to get the member with ID {}".format(id))
+            return
+        DB_user = config.Users.create_if_missing(user)
+        if amount < 0:
+            amount = 0
+        DB_user.xp_multiplier = amount
+
+        if amount == 0:
+            await ctx.send("{} has been banned from xp gain".format(user.name))
+        else:
+            await ctx.send("Set {}'s xp multiplier to {}".format(user.name, amount))
+
     @xp.command(name="set")
     async def xpset(self, ctx, *args):
         if ctx.message.mentions:

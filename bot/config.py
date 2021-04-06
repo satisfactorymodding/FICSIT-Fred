@@ -33,6 +33,7 @@ class Users(SQLObject):
     full_name = StringCol()
     message_count = IntCol(default=0)
     xp_count = IntCol(default=0)
+    xp_multiplier = IntCol(default=1)
     rank = IntCol(default=0)
     rank_role_id = BigIntCol(default=None)
     accepts_dms = BoolCol(default=True)
