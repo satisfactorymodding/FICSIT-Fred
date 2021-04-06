@@ -11,7 +11,7 @@ import io
 import typing
 
 from discord.ext import commands
-
+# TODO make commands reply to the calling message or the message the calling message replied to
 
 async def t3_only(ctx):
     return (ctx.author.id == 227473074616795137 or
@@ -86,12 +86,10 @@ class Commands(commands.Cog):
                     try:
                         r = await self.bot.wait_for('reaction_add', timeout=240.0, check=check)
                         member = r[1]
-                        if not member.dm_channel:
-                            await member.create_dm()
-                        try:
-                            await member.dm_channel.send(content=None, embed=CreateEmbed.desc(desc))
+                        sent = await self.bot.send_DM(member, content=None, embed=CreateEmbed.desc(desc))
+                        if sent:
                             await newmessage.add_reaction("✅")
-                        except:
+                        else:
                             await ctx(
                                 "I was unable to send you a direct message. Please check your discord "
                                 "settings regarding those !")
@@ -108,6 +106,33 @@ class Commands(commands.Cog):
         index = search.init_index('ficsit')
         query = index.search(args + " " + version)
         await ctx.send("This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
+
+    @commands.command()
+    async def leaderboard(self, ctx):
+        query = config.Users.select().orderBy("-xp_count").limit(10)
+        results = list(query)
+        if not results:
+            ctx.send("The database was empty. This should NEVER happen")
+            return
+        data = [dict(name=user.full_name, count_and_rank=dict(count=user.xp_count, rank=user.rank)) for user in results]
+        embed = CreateEmbed.leaderboard(data)
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def rank(self, ctx, *, args=None):
+        if ctx.message.mentions:
+            user = ctx.message.mentions[0]
+        else:
+            if args:
+                id = int(args[0])
+                user = self.bot.get_user(id)
+                if not user:
+                    ctx.send("Sorry, I was unable to find the user with id {}".format(id))
+                    return
+            else:
+                user = ctx.author
+        DB_user = config.Users.create_if_missing(user)
+        await ctx.send("{} is rank {} with {} xp".format(user.name, DB_user.rank, DB_user.xp_count))
 
     @commands.group()
     @commands.check(t3_only)
@@ -454,27 +479,29 @@ class Commands(commands.Cog):
     async def setNLPstate(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
+            if data.lower() in ["0", "false", "no", "off"]:
+                config.Misc.change("dialogflow_state", False)
+                await ctx.send("The NLP is now off !")
+            else:
+                config.Misc.change("dialogflow_state", True)
+                await ctx.send("The NLP is now on !")
         else:
-            data = await Helper.waitResponse(self.bot, ctx.message, "Should the NLP be on or off ?")
-        if data.lower() in ["0", "false", "no", "off"]:
-            config.Misc.change("dialogflow_state", False)
-            await ctx.send("The NLP is now off !")
-        else:
-            config.Misc.change("dialogflow_state", True)
-            await ctx.send("The NLP is now on !")
+            config.Misc.change("dialogflow_state", config.Misc.fetch("dialogflow_state"))
+
 
     @set.command(name="NLP_debug")
     async def setNLPdebug(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
+            if data.lower() in ["0", "false", "no", "off"]:
+                config.Misc.change("dialogflow_debug_state", False)
+                await ctx.send("The NLP debugging mode is now off !")
+            else:
+                config.Misc.change("dialogflow_debug_state", True)
+                await ctx.send("The NLP debugging mode is now on !")
         else:
-            data = await Helper.waitResponse(self.bot, ctx.message, "Should the NLP be in debugging mode ?")
-        if data.lower() in ["0", "false", "no", "off"]:
-            config.Misc.change("dialogflow_debug_state", False)
-            await ctx.send("The NLP debugging mode is now off !")
-        else:
-            config.Misc.change("dialogflow_debug_state", True)
-            await ctx.send("The NLP debugging mode is now on !")
+            config.Misc.change("dialogflow_debug_state", not config.Misc.fetch("dialogflow_debug_state"))
+
 
     @set.command(name="welcome_message")
     async def setwelcomemessage(self, ctx, *args):
@@ -565,14 +592,15 @@ class Commands(commands.Cog):
     async def setlevellingstate(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
+            if data.lower() in ["0", "false", "no", "off"]:
+                config.Misc.change("levelling_state", False)
+                await ctx.send("The levelling system is now inactive !")
+            else:
+                config.Misc.change("levelling_state", True)
+                await ctx.send("The levelling system is now active !")
         else:
-            data = await Helper.waitResponse(self.bot, ctx.message, "Should the levelling system be active ?")
-        if data.lower() in ["0", "false", "no", "off"]:
-            config.Misc.change("levelling_state", False)
-            await ctx.send("The levelling system is now inactive !")
-        else:
-            config.Misc.change("levelling_state", True)
-            await ctx.send("The levelling system is now active !")
+            config.Misc.change("levelling_state", not config.Misc.fetch("levelling_state"))
+
 
     @commands.check(mod_only)
     @set.command(name="main_guild")
@@ -661,14 +689,12 @@ class Commands(commands.Cog):
     @commands.command()
     @commands.check(t3_only)
     async def saveconfig(self, ctx, *args):
-        if not ctx.author.dm_channel:
-            await ctx.author.create_dm()
-        try:
-            await ctx.author.dm_channel.send(content="WARNING : THIS IS OUTDATED, config is now managed via the DB",
+        sent = self.bot.send_DM(ctx.author, content="WARNING : THIS IS OUTDATED, config is now managed via the DB",
                                              file=discord.File(open("../config/config.json", "r"),
                                                                filename="config.json"))
+        if sent:
             await ctx.message.add_reaction("✅")
-        except:
+        else:
             await ctx.send("I was unable to send you a direct message. Please check your discord "
                            "settings regarding those !")
 

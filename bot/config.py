@@ -35,12 +35,12 @@ class Users(SQLObject):
     xp_count = IntCol(default=0)
     rank = IntCol(default=0)
     rank_role_id = BigIntCol(default=None)
-    rankup_notifications = BoolCol(default=True)
+    accepts_dms = BoolCol(default=True)
 
     def as_dict(self):
         return dict(user_id=self.user_id, message_count=self.message_count, xp_count=self.xp_count,
                     rank_role_id=self.rank_role_id, rank=self.rank, full_name=self.full_name,
-                    rankup_notifications=self.rankup_notifications)
+                    accepts_dms=self.accepts_dms)
 
     @staticmethod
     def fetch(user_id):
@@ -51,6 +51,15 @@ class Users(SQLObject):
         else:
             return None
 
+    @staticmethod
+    def create_if_missing(user):
+        query = Users.selectBy(user_id=user.id)
+        results = list(query)
+        if results:
+            return results[0]
+        else:
+            return Users(user_id=user.id, full_name=user.name + "#" + user.discriminator)
+
 
 class ActionColours(SQLObject):
     class sqlmeta:
@@ -59,14 +68,14 @@ class ActionColours(SQLObject):
     name = StringCol()
     colour = IntCol()
 
-
-def get_action_colour(name):
-    query = ActionColours.selectBy(name=name.lower())
-    results = list(query)
-    if results:
-        return query[0].colour
-    else:
-        return None
+    @staticmethod
+    def fetch(name):
+        query = ActionColours.selectBy(name=name.lower())
+        results = list(query)
+        if results:
+            return query[0].colour
+        else:
+            return None
 
 
 class MediaOnlyChannels(SQLObject):

@@ -49,26 +49,11 @@ class UserProfile:
         if expected_rank != self.rank:
             self.bot.logger.info("Correcting a mismatched rank from {} to {}".format(self.rank, expected_rank))
             self.DB_user.rank = expected_rank
-            if self.DB_user.rankup_notifications:
-                if not self.member.dm_channel:
-                    await self.member.create_dm()
+            if self.DB_user.accepts_dms:
                 if expected_rank > self.rank:
-                    try:
-                        await self.member.dm_channel.send("You went up in rank ! Congratulations ! Look at you and "
-                                                          "your shiny new role and colour\n(If you wish that I do not "
-                                                          "send you a DM next time, simply say 'stop'. You can "
-                                                          "reactivate it with 'start')")
-                    except:
-                        pass
+                    await self.bot.send_DM(self.member, "You went up from rank {} to rank {} ! Congratulations !".format(self.rank, expected_rank))
                 else:
-                    try:
-                        await self.member.dm_channel.send("You went down in rank.. This is weird. Maybe the admins "
-                                                          "changed some experience values. Sorry about that ! But "
-                                                          "maybe it's normal\n(If you wish that I do not send you a "
-                                                          "DM next time, simply say 'stop'. You can reactivate it "
-                                                          "with 'start')")
-                    except:
-                        pass
+                    await self.bot.send_DM(self.member, "You went down from rank {} to rank {}.. Sorry about that".format(self.rank, expected_rank))
             self.rank = expected_rank
         await self.validate_role()
 

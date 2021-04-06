@@ -8,15 +8,10 @@ class Welcome(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        if not member.dm_channel:
-            await member.create_dm()
-        try:
-            welcome = config.Misc.fetch("welcome_message")
-            info = config.Misc.fetch("latest_info")
-            if welcome:
-                await member.send(welcome)
-            if info:
-                info = "Here's the latest information :\n\n" + info
-                await member.send(info)
-        except:
-            pass
+        welcome = config.Misc.fetch("welcome_message")
+        info = config.Misc.fetch("latest_info")
+        if welcome:
+            await self.bot.send_DM(member, welcome)
+        if info:
+            info = "Here's the latest information :\n\n" + info
+            await self.bot.send_DM(member, info)

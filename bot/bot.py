@@ -126,15 +126,31 @@ class Bot(discord.ext.commands.Bot):
             channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
 
+    async def send_DM(self, user, content, embed=None, file=None):
+        DB_user = config.Users.create_if_missing(user)
+        if not DB_user.accepts_dms:
+            return None
+
+        if not user.dm_channel:
+            await user.create_dm()
+        try:
+            if not embed:
+                embed = CreateEmbed.DM(content)
+                content = None
+            return await user.dm_channel.send(content=content, embed=embed, file=file)
+        except Exception as e:
+            print(e)
+            return None
+
     async def on_message(self, message):
         if message.author.bot or not self.running:
             return
         if isinstance(message.channel, discord.DMChannel):
             if message.content.lower() == "start":
-                config.Users.fetch(message.author.id).rankup_notifications = True
+                config.Users.fetch(message.author.id).accepts_dms = True
                 await message.channel.send("You will now receive rank changes notifications !")
             elif message.content.lower() == "stop":
-                config.Users.fetch(message.author.id).rankup_notifications = False
+                config.Users.fetch(message.author.id).accepts_dms = False
                 await message.channel.send("You will no longer receive rank changes notifications !")
             else:
                 await message.channel.send("I do not allow commands other than 'start' and 'stop' to be used by direct "
