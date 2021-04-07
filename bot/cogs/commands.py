@@ -35,7 +35,6 @@ class Commands(commands.Cog):
             if config.Commands.fetch(command):
                 return
         await self.bot.reply_to_msg(ctx.message, "I encountered an error while trying to call this command. Feyko has been notified")
-        raise error
 
     @commands.Cog.listener()
     async def on_message(self, message):

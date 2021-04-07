@@ -36,7 +36,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.6.0"
+        self.version = "2.6.2"
         self.running = True
         self.loop = asyncio.get_event_loop()
 
@@ -146,7 +146,7 @@ class Bot(discord.ext.commands.Bot):
         reference = message.reference or message
         self.logger.debug(type(reference))
         self.logger.debug(str(reference))
-        
+
         return await message.channel.send(content, reference=reference, **kwargs)
 
     async def on_message(self, message):
