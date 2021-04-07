@@ -144,8 +144,8 @@ class Bot(discord.ext.commands.Bot):
 
     async def reply_to_msg(self, message, content=None, **kwargs):
         reference = message.reference or message
-        self.logger.debug(type(reference))
-        self.logger.debug(str(reference))
+        self.logger.info(type(reference))
+        self.logger.info(str(reference))
 
         return await message.channel.send(content, reference=reference, **kwargs)
 
