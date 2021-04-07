@@ -5,11 +5,15 @@ import os
 import uuid
 import asyncio
 import json
+import config
+from sqlobject.sqlbuilder import *
 
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
-session_client = dialogflow.SessionsClient(credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH))
+session_client = dialogflow.SessionsClient(
+    credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH))
 DIALOGFLOW_PROJECT_ID = DIALOGFLOW_AUTH['project_id']
-SESSION_LIFETIME = 10 * 60 # 10 minutes to avoid repeated false positives
+SESSION_LIFETIME = 10 * 60  # 10 minutes to avoid repeated false positives
+
 
 class DialogFlow(commands.Cog):
     def __init__(self, bot):
@@ -19,16 +23,17 @@ class DialogFlow(commands.Cog):
     async def process_message(self, message):
         if message.content.startswith(self.bot.command_prefix):
             return
-        if not self.bot.config["dialogflow state"]:
+        if not config.Misc.fetch("dialogflow_state"):
             return
-        if not message.channel.id in self.bot.config["dialogflow_channels"]:
+        if not config.DialogflowChannels.fetch(message.channel.id):
             return
-        if not self.bot.config["dialogflow debug state"]:
+        if not config.Misc.fetch("dialogflow_debug_state"):
             roles = message.author.roles[1:]
-            if len(roles) != 0 and len(roles) != len(self.bot.config["dialogflow_exception_roles"]):
+            exceptionroles = config.DialogflowExceptionRoles.fetch_all()
+            if len(roles) != 0 and len(roles) != len(exceptionroles):
                 return
             for role in roles:
-                if role.id not in self.bot.config["dialogflow_exception_roles"]:
+                if role.id not in exceptionroles:
                     return
 
         if message.author.id in self.session_ids:
@@ -36,7 +41,7 @@ class DialogFlow(commands.Cog):
         else:
             session_id = uuid.uuid4()
             self.session_ids[message.author.id] = session_id
-        
+
         session = session_client.session_path(DIALOGFLOW_PROJECT_ID, session_id)
 
         if not message.content:
@@ -51,32 +56,32 @@ class DialogFlow(commands.Cog):
         response_text = response.query_result.fulfillment_text
         response_data = response.query_result.parameters
         intent_id = response.query_result.intent.name.split('/')[-1]
+        query = config.Dialogflow.select(
+            "dialogflow.intent_id = '{}' AND ((dialogflow.data IS NULL) OR dialogflow.data = '{}')"
+                .format(intent_id, str(dict(response_data)).replace("'", '"')))
+        results = list(query)
+        if not len(results):
+            return
+        dialogflowReply = results[0].as_dict()
 
-        for dialogflowReply in self.bot.config["dialogflow"]:
-            if dialogflowReply["id"] == intent_id and (not dialogflowReply["data"] or dialogflowReply["data"] == response_data):
-                if not dialogflowReply["response"]:
-                    await message.channel.send(message.author.mention + " : " + response_text)
-                else:
-                    if dialogflowReply["response"].startswith(self.bot.command_prefix):
-                        command = dialogflowReply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]
-                        for automation in self.bot.config["commands"]:
-                            if command.lower() == automation["command"].lower():
-                                await message.channel.send(automation["response"])
-                        
-                    else:
-                        await message.channel.send(dialogflowReply["response"])
+        if not dialogflowReply["response"]:
+            await message.reply_to_msg(response_text)
+        else:
+            if dialogflowReply["response"].startswith(self.bot.command_prefix):
+                commandname = dialogflowReply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]
+                if command := config.Commands.fetch(commandname):
+                    await message.reply_to_msg(command["response"])
 
-                if dialogflowReply["has_followup"]:
-                    def check(message2):
-                        return message2.author == message.author and message2.channel == message.channel
+            else:
+                await message.reply_to_msg(dialogflowReply["response"])
 
-                    try:
-                        response = await self.bot.wait_for('message', timeout=SESSION_LIFETIME, check=check)
-                    except asyncio.TimeoutError:
-                        del self.session_ids[message.author.id]
-                else:
-                    del self.session_ids[message.author.id]
-                
-                break
+        if dialogflowReply["has_followup"]:
+            def check(message2):
+                return message2.author == message.author and message2.channel == message.channel
 
-      
+            try:
+                response = await self.bot.wait_for('message', timeout=SESSION_LIFETIME, check=check)
+            except asyncio.TimeoutError:
+                del self.session_ids[message.author.id]
+        else:
+            del self.session_ids[message.author.id]

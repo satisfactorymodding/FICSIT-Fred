@@ -9,3 +9,5 @@ packaging
 jellyfish
 python-logstash-async
 google-cloud-dialogflow
+sqlobject
+psycopg2
