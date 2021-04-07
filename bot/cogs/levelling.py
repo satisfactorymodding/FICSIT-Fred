@@ -58,7 +58,7 @@ class UserProfile:
         await self.validate_role()
 
     async def increment_xp(self):
-        await self.give_xp(config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier)
+        await self.give_xp(config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier * self.DB_user.role_xp_multiplier)
 
     async def give_xp(self, xp):
         if xp <= 0:
@@ -78,10 +78,17 @@ class UserProfile:
         await self.validate_rank()
 
 
+
 class Levelling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot.xp_timers = {}
+
+    # TODO make xp roles
+    @commands.Cog.listener()
+    async def on_member_update(self, before, after):
+        if before.roles != after.roles:
+            config.XpRoles
 
     @commands.Cog.listener()
     async def on_message(self, message):

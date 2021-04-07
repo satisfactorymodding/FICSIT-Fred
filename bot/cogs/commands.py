@@ -1,7 +1,7 @@
 import discord
 import asyncio
 import config
-import levelling
+from cogs import levelling
 import libraries.createembed as CreateEmbed
 import json
 import libraries.helper as Helper
@@ -34,7 +34,7 @@ class Commands(commands.Cog):
             command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if config.Commands.fetch(command):
                 return
-        await self.bot.reply(ctx.message, "I encountered an error while trying to call this command. Feyko has been notified")
+        await self.bot.reply_to_msg(ctx.message, "I encountered an error while trying to call this command. Feyko has been notified")
         raise error
 
     @commands.Cog.listener()
@@ -44,24 +44,24 @@ class Commands(commands.Cog):
         if message.content.startswith(self.bot.command_prefix):
             name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if command := config.Commands.fetch(name):
-                await self.bot.reply(message, command["content"])
+                await self.bot.reply_to_msg(message, command["content"])
                 return
 
     @commands.command()
     async def version(self, ctx):
-        await self.bot.reply(ctx.message, self.bot.version)
+        await self.bot.reply_to_msg(ctx.message, self.bot.version)
 
     @commands.command()
     async def help(self, ctx):
-        await self.bot.reply(ctx.message, "Sorry, this command is temporarily unavailable")
+        await self.bot.reply_to_msg(ctx.message, "Sorry, this command is temporarily unavailable")
 
     @commands.command()
     async def mod(self, ctx, *args):
         if len(args) < 1:
-            await self.bot.reply(ctx.message, "This command requires at least one argument")
+            await self.bot.reply_to_msg(ctx.message, "This command requires at least one argument")
             return
         if args[0] == "help":
-            await self.bot.reply(ctx.message, "I search for the provided mod name in the SMR database, returning the details "
+            await self.bot.reply_to_msg(ctx.message, "I search for the provided mod name in the SMR database, returning the details "
                            "of the mod if it is found. If multiple are found, it will state so. Same for "
                            "if none are found. If someone reacts to the clipboard in 4m, I will send them "
                            "the full description of the mod.")
@@ -69,11 +69,11 @@ class Commands(commands.Cog):
         args = " ".join(args)
         result, desc = CreateEmbed.mod(args)
         if result is None:
-            await self.bot.reply(ctx.message, "No mods found!")
+            await self.bot.reply_to_msg(ctx.message, "No mods found!")
         elif isinstance(result, str):
-            await self.bot.reply(ctx.message, "multiple mods found")
+            await self.bot.reply_to_msg(ctx.message, "multiple mods found")
         else:
-            newmessage = await self.bot.reply(ctx.message, content=None, embed=result)
+            newmessage = await self.bot.reply_to_msg(ctx.message, content=None, embed=result)
             if desc:
                 await newmessage.add_reaction("📋")
                 await asyncio.sleep(0.5)
@@ -105,18 +105,18 @@ class Commands(commands.Cog):
         search = SearchClient.create('BH4D9OD16A', '53b3a8362ea7b391f63145996cfe8d82')
         index = search.init_index('ficsit')
         query = index.search(args + " " + version)
-        await self.bot.reply(ctx.message, "This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
+        await self.bot.reply_to_msg(ctx.message, "This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
 
     @commands.command()
     async def leaderboard(self, ctx):
         query = config.Users.select().orderBy("-xp_count").limit(10)
         results = list(query)
         if not results:
-            self.bot.reply(ctx.message, "The database was empty. This should NEVER happen")
+            self.bot.reply_to_msg(ctx.message, "The database was empty. This should NEVER happen")
             return
         data = [dict(name=user.full_name, count_and_rank=dict(count=user.xp_count, rank=user.rank)) for user in results]
         embed = CreateEmbed.leaderboard(data)
-        await self.bot.reply(ctx.message, embed=embed)
+        await self.bot.reply_to_msg(ctx.message, embed=embed)
 
     @commands.command()
     async def rank(self, ctx, *, args=None):
@@ -127,46 +127,46 @@ class Commands(commands.Cog):
                 id = int(args[0])
                 user = self.bot.get_user(id)
                 if not user:
-                    self.bot.reply(ctx.message, "Sorry, I was unable to find the user with id {}".format(id))
+                    self.bot.reply_to_msg(ctx.message, "Sorry, I was unable to find the user with id {}".format(id))
                     return
             else:
                 user = ctx.author
         DB_user = config.Users.create_if_missing(user)
-        await self.bot.reply(ctx.message, "{} is rank {} with {} xp".format(user.name, DB_user.rank, DB_user.xp_count))
+        await self.bot.reply_to_msg(ctx.message, "{} is rank {} with {} xp".format(user.name, DB_user.rank, DB_user.xp_count))
 
     @commands.group()
     @commands.check(t3_only)
     async def add(self, ctx):
         if ctx.invoked_subcommand is None:
-            await self.bot.reply(ctx.message, 'Invalid sub command passed...')
+            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
     @commands.check(t3_only)
     async def remove(self, ctx):
         if ctx.invoked_subcommand is None:
-            await self.bot.reply(ctx.message, 'Invalid sub command passed...')
+            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
     @commands.check(t3_only)
     async def set(self, ctx):
         if ctx.invoked_subcommand is None:
-            await self.bot.reply(ctx.message, 'Invalid sub command passed...')
+            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
     @commands.check(t3_only)
     async def modify(self, ctx):
         if ctx.invoked_subcommand is None:
-            await self.bot.reply(ctx.message, 'Invalid sub command passed...')
+            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
     @commands.check(mod_only)
     async def xp(self, ctx):
         if ctx.invoked_subcommand is None:
-            await self.bot.reply(ctx.message, 'Invalid sub command passed...')
+            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @add.command(name="mediaonly")
@@ -181,11 +181,11 @@ class Commands(commands.Cog):
                                                                           "``709509235028918334``"))
 
         if config.MediaOnlyChannels.fetch(id):
-            await self.bot.reply(ctx.message, "This channel is already a media only channel")
+            await self.bot.reply_to_msg(ctx.message, "This channel is already a media only channel")
             return
 
         config.MediaOnlyChannels(channel_id=id)
-        await self.bot.reply(ctx.message, "Media only channel " + self.bot.get_channel(id).mention + " added !")
+        await self.bot.reply_to_msg(ctx.message, "Media only channel " + self.bot.get_channel(id).mention + " added !")
 
     @remove.command(name="mediaonly")
     async def removemediaonly(self, ctx, *args):
@@ -199,11 +199,11 @@ class Commands(commands.Cog):
                                                                           "``709509235028918334``"))
 
         if not config.MediaOnlyChannels.fetch(id):
-            await self.bot.reply(ctx.message, "Media Only Channel could not be found !")
+            await self.bot.reply_to_msg(ctx.message, "Media Only Channel could not be found !")
             return
 
         config.MediaOnlyChannels.deleteBy(channel_id=id)
-        await self.bot.reply(ctx.message, "Media Only Channel removed !")
+        await self.bot.reply_to_msg(ctx.message, "Media Only Channel removed !")
 
     @add.command(name="command")
     async def addcommand(self, ctx, *args):
@@ -213,10 +213,10 @@ class Commands(commands.Cog):
             command = await Helper.waitResponse(self.bot, ctx.message, "What is the command? e.g. ``install``")
 
         if config.Commands.fetch(command):
-            await self.bot.reply(ctx.message, "This command already exists !")
+            await self.bot.reply_to_msg(ctx.message, "This command already exists !")
             return
         if config.ReservedCommands.fetch(command):
-            await self.bot.reply(ctx.message, "This command name is reserved")
+            await self.bot.reply_to_msg(ctx.message, "This command name is reserved")
             return
 
         if len(args) == 2:
@@ -228,7 +228,7 @@ class Commands(commands.Cog):
                                                                         "or an image or link to an image")
 
         config.Commands(name=command, content=response)
-        await self.bot.reply(ctx.message, "Command '" + command + "' added !")
+        await self.bot.reply_to_msg(ctx.message, "Command '" + command + "' added !")
 
     @remove.command(name="command")
     async def removecommand(self, ctx, *args):
@@ -238,11 +238,11 @@ class Commands(commands.Cog):
             commandname = await Helper.waitResponse(self.bot, ctx.message, "What is the command? e.g. ``install``")
 
         if not config.Commands.fetch(commandname):
-            await self.bot.reply(ctx.message, "Command could not be found !")
+            await self.bot.reply_to_msg(ctx.message, "Command could not be found !")
             return
 
         config.Commands.deleteBy(name=commandname)
-        await self.bot.reply(ctx.message, "Command removed !")
+        await self.bot.reply_to_msg(ctx.message, "Command removed !")
 
     @modify.command(name="command")
     async def modifycommand(self, ctx, *args):
@@ -253,7 +253,7 @@ class Commands(commands.Cog):
                                                     "What is the command to modify ? e.g. ``install``")
 
         if config.ReservedCommands.fetch(commandname):
-            await self.bot.reply(ctx.message, "This command is special and cannot be modified")
+            await self.bot.reply_to_msg(ctx.message, "This command is special and cannot be modified")
             return
 
         commandname = commandname.lower()
@@ -263,7 +263,7 @@ class Commands(commands.Cog):
             createcommand = await Helper.waitResponse(self.bot, ctx.message,
                                                       "Command could not be found ! Do you want to create it ?")
             if createcommand.lower() in ["0", "false", "no", "off"]:
-                await self.bot.reply(ctx.message, "Understood. Aborting")
+                await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
                 return
         if len(args) == 2:
             response = args[1]
@@ -275,15 +275,15 @@ class Commands(commands.Cog):
 
         if not results:
             config.Commands(name=commandname, content=response)
-            await self.bot.reply(ctx.message, "Command '" + commandname + "' added !")
+            await self.bot.reply_to_msg(ctx.message, "Command '" + commandname + "' added !")
         else:
             results[0].content = response
-            await self.bot.reply(ctx.message, "Command '" + commandname + "' modified !")
+            await self.bot.reply_to_msg(ctx.message, "Command '" + commandname + "' modified !")
 
     @add.command(name="crash")
     async def addcrash(self, ctx, *args):
         if len(args) > 3:
-            self.bot.reply(ctx.message, "Please put your parameters between double quotes `\"`.")
+            self.bot.reply_to_msg(ctx.message, "Please put your parameters between double quotes `\"`.")
             return
         if len(args) > 0:
             name = args[0]
@@ -293,7 +293,7 @@ class Commands(commands.Cog):
         name = name.lower()
 
         if config.Crashes.fetch(name):
-            await self.bot.reply(ctx.message, "A crash with this name already exists")
+            await self.bot.reply_to_msg(ctx.message, "A crash with this name already exists")
             return
 
         if len(args) > 1:
@@ -310,7 +310,7 @@ class Commands(commands.Cog):
                                                  "keywords {user}`` (use {user} to ping the user)")
 
         config.Crashes(name=name, crash=crash, response=response)
-        await self.bot.reply(ctx.message, "Known crash '" + name + "' added!")
+        await self.bot.reply_to_msg(ctx.message, "Known crash '" + name + "' added!")
 
     @remove.command(name="crash")
     async def removecrash(self, ctx, *args):
@@ -320,11 +320,11 @@ class Commands(commands.Cog):
             name = await Helper.waitResponse(self.bot, ctx.message, "Which known crash do you want to remove ?")
 
         if not config.Crashes.fetch(name):
-            await self.bot.reply(ctx.message, "Crash could not be found!")
+            await self.bot.reply_to_msg(ctx.message, "Crash could not be found!")
             return
 
         config.Crashes.deleteBy(name=name)
-        await self.bot.reply(ctx.message, "Crash removed!")
+        await self.bot.reply_to_msg(ctx.message, "Crash removed!")
 
     @add.command(name="dialogflow")
     async def adddialogflow(self, ctx, id: str, response: typing.Union[bool, str], has_followup: bool, *args):
@@ -334,7 +334,7 @@ class Commands(commands.Cog):
             data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
 
         if response == True:
-            await self.bot.reply(ctx.message, "Response should be a string or False (use the response from dialogflow)")
+            await self.bot.reply_to_msg(ctx.message, "Response should be a string or False (use the response from dialogflow)")
             return
 
         if config.Dialogflow.fetch(id, data):
@@ -346,7 +346,7 @@ class Commands(commands.Cog):
             await self.removedialogflow(ctx, id, *args)
 
         config.Dialogflow(intent_id=id, data=data, response=response, has_followup=has_followup)
-        await self.bot.reply(ctx.message,
+        await self.bot.reply_to_msg(ctx.message,
             "Dialogflow response for '" + id + "' (" + (json.dumps(data) if data else 'any data') + ") added!")
 
     @remove.command(name="dialogflow")
@@ -357,11 +357,11 @@ class Commands(commands.Cog):
             data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
 
         if not config.Dialogflow.fetch(id, data):
-            await self.bot.reply(ctx.message, "Couldn't find the dialogflow reply")
+            await self.bot.reply_to_msg(ctx.message, "Couldn't find the dialogflow reply")
             return
 
         config.Dialogflow.deleteBy(intent_id=id, data=data)
-        await self.bot.reply(ctx.message, "Dialogflow reply deleted")
+        await self.bot.reply_to_msg(ctx.message, "Dialogflow reply deleted")
 
     @add.command(name="dialogflowChannel")
     async def adddialogflowchannel(self, ctx, *args):
@@ -374,11 +374,11 @@ class Commands(commands.Cog):
                 id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
                                                                           "``709509235028918334``"))
         if config.DialogflowChannels.fetch(id):
-            await self.bot.reply(ctx.message, "This channel is already a dialogflow channel")
+            await self.bot.reply_to_msg(ctx.message, "This channel is already a dialogflow channel")
             return
 
         config.DialogflowChannels(channel_id=id)
-        await self.bot.reply(ctx.message, "Dialogflow channel " + self.bot.get_channel(id).mention + " added!")
+        await self.bot.reply_to_msg(ctx.message, "Dialogflow channel " + self.bot.get_channel(id).mention + " added!")
 
     @remove.command(name="dialogflowChannel")
     async def removedialogflowchannel(self, ctx, *args):
@@ -393,9 +393,9 @@ class Commands(commands.Cog):
         index = 0
         if config.DialogflowChannels.fetch(id):
             config.DialogflowChannels.deleteBy(channel_id=id)
-            await self.bot.reply(ctx.message, "Dialogflow Channel removed!")
+            await self.bot.reply_to_msg(ctx.message, "Dialogflow Channel removed!")
         else:
-            await self.bot.reply(ctx.message, "Dialogflow channel could not be found!")
+            await self.bot.reply_to_msg(ctx.message, "Dialogflow channel could not be found!")
 
     @add.command(name="dialogflowRole")
     async def adddialogflowrole(self, ctx, *args):
@@ -409,11 +409,11 @@ class Commands(commands.Cog):
                                                                           "``809710343533232129``"))
 
         if config.DialogflowExceptionRoles.fetch(id):
-            await self.bot.reply(ctx.message, "This role is already a dialogflow exception role")
+            await self.bot.reply_to_msg(ctx.message, "This role is already a dialogflow exception role")
             return
 
         config.DialogflowExceptionRoles(role_id=id)
-        await self.bot.reply(ctx.message, "Dialogflow role " + ctx.message.guild.get_role(id).name + " added!")
+        await self.bot.reply_to_msg(ctx.message, "Dialogflow role " + ctx.message.guild.get_role(id).name + " added!")
 
     @remove.command(name="dialogflowRole")
     async def removedialogflowrole(self, ctx, *args):
@@ -428,9 +428,9 @@ class Commands(commands.Cog):
         index = 0
         if config.DialogflowExceptionRoles.fetch(id):
             config.DialogflowExceptionRoles.deleteBy(role_id=id)
-            await self.bot.reply(ctx.message, "Dialogflow role removed!")
+            await self.bot.reply_to_msg(ctx.message, "Dialogflow role removed!")
         else:
-            await self.bot.reply(ctx.message, "Dialogflow role could not be found!")
+            await self.bot.reply_to_msg(ctx.message, "Dialogflow role could not be found!")
 
     @add.command(name="rank_role")
     async def adddrankrole(self, ctx, *args):
@@ -452,11 +452,11 @@ class Commands(commands.Cog):
                 rank = int(await Helper.waitResponse(self.bot, ctx.message, "What is the rank for the role ? e.g. 5"))
 
         if config.DialogflowExceptionRoles.fetch(id):
-            await self.bot.reply(ctx.message, "This role is already a rank role")
+            await self.bot.reply_to_msg(ctx.message, "This role is already a rank role")
             return
 
         config.RankRoles(role_id=id, rank=rank)
-        await self.bot.reply(ctx.message, "Rank role " + ctx.message.guild.get_role(id).name + " added!")
+        await self.bot.reply_to_msg(ctx.message, "Rank role " + ctx.message.guild.get_role(id).name + " added!")
 
     @remove.command(name="rank_role")
     async def removerankrole(self, ctx, *args):
@@ -471,9 +471,9 @@ class Commands(commands.Cog):
 
         if config.RankRoles.fetch_by_role(id):
             config.RankRoles.deleteBy(role_id=id)
-            await self.bot.reply(ctx.message, "Rank role removed!")
+            await self.bot.reply_to_msg(ctx.message, "Rank role removed!")
         else:
-            await self.bot.reply(ctx.message, "Rank role could not be found!")
+            await self.bot.reply_to_msg(ctx.message, "Rank role could not be found!")
 
     @set.command(name="NLP_state")
     async def setNLPstate(self, ctx, *args):
@@ -481,10 +481,10 @@ class Commands(commands.Cog):
             data = args[0]
             if data.lower() in ["0", "false", "no", "off"]:
                 config.Misc.change("dialogflow_state", False)
-                await self.bot.reply(ctx.message, "The NLP is now off !")
+                await self.bot.reply_to_msg(ctx.message, "The NLP is now off !")
             else:
                 config.Misc.change("dialogflow_state", True)
-                await self.bot.reply(ctx.message, "The NLP is now on !")
+                await self.bot.reply_to_msg(ctx.message, "The NLP is now on !")
         else:
             config.Misc.change("dialogflow_state", config.Misc.fetch("dialogflow_state"))
 
@@ -495,10 +495,10 @@ class Commands(commands.Cog):
             data = args[0]
             if data.lower() in ["0", "false", "no", "off"]:
                 config.Misc.change("dialogflow_debug_state", False)
-                await self.bot.reply(ctx.message, "The NLP debugging mode is now off !")
+                await self.bot.reply_to_msg(ctx.message, "The NLP debugging mode is now off !")
             else:
                 config.Misc.change("dialogflow_debug_state", True)
-                await self.bot.reply(ctx.message, "The NLP debugging mode is now on !")
+                await self.bot.reply_to_msg(ctx.message, "The NLP debugging mode is now on !")
         else:
             config.Misc.change("dialogflow_debug_state", not config.Misc.fetch("dialogflow_debug_state"))
 
@@ -513,10 +513,10 @@ class Commands(commands.Cog):
                                                                     "mesage)")
         if len(data) < 10:
             config.Misc.change("welcome_message", "")
-            await self.bot.reply(ctx.message, "The welcome message is now disabled")
+            await self.bot.reply_to_msg(ctx.message, "The welcome message is now disabled")
         else:
             config.Misc.change("welcome_message", data)
-            await self.bot.reply(ctx.message, "The welcome message has been changed !")
+            await self.bot.reply_to_msg(ctx.message, "The welcome message has been changed !")
 
     @set.command(name="latest_info")
     async def setlatestinfo(self, ctx, *args):
@@ -528,10 +528,10 @@ class Commands(commands.Cog):
                                                                     "mesage)")
         if len(data) < 10:
             config.Misc.change("latest_info", "")
-            await self.bot.reply(ctx.message, "The latest info message is now disabled")
+            await self.bot.reply_to_msg(ctx.message, "The latest info message is now disabled")
         else:
             config.Misc.change("latest_info", data)
-            await self.bot.reply(ctx.message, "The latest info message has been changed !")
+            await self.bot.reply_to_msg(ctx.message, "The latest info message has been changed !")
 
     @commands.check(mod_only)
     @set.command(name="base_rank_value")
@@ -544,7 +544,7 @@ class Commands(commands.Cog):
         data = int(data)
 
         config.Misc.change("base_rank_value", data)
-        await self.bot.reply(ctx.message, "The base rank value has been changed !")
+        await self.bot.reply_to_msg(ctx.message, "The base rank value has been changed !")
 
     @commands.check(mod_only)
     @set.command(name="rank_value_multiplier")
@@ -558,7 +558,7 @@ class Commands(commands.Cog):
         data = float(data)
 
         config.Misc.change("rank_value_multiplier", data)
-        await self.bot.reply(ctx.message, "The rank value multiplier has been changed !")
+        await self.bot.reply_to_msg(ctx.message, "The rank value multiplier has been changed !")
 
     @commands.check(mod_only)
     @set.command(name="xp_gain_value")
@@ -571,7 +571,7 @@ class Commands(commands.Cog):
         data = int(data)
 
         config.Misc.change("xp_gain_value", data)
-        await self.bot.reply(ctx.message, "The xp gain value has been changed !")
+        await self.bot.reply_to_msg(ctx.message, "The xp gain value has been changed !")
 
     @commands.check(mod_only)
     @set.command(name="xp_gain_delay")
@@ -586,7 +586,7 @@ class Commands(commands.Cog):
         data = int(data)
 
         config.Misc.change("xp_gain_delay", data)
-        await self.bot.reply(ctx.message, "The xp gain delay has been changed !")
+        await self.bot.reply_to_msg(ctx.message, "The xp gain delay has been changed !")
 
     @set.command(name="levelling_state")
     async def setlevellingstate(self, ctx, *args):
@@ -594,10 +594,10 @@ class Commands(commands.Cog):
             data = args[0]
             if data.lower() in ["0", "false", "no", "off"]:
                 config.Misc.change("levelling_state", False)
-                await self.bot.reply(ctx.message, "The levelling system is now inactive !")
+                await self.bot.reply_to_msg(ctx.message, "The levelling system is now inactive !")
             else:
                 config.Misc.change("levelling_state", True)
-                await self.bot.reply(ctx.message, "The levelling system is now active !")
+                await self.bot.reply_to_msg(ctx.message, "The levelling system is now active !")
         else:
             config.Misc.change("levelling_state", not config.Misc.fetch("levelling_state"))
 
@@ -606,7 +606,7 @@ class Commands(commands.Cog):
     @set.command(name="main_guild")
     async def setmainguild(self, ctx, *args):
         config.Misc.change("main_guild_id", ctx.guild.id)
-        await self.bot.reply(ctx.message, "The main guild is now this one !")
+        await self.bot.reply_to_msg(ctx.message, "The main guild is now this one !")
 
     @xp.command(name="give")
     async def xpgive(self, ctx, *args):
@@ -627,12 +627,12 @@ class Commands(commands.Cog):
                                                    "``809710343533232129``"))
         user = ctx.guild.get_member(id)
         if not user:
-            self.bot.reply(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
+            self.bot.reply_to_msg(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
             return
         profile = levelling.UserProfile(id, ctx.guild, self.bot)
         await profile.give_xp(amount)
-        await self.bot.reply(ctx.message, "Gave {} xp to {}. They are now rank {} ({} xp)".format(amount, user.name, profile.rank,
-                                                                               profile.xp_count))
+        await self.bot.reply_to_msg(ctx.message, "Gave {} xp to {}. They are now rank {} ({} xp)".format(amount, user.name, profile.rank,
+                                                                                                         profile.xp_count))
 
     @xp.command(name="take")
     async def xptake(self, ctx, *args):
@@ -653,12 +653,12 @@ class Commands(commands.Cog):
                                                    "``809710343533232129``"))
         user = ctx.guild.get_member(id)
         if not user:
-            self.bot.reply(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
+            self.bot.reply_to_msg(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
             return
         profile = levelling.UserProfile(id, ctx.guild, self.bot)
         await profile.take_xp(amount)
-        await self.bot.reply(ctx.message, "Took {} xp from {}. They are now rank {} ({} xp)".format(amount, user.name, profile.rank,
-                                                                                 profile.xp_count))
+        await self.bot.reply_to_msg(ctx.message, "Took {} xp from {}. They are now rank {} ({} xp)".format(amount, user.name, profile.rank,
+                                                                                                           profile.xp_count))
 
     @xp.command(name="multiplier")
     async def xpmultiplier(self, ctx, *args):
@@ -679,7 +679,7 @@ class Commands(commands.Cog):
                                                    "``809710343533232129``"))
         user = ctx.guild.get_member(id)
         if not user:
-            self.bot.reply(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
+            self.bot.reply_to_msg(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
             return
         DB_user = config.Users.create_if_missing(user)
         if amount < 0:
@@ -687,9 +687,9 @@ class Commands(commands.Cog):
         DB_user.xp_multiplier = amount
 
         if amount == 0:
-            await self.bot.reply(ctx.message, "{} has been banned from xp gain".format(user.name))
+            await self.bot.reply_to_msg(ctx.message, "{} has been banned from xp gain".format(user.name))
         else:
-            await self.bot.reply(ctx.message, "Set {}'s xp multiplier to {}".format(user.name, amount))
+            await self.bot.reply_to_msg(ctx.message, "Set {}'s xp multiplier to {}".format(user.name, amount))
 
     @xp.command(name="set")
     async def xpset(self, ctx, *args):
@@ -710,12 +710,12 @@ class Commands(commands.Cog):
                                                    "``809710343533232129``"))
         user = ctx.guild.get_member(id)
         if not user:
-            self.bot.reply(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
+            self.bot.reply_to_msg(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
             return
         profile = levelling.UserProfile(id, ctx.guild, self.bot)
         await profile.set_xp(amount)
-        await self.bot.reply(ctx.message, "Set {}'s xp count to {}. They are now rank {}".format(user.name, amount, profile.rank,
-                                                                              profile.xp_count))
+        await self.bot.reply_to_msg(ctx.message, "Set {}'s xp count to {}. They are now rank {}".format(user.name, amount, profile.rank,
+                                                                                                        profile.xp_count))
 
     @commands.command()
     @commands.check(t3_only)
@@ -726,7 +726,7 @@ class Commands(commands.Cog):
         if sent:
             await ctx.message.add_reaction("✅")
         else:
-            await self.bot.reply(ctx.message, "I was unable to send you a direct message. Please check your discord "
+            await self.bot.reply_to_msg(ctx.message, "I was unable to send you a direct message. Please check your discord "
                            "settings regarding those !")
 
     @commands.command()
@@ -741,7 +741,7 @@ class Commands(commands.Cog):
                 id = int(await Helper.waitResponse(self.bot, ctx.message,
                                                    "What is the ID for the channel? e.g. ``709509235028918334``"))
         config.Misc.change("filter_channel", id)
-        await self.bot.reply(ctx.message,
+        await self.bot.reply_to_msg(ctx.message,
             "The filter channel for the engineers is now " + self.bot.get_channel(int(id)).mention + "!")
 
     @commands.command()
@@ -756,7 +756,7 @@ class Commands(commands.Cog):
                 id = int(await Helper.waitResponse(self.bot, ctx.message,
                                                    "What is the ID for the channel? e.g. ``709509235028918334``"))
         config.Misc.change("mod_channel", id)
-        await self.bot.reply(ctx.message,
+        await self.bot.reply_to_msg(ctx.message,
             "The filter channel for the moderators is now " + self.bot.get_channel(int(id)).mention + "!")
 
     @commands.command()
@@ -771,15 +771,15 @@ class Commands(commands.Cog):
                 id = int(await Helper.waitResponse(self.bot, ctx.message,
                                                    "What is the ID for the channel? e.g. ``709509235028918334``"))
         config.Misc.change("githook_channel", id)
-        await self.bot.reply(ctx.message,
+        await self.bot.reply_to_msg(ctx.message,
             "The channel for the github hooks is now " + self.bot.get_channel(int(id)).mention + "!")
 
     @commands.command()
     @commands.check(mod_only)
     async def prefix(self, ctx, *args):
         if not args:
-            await self.bot.reply(ctx.message, "Please specify a prefix")
+            await self.bot.reply_to_msg(ctx.message, "Please specify a prefix")
             return
         config.Misc.change("prefix", args[0])
         self.bot.command_prefix = args[0]
-        await self.bot.reply(ctx.message, "Prefix changed to " + args[0])
+        await self.bot.reply_to_msg(ctx.message, "Prefix changed to " + args[0])

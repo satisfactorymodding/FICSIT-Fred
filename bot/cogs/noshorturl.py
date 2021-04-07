@@ -15,7 +15,7 @@ class NoShortUrl(commands.Cog):
                                                   "message if you want to paste it again after the adequate changes : "
                                                   "```\n" + message.content + "\n```")
             if not sent:
-                self.bot.reply(message, "Hi " + message.author.name + ". We do not accept shortened urls as we cannot moderate and verify "
+                self.bot.reply_to_msg(message, "Hi " + message.author.name + ". We do not accept shortened urls as we cannot moderate and verify "
                                                   "each and every one of them. Please send the full url.")
             await message.delete()
             return True

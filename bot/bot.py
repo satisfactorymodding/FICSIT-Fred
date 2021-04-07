@@ -13,7 +13,6 @@ import config
 import libraries.createembed as CreateEmbed
 from logstash_async.handler import AsynchronousLogstashHandler
 
-
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
            "FRED_SQL_HOST", "FRED_SQL_PORT"]
@@ -143,7 +142,7 @@ class Bot(discord.ext.commands.Bot):
             print(e)
             return None
 
-    async def reply(self, message, content=None, **kwargs):
+    async def reply_to_msg(self, message, content=None, **kwargs):
         reference = message.reference or message
         return await message.channel.send(content, reference=reference, **kwargs)
 
@@ -153,13 +152,14 @@ class Bot(discord.ext.commands.Bot):
         if isinstance(message.channel, discord.DMChannel):
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
-                await self.reply(message, "You will now receive rank changes notifications !")
+                await self.reply_to_msg(message, "You will now receive rank changes notifications !")
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
-                await self.reply(message, "You will no longer receive rank changes notifications !")
+                await self.reply_to_msg(message, "You will no longer receive rank changes notifications !")
             else:
-                await self.reply(message, "I do not allow commands other than 'start' and 'stop' to be used by direct "
-                                           "message, please use an appropriate channel in the Modding Discord instead.")
+                await self.reply_to_msg(message,
+                                        "I do not allow commands other than 'start' and 'stop' to be used by direct "
+                                        "message, please use an appropriate channel in the Modding Discord instead.")
             return
 
         removed = await self.MediaOnly.process_message(message)

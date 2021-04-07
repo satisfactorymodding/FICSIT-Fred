@@ -64,11 +64,11 @@ class Crashes(commands.Cog):
                             for line in bootLog:
                                 if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(
                                         crash["crash"]) * 0.1:
-                                    return await self.bot.reply(message,
-                                        str(crash["response"].format(user=message.author.mention)))
+                                    return await self.bot.reply_to_msg(message,
+                                                                       str(crash["response"].format(user=message.author.mention)))
                                     return
                         if bootLog[-1] == b'Resolved imports successfully; Calling DllMain\r\n':
-                            return await message.reply("Hi " + message.author.mention + "! This is a known crash, albeit we "
+                            return await message.reply_to_msg("Hi " + message.author.mention + "! This is a known crash, albeit we "
                                                                                   "do not know what causes it. We do "
                                                                                   "know how to get around it though, "
                                                                                   "so try launching the game directly "
@@ -148,7 +148,7 @@ class Crashes(commands.Cog):
         if commandline:
             versionInfo += "Command Line : " + commandline + "\n"
         if versionInfo:
-            return await message.reply(versionInfo)
+            return await message.reply_to_msg(versionInfo)
         if CL and sml_version:
             # Check the right SML for that CL
             query = """{
@@ -167,9 +167,9 @@ class Crashes(commands.Cog):
                 if hasMetadata:
                     if sml_versions[i]["version"] == sml_version:
                         if version.parse(sml_versions[i]["bootstrap_version"]) > version.parse(smb_version):
-                            return await self.bot.reply(message,
+                            return await self.bot.reply_to_msg(message,
                                 "Hi " + message.author.mention + " ! Your SMBootstrapper version is wrong. Please update it to " +
-                                sml_versions[i][
+                                                               sml_versions[i][
                                     "bootstrap_version"] + ". This can often be done by switching to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
                 if sml_versions[i]["satisfactory_version"] > CL:
                     continue
@@ -177,7 +177,7 @@ class Crashes(commands.Cog):
                     latest = sml_versions[i]
                     break
             if latest["version"] != sml_version:
-                return await self.bot.reply(message,
+                return await self.bot.reply_to_msg(message,
                     "Hi " + message.author.mention + " ! Your SML version is wrong. Please update it to " + latest[
                         "version"] + ". This can often be done by switching to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
 
@@ -191,5 +191,5 @@ class Crashes(commands.Cog):
             for line in data.split("\n"):
                 if line.startswith("["): line = line[80:]
                 if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(crash["crash"]) * 0.1:
-                    return await message.reply(str(crash["response"].format(user=message.author.mention)))
+                    return await message.reply_to_msg(str(crash["response"].format(user=message.author.mention)))
                     return

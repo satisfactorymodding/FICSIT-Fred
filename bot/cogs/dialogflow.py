@@ -65,15 +65,15 @@ class DialogFlow(commands.Cog):
         dialogflowReply = results[0].as_dict()
 
         if not dialogflowReply["response"]:
-            await message.reply(response_text)
+            await message.reply_to_msg(response_text)
         else:
             if dialogflowReply["response"].startswith(self.bot.command_prefix):
                 commandname = dialogflowReply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]
                 if command := config.Commands.fetch(commandname):
-                    await message.reply(command["response"])
+                    await message.reply_to_msg(command["response"])
 
             else:
-                await message.reply(dialogflowReply["response"])
+                await message.reply_to_msg(dialogflowReply["response"])
 
         if dialogflowReply["has_followup"]:
             def check(message2):

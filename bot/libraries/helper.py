@@ -6,7 +6,7 @@ import asyncio
 async def waitResponse(client, message, question):
     file = False
     await asyncio.sleep(0.1)
-    await self.bot.reply(message, question)
+    await client.reply_to_msg(message, question)
 
     def check(message2):
         return message2.author == message.author
@@ -18,7 +18,7 @@ async def waitResponse(client, message, question):
         except:
             pass
     except asyncio.TimeoutError:
-        await self.bot.reply(message, "Timed out and aborted after 30 seconds.")
+        await client.reply_to_msg(message, "Timed out and aborted after 30 seconds.")
         raise asyncio.TimeoutError
     time.sleep(0.1)
     return response.content

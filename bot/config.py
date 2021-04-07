@@ -28,12 +28,30 @@ class RankRoles(SQLObject):
             return None
 
 
+class XpRoles(SQLObject):
+    class sqlmeta:
+        table = "xp_roles"
+
+    multiplier = FloatCol()
+    role_id = BigIntCol()
+
+    @staticmethod
+    def fetch(role_id):
+        query = XpRoles.selectBy(role_id=role_id)
+        results = list(query)
+        if results:
+            return results[0]
+        else:
+            return None
+
+
 class Users(SQLObject):
     user_id = BigIntCol()
     full_name = StringCol()
     message_count = IntCol(default=0)
-    xp_count = IntCol(default=0)
-    xp_multiplier = IntCol(default=1)
+    xp_count = FloatCol(default=0)
+    xp_multiplier = FloatCol(default=1)
+    role_xp_multiplier = FloatCol(default=1)
     rank = IntCol(default=0)
     rank_role_id = BigIntCol(default=None)
     accepts_dms = BoolCol(default=True)
