@@ -68,7 +68,7 @@ class Crashes(commands.Cog):
                                                                        str(crash["response"].format(user=message.author.mention)))
                                     return
                         if bootLog[-1] == b'Resolved imports successfully; Calling DllMain\r\n':
-                            return await message.reply_to_msg("Hi " + message.author.mention + "! This is a known crash, albeit we "
+                            return await self.bot.reply_to_msg(message, "Hi " + message.author.mention + "! This is a known crash, albeit we "
                                                                                   "do not know what causes it. We do "
                                                                                   "know how to get around it though, "
                                                                                   "so try launching the game directly "
@@ -148,7 +148,7 @@ class Crashes(commands.Cog):
         if commandline:
             versionInfo += "Command Line : " + commandline + "\n"
         if versionInfo:
-            return await message.reply_to_msg(versionInfo)
+            return await self.bot.reply_to_msg(message, versionInfo)
         if CL and sml_version:
             # Check the right SML for that CL
             query = """{
@@ -191,5 +191,5 @@ class Crashes(commands.Cog):
             for line in data.split("\n"):
                 if line.startswith("["): line = line[80:]
                 if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(crash["crash"]) * 0.1:
-                    return await message.reply_to_msg(str(crash["response"].format(user=message.author.mention)))
+                    return await self.bot.reply_to_msg(message, str(crash["response"].format(user=message.author.mention)))
                     return
