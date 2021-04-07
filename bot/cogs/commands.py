@@ -34,7 +34,11 @@ class Commands(commands.Cog):
             command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if config.Commands.fetch(command):
                 return
-        await self.bot.reply_to_msg(ctx.message, "I encountered an error while trying to call this command. Feyko has been notified")
+        elif isinstance(error, commands.CheckFailure):
+            ctx.send("Sorry, but you do not have enough permissions to do this")
+        else:
+            await ctx.send("I encountered an error while trying to call this command. Feyko has been notified")
+            raise error
 
     @commands.Cog.listener()
     async def on_message(self, message):
