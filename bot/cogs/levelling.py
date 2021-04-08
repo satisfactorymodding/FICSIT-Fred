@@ -63,6 +63,7 @@ class UserProfile:
     async def give_xp(self, xp):
         if xp <= 0:
             return
+        print("Giving xp")
         self.DB_user.xp_count += xp
         self.xp_count += xp
         await self.validate_rank()
@@ -102,4 +103,3 @@ class Levelling(commands.Cog):
                 await profile.increment_xp()
         else:
             self.bot.xp_timers[profile.user_id] = datetime.now() + timedelta(seconds=config.Misc.fetch("xp_gain_delay"))
-            await profile.increment_xp()

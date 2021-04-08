@@ -70,7 +70,7 @@ class DialogFlow(commands.Cog):
             if dialogflowReply["response"].startswith(self.bot.command_prefix):
                 commandname = dialogflowReply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]
                 if command := config.Commands.fetch(commandname):
-                    await self.bot.reply_to_msg(message, command["response"])
+                    await self.bot.reply_to_msg(message, command.response)
 
             else:
                 await self.bot.reply_to_msg(message, dialogflowReply["response"])

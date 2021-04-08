@@ -35,7 +35,7 @@ class Commands(commands.Cog):
             if config.Commands.fetch(command):
                 return
         elif isinstance(error, commands.CheckFailure):
-            ctx.send("Sorry, but you do not have enough permissions to do this")
+            await ctx.send("Sorry, but you do not have enough permissions to do this")
         else:
             await ctx.send("I encountered an error while trying to call this command. Feyko has been notified")
             raise error
