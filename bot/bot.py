@@ -36,7 +36,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.6.4"
+        self.version = "2.6.5"
         self.running = True
         self.loop = asyncio.get_event_loop()
 
@@ -116,6 +116,7 @@ class Bot(discord.ext.commands.Bot):
             tbs = tbs + string
         tbs = tbs + "```"
         print(tbs.replace("```", ""))
+
         await self.get_channel(748229790825185311).send(tbs)
 
     async def githook_send(self, data):
@@ -144,9 +145,8 @@ class Bot(discord.ext.commands.Bot):
 
     async def reply_to_msg(self, message, content=None, **kwargs):
         reference = message.reference or message
-        self.logger.info(type(reference))
-        self.logger.info(str(reference))
-
+        if isinstance(reference, discord.MessageReference):
+            reference.fail_if_not_exists = False
         return await message.channel.send(content, reference=reference, **kwargs)
 
     async def on_message(self, message):
