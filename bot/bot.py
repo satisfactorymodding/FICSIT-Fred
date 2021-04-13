@@ -36,7 +36,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.7.1"
+        self.version = "2.8.0"
 
         self.running = True
         self.loop = asyncio.get_event_loop()
@@ -170,9 +170,9 @@ class Bot(discord.ext.commands.Bot):
         if not removed:
             removed = await self.NoShortUrl.process_message(message)
         if not removed:
-            await self.process_commands(message)
             reacted = await self.Crashes.process_message(message)
             if not reacted:
+                await self.process_commands(message)
                 await self.DialogFlow.process_message(message)
 
 

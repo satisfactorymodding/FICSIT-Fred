@@ -321,7 +321,7 @@ class Commands(commands.Cog):
             response = args[2]
         else:
             response = await Helper.waitResponse(self.bot, ctx.message,
-                                                 "What response do you want it to provide?")
+                                                 "What response do you want it to provide? Responding with a command will make the response that command")
 
         config.Crashes(name=name, crash=crash, response=response)
         await self.bot.reply_to_msg(ctx.message, "Known crash '" + name + "' added!")

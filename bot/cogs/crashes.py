@@ -195,5 +195,10 @@ class Crashes(commands.Cog):
         data = data[len(data) - 100000:]
         for crash in config.Crashes.fetch_all():
             if re.search(crash["crash"].lower(), data.lower()):
-                sent = await self.bot.reply_to_msg(message,str(crash["response"]))
+                response = str(crash["response"])
+                if str(crash["response"]).startswith(self.bot.command_prefix):
+                    if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
+                        response = command["content"]
+
+                sent = await self.bot.reply_to_msg(message, response)
         return sent
