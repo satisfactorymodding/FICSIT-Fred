@@ -1,6 +1,6 @@
-import asyncio
+import re
+
 import discord.ext.commands as commands
-import discord.ext.tasks as tasks
 import requests
 from PIL import Image, ImageEnhance
 from packaging import version
@@ -11,7 +11,8 @@ from urllib.request import urlopen
 import io
 import json
 import config
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
+
 
 class Crashes(commands.Cog):
     def __init__(self, bot):
@@ -23,6 +24,8 @@ class Crashes(commands.Cog):
         smb_version = ""
         CL = 0
         path = ""
+
+        sent = None
 
         # attachments
         if message.attachments or "https://cdn.discordapp.com/attachments/" in message.content:
@@ -45,7 +48,8 @@ class Crashes(commands.Cog):
             # SMM Debug file
             elif name.endswith(".zip"):
                 with zipfile.ZipFile(file) as file:
-                    data = file.open("FactoryGame.log").read().decode("utf-8") if "FactoryGame.log" in file.namelist() else ""
+                    data = file.open("FactoryGame.log").read().decode(
+                        "utf-8") if "FactoryGame.log" in file.namelist() else ""
                     with file.open("metadata.json") as metadataFile:
                         metadata = json.load(metadataFile)
                         if metadata["selectedInstall"]:
@@ -64,15 +68,17 @@ class Crashes(commands.Cog):
                             for line in bootLog:
                                 if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(
                                         crash["crash"]) * 0.1:
-                                    return await self.bot.reply_to_msg(message,
-                                                                       str(crash["response"].format(user=message.author.mention)))
-                                    return
+                                    sent = await self.bot.reply_to_msg(message,
+                                                                       str(crash["response"].format(
+                                                                           user=message.author.mention)))
+                                    return sent
                         if bootLog[-1] == b'Resolved imports successfully; Calling DllMain\r\n':
-                            return await self.bot.reply_to_msg(message, "Hi " + message.author.mention + "! This is a known crash, albeit we "
-                                                                                  "do not know what causes it. We do "
-                                                                                  "know how to get around it though, "
-                                                                                  "so try launching the game directly "
-                                                                                  "via its .exe. Hope it works !")
+                            sent = await self.bot.reply_to_msg(message,
+                                                               "Hi " + message.author.mention + "! This is a known crash, albeit we "
+                                                                                                "do not know what causes it. We do "
+                                                                                                "know how to get around it though, "
+                                                                                                "so try launching the game directly "
+                                                                                                "via its .exe. Hope it works !")
 
             # images
             else:
@@ -88,7 +94,6 @@ class Crashes(commands.Cog):
                     image = enhancerContrast.enhance(2)
                     enhancerSharpness = ImageEnhance.Sharpness(image)
                     image = enhancerSharpness.enhance(10)
-                    pool = asyncio.get_running_loop()
                     with ThreadPoolExecutor() as pool:
                         data = await self.bot.loop.run_in_executor(pool, image_to_string, image)
 
@@ -148,7 +153,7 @@ class Crashes(commands.Cog):
         if commandline:
             versionInfo += "Command Line : " + commandline + "\n"
         if versionInfo:
-            return await self.bot.reply_to_msg(message, versionInfo)
+            sent = await self.bot.reply_to_msg(message, versionInfo)
         if CL and sml_version:
             # Check the right SML for that CL
             query = """{
@@ -167,19 +172,20 @@ class Crashes(commands.Cog):
                 if hasMetadata:
                     if sml_versions[i]["version"] == sml_version:
                         if version.parse(sml_versions[i]["bootstrap_version"]) > version.parse(smb_version):
-                            return await self.bot.reply_to_msg(message,
-                                "Hi " + message.author.mention + " ! Your SMBootstrapper version is wrong. Please update it to " +
+                            sent = await self.bot.reply_to_msg(message,
+                                                               "Hi " + message.author.mention + " ! Your SMBootstrapper version is wrong. Please update it to " +
                                                                sml_versions[i][
-                                    "bootstrap_version"] + ". This can often be done by switching to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
+                                                                   "bootstrap_version"] + ". This can often be done by switching to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
                 if sml_versions[i]["satisfactory_version"] > CL:
                     continue
                 else:
                     latest = sml_versions[i]
                     break
             if latest["version"] != sml_version:
-                return await self.bot.reply_to_msg(message,
-                    "Hi " + message.author.mention + " ! Your SML version is wrong. Please update it to " + latest[
-                        "version"] + ". This can often be done by switching to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
+                sent = await self.bot.reply_to_msg(message,
+                                                   "Hi " + message.author.mention + " ! Your SML version is wrong. Please update it to " +
+                                                   latest[
+                                                       "version"] + ". This can often be done by switching to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
 
         data = data.lower()
         try:
@@ -188,8 +194,6 @@ class Crashes(commands.Cog):
             pass
         data = data[len(data) - 100000:]
         for crash in config.Crashes.fetch_all():
-            for line in data.split("\n"):
-                if line.startswith("["): line = line[80:]
-                if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(crash["crash"]) * 0.1:
-                    return await self.bot.reply_to_msg(message, str(crash["response"].format(user=message.author.mention)))
-                    return
+            if re.search(crash["crash"], data):
+                sent = await self.bot.reply_to_msg(message,str(crash["response"]))
+        return sent

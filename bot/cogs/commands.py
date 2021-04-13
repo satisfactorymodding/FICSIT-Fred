@@ -1,3 +1,5 @@
+import re
+
 import discord
 import asyncio
 import config
@@ -64,10 +66,11 @@ class Commands(commands.Cog):
             await self.bot.reply_to_msg(ctx.message, "This command requires at least one argument")
             return
         if args[0] == "help":
-            await self.bot.reply_to_msg(ctx.message, "I search for the provided mod name in the SMR database, returning the details "
-                           "of the mod if it is found. If multiple are found, it will state so. Same for "
-                           "if none are found. If someone reacts to the clipboard in 4m, I will send them "
-                           "the full description of the mod.")
+            await self.bot.reply_to_msg(ctx.message,
+                                        "I search for the provided mod name in the SMR database, returning the details "
+                                        "of the mod if it is found. If multiple are found, it will state so. Same for "
+                                        "if none are found. If someone reacts to the clipboard in 4m, I will send them "
+                                        "the full description of the mod.")
             return
         args = " ".join(args)
         result, desc = CreateEmbed.mod(args)
@@ -108,7 +111,8 @@ class Commands(commands.Cog):
         search = SearchClient.create('BH4D9OD16A', '53b3a8362ea7b391f63145996cfe8d82')
         index = search.init_index('ficsit')
         query = index.search(args + " " + version)
-        await self.bot.reply_to_msg(ctx.message, "This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
+        await self.bot.reply_to_msg(ctx.message,
+                                    "This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
 
     @commands.command()
     async def leaderboard(self, ctx):
@@ -135,7 +139,8 @@ class Commands(commands.Cog):
             else:
                 user = ctx.author
         DB_user = config.Users.create_if_missing(user)
-        await self.bot.reply_to_msg(ctx.message, "{} is rank {} with {} xp".format(user.name, DB_user.rank, DB_user.xp_count))
+        await self.bot.reply_to_msg(ctx.message,
+                                    "{} is rank {} with {} xp".format(user.name, DB_user.rank, DB_user.xp_count))
 
     @commands.group()
     @commands.check(t3_only)
@@ -302,15 +307,21 @@ class Commands(commands.Cog):
         if len(args) > 1:
             crash = args[1]
         else:
-            crash = await Helper.waitResponse(self.bot, ctx.message,
-                                              "What is the string to search for in the crash logs ? e.g. \"Assertion "
-                                              "failed: ObjectA == nullptr\"")
+            crash = await Helper.waitResponse(self.bot, ctx.message, "What is the regular expression to match in the logs ?")
+
+        try:
+            re.search(crash, "test")
+        except:
+            await self.bot.reply_to_msg(ctx.message, "The regex isn't valid. Please refer to "
+                                               "https://docs.python.org/3/library/re.html for docs on Python's regex "
+                                               "library")
+            return
+
         if len(args) > 2:
             response = args[2]
         else:
             response = await Helper.waitResponse(self.bot, ctx.message,
-                                                 "What response do you want it to provide? e.g. ``Thanks for saying my "
-                                                 "keywords {user}`` (use {user} to ping the user)")
+                                                 "What response do you want it to provide?")
 
         config.Crashes(name=name, crash=crash, response=response)
         await self.bot.reply_to_msg(ctx.message, "Known crash '" + name + "' added!")
@@ -337,7 +348,8 @@ class Commands(commands.Cog):
             data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
 
         if response == True:
-            await self.bot.reply_to_msg(ctx.message, "Response should be a string or False (use the response from dialogflow)")
+            await self.bot.reply_to_msg(ctx.message,
+                                        "Response should be a string or False (use the response from dialogflow)")
             return
 
         if config.Dialogflow.fetch(id, data):
@@ -350,7 +362,8 @@ class Commands(commands.Cog):
 
         config.Dialogflow(intent_id=id, data=data, response=response, has_followup=has_followup)
         await self.bot.reply_to_msg(ctx.message,
-            "Dialogflow response for '" + id + "' (" + (json.dumps(data) if data else 'any data') + ") added!")
+                                    "Dialogflow response for '" + id + "' (" + (
+                                        json.dumps(data) if data else 'any data') + ") added!")
 
     @remove.command(name="dialogflow")
     async def removedialogflow(self, ctx, id: str, *args):
@@ -491,7 +504,6 @@ class Commands(commands.Cog):
         else:
             config.Misc.change("dialogflow_state", config.Misc.fetch("dialogflow_state"))
 
-
     @set.command(name="NLP_debug")
     async def setNLPdebug(self, ctx, *args):
         if len(args) > 0:
@@ -504,7 +516,6 @@ class Commands(commands.Cog):
                 await self.bot.reply_to_msg(ctx.message, "The NLP debugging mode is now on !")
         else:
             config.Misc.change("dialogflow_debug_state", not config.Misc.fetch("dialogflow_debug_state"))
-
 
     @set.command(name="welcome_message")
     async def setwelcomemessage(self, ctx, *args):
@@ -604,7 +615,6 @@ class Commands(commands.Cog):
         else:
             config.Misc.change("levelling_state", not config.Misc.fetch("levelling_state"))
 
-
     @commands.check(mod_only)
     @set.command(name="main_guild")
     async def setmainguild(self, ctx, *args):
@@ -634,8 +644,10 @@ class Commands(commands.Cog):
             return
         profile = levelling.UserProfile(id, ctx.guild, self.bot)
         await profile.give_xp(amount)
-        await self.bot.reply_to_msg(ctx.message, "Gave {} xp to {}. They are now rank {} ({} xp)".format(amount, user.name, profile.rank,
-                                                                                                         profile.xp_count))
+        await self.bot.reply_to_msg(ctx.message,
+                                    "Gave {} xp to {}. They are now rank {} ({} xp)".format(amount, user.name,
+                                                                                            profile.rank,
+                                                                                            profile.xp_count))
 
     @xp.command(name="take")
     async def xptake(self, ctx, *args):
@@ -660,8 +672,10 @@ class Commands(commands.Cog):
             return
         profile = levelling.UserProfile(id, ctx.guild, self.bot)
         await profile.take_xp(amount)
-        await self.bot.reply_to_msg(ctx.message, "Took {} xp from {}. They are now rank {} ({} xp)".format(amount, user.name, profile.rank,
-                                                                                                           profile.xp_count))
+        await self.bot.reply_to_msg(ctx.message,
+                                    "Took {} xp from {}. They are now rank {} ({} xp)".format(amount, user.name,
+                                                                                              profile.rank,
+                                                                                              profile.xp_count))
 
     @xp.command(name="multiplier")
     async def xpmultiplier(self, ctx, *args):
@@ -717,20 +731,23 @@ class Commands(commands.Cog):
             return
         profile = levelling.UserProfile(id, ctx.guild, self.bot)
         await profile.set_xp(amount)
-        await self.bot.reply_to_msg(ctx.message, "Set {}'s xp count to {}. They are now rank {}".format(user.name, amount, profile.rank,
-                                                                                                        profile.xp_count))
+        await self.bot.reply_to_msg(ctx.message,
+                                    "Set {}'s xp count to {}. They are now rank {}".format(user.name, amount,
+                                                                                           profile.rank,
+                                                                                           profile.xp_count))
 
     @commands.command()
     @commands.check(t3_only)
     async def saveconfig(self, ctx, *args):
         sent = self.bot.send_DM(ctx.author, content="WARNING : THIS IS OUTDATED, config is now managed via the DB",
-                                             file=discord.File(open("../config/config.json", "r"),
-                                                               filename="config.json"))
+                                file=discord.File(open("../config/config.json", "r"),
+                                                  filename="config.json"))
         if sent:
             await ctx.message.add_reaction("✅")
         else:
-            await self.bot.reply_to_msg(ctx.message, "I was unable to send you a direct message. Please check your discord "
-                           "settings regarding those !")
+            await self.bot.reply_to_msg(ctx.message,
+                                        "I was unable to send you a direct message. Please check your discord "
+                                        "settings regarding those !")
 
     @commands.command()
     @commands.check(mod_only)
@@ -745,7 +762,8 @@ class Commands(commands.Cog):
                                                    "What is the ID for the channel? e.g. ``709509235028918334``"))
         config.Misc.change("filter_channel", id)
         await self.bot.reply_to_msg(ctx.message,
-            "The filter channel for the engineers is now " + self.bot.get_channel(int(id)).mention + "!")
+                                    "The filter channel for the engineers is now " + self.bot.get_channel(
+                                        int(id)).mention + "!")
 
     @commands.command()
     @commands.check(mod_only)
@@ -760,7 +778,8 @@ class Commands(commands.Cog):
                                                    "What is the ID for the channel? e.g. ``709509235028918334``"))
         config.Misc.change("mod_channel", id)
         await self.bot.reply_to_msg(ctx.message,
-            "The filter channel for the moderators is now " + self.bot.get_channel(int(id)).mention + "!")
+                                    "The filter channel for the moderators is now " + self.bot.get_channel(
+                                        int(id)).mention + "!")
 
     @commands.command()
     @commands.check(mod_only)
@@ -775,7 +794,8 @@ class Commands(commands.Cog):
                                                    "What is the ID for the channel? e.g. ``709509235028918334``"))
         config.Misc.change("githook_channel", id)
         await self.bot.reply_to_msg(ctx.message,
-            "The channel for the github hooks is now " + self.bot.get_channel(int(id)).mention + "!")
+                                    "The channel for the github hooks is now " + self.bot.get_channel(
+                                        int(id)).mention + "!")
 
     @commands.command()
     @commands.check(mod_only)
