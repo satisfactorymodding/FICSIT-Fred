@@ -194,6 +194,6 @@ class Crashes(commands.Cog):
             pass
         data = data[len(data) - 100000:]
         for crash in config.Crashes.fetch_all():
-            if re.search(crash["crash"], data):
+            if re.search(crash["crash"].lower(), data.lower()):
                 sent = await self.bot.reply_to_msg(message,str(crash["response"]))
         return sent

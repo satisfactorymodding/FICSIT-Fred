@@ -101,5 +101,4 @@ class Levelling(commands.Cog):
         if profile.user_id in self.bot.xp_timers:
             if datetime.now() >= self.bot.xp_timers[profile.user_id]:
                 await profile.increment_xp()
-        else:
-            self.bot.xp_timers[profile.user_id] = datetime.now() + timedelta(seconds=config.Misc.fetch("xp_gain_delay"))
+        self.bot.xp_timers[profile.user_id] = datetime.now() + timedelta(seconds=config.Misc.fetch("xp_gain_delay"))
