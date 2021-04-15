@@ -36,7 +36,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.8.0"
+        self.version = "2.8.1"
 
         self.running = True
         self.loop = asyncio.get_event_loop()
@@ -47,7 +47,7 @@ class Bot(discord.ext.commands.Bot):
         print('We have logged in as {0.user}'.format(self))
 
     async def on_reaction_add(self, reaction, user):
-        if not user.bot and reaction.emoji == "❌":
+        if not user.bot and reaction.message.author.bot and reaction.emoji == "❌":
             await reaction.message.delete()
 
     def setup_DB(self):
