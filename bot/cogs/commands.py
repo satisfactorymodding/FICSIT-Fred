@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timedelta
 
 import discord
 import asyncio
@@ -219,7 +220,7 @@ class Commands(commands.Cog):
             command = args[0]
         else:
             command = await Helper.waitResponse(self.bot, ctx.message, "What is the command? e.g. ``install``")
-
+        command = command.lower()
         if config.Commands.fetch(command):
             await self.bot.reply_to_msg(ctx.message, "This command already exists !")
             return
@@ -248,7 +249,7 @@ class Commands(commands.Cog):
         if not config.Commands.fetch(commandname):
             await self.bot.reply_to_msg(ctx.message, "Command could not be found !")
             return
-
+        commandname = commandname.lower()
         config.Commands.deleteBy(name=commandname)
         await self.bot.reply_to_msg(ctx.message, "Command removed !")
 
@@ -336,7 +337,7 @@ class Commands(commands.Cog):
         if not config.Crashes.fetch(name):
             await self.bot.reply_to_msg(ctx.message, "Crash could not be found!")
             return
-
+        name = name.lower()
         config.Crashes.deleteBy(name=name)
         await self.bot.reply_to_msg(ctx.message, "Crash removed!")
 
