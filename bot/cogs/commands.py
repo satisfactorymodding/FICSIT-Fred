@@ -111,9 +111,14 @@ class Commands(commands.Cog):
 
         search = SearchClient.create('BH4D9OD16A', '53b3a8362ea7b391f63145996cfe8d82')
         index = search.init_index('ficsit')
-        query = index.search(args + " " + version)
-        await self.bot.reply_to_msg(ctx.message,
-                                    "This is the best result I got from the SMD :\n" + query["hits"][0]["url"])
+        query = index.search(args, {
+            'attributesToRetrieve': '*'
+        })
+        for hit in query["hits"]:
+            if hit["hierarchy"]["lvl0"].endswith("latest"):
+                await self.bot.reply_to_msg(ctx.message,
+                                            "This is the best result I got from the SMD :\n" + hit["url"])
+                return
 
     @commands.command()
     async def leaderboard(self, ctx):
