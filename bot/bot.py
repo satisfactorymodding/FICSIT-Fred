@@ -36,7 +36,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.8.3"
+        self.version = "2.8.4"
 
         self.running = True
         self.loop = asyncio.get_event_loop()

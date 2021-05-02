@@ -1,11 +1,9 @@
 import re
-
 import discord.ext.commands as commands
 import requests
 from PIL import Image, ImageEnhance
 from packaging import version
 from pytesseract import image_to_string
-import jellyfish
 import zipfile
 from urllib.request import urlopen
 import io
@@ -56,29 +54,9 @@ class Crashes(commands.Cog):
                             CL = int(metadata["selectedInstall"]["version"])
                         if "installedMods" in metadata and len(metadata["installedMods"]) > 0:
                             sml_version = metadata["smlVersion"]
-                            smb_version = metadata["bootstrapperVersion"]
                             path = metadata["selectedInstall"]["installLocation"]
                             hasMetadata = True
                             "Resolved imports successfully; Calling DllMain"
-
-                    # TODO Optimise this so it doesn't ask for all the data, if possible
-                    if "pre-launch-debug.log" in file.namelist():
-                        bootLog = file.open("pre-launch-debug.log").readlines()
-                        for crash in config.Crashes.fetch_all():
-                            for line in bootLog:
-                                if jellyfish.levenshtein_distance(line, crash["crash"].lower()) < len(
-                                        crash["crash"]) * 0.1:
-                                    sent = await self.bot.reply_to_msg(message,
-                                                                       str(crash["response"].format(
-                                                                           user=message.author.mention)))
-                                    return sent
-                        if bootLog[-1] == b'Resolved imports successfully; Calling DllMain\r\n':
-                            sent = await self.bot.reply_to_msg(message,
-                                                               "Hi " + message.author.mention + "! This is a known crash, albeit we "
-                                                                                                "do not know what causes it. We do "
-                                                                                                "know how to get around it though, "
-                                                                                                "so try launching the game directly "
-                                                                                                "via its .exe. Hope it works !")
 
             # images
             else:
@@ -117,11 +95,11 @@ class Crashes(commands.Cog):
         # Try to find CL and SML versions in data
         if not hasMetadata:
             try:
-                sml_version = data.find("SatisfactoryModLoader ", 0, 1000)
-                assert sml_version != -1
-                sml_version = data[sml_version:][23:].split("\r")[0]
-            except:
-                sml_version = ""
+                r = re.search(r"Satisfactory Mod Loader v\.(\d+\.\d+\.\d+)", data)
+                sml_version = r[1]
+            except TypeError:
+                sml_version = None
+            print(sml_version)
             try:
                 CL = int(data[:200000].split("-CL-")[1].split("\n")[0])
             except:
@@ -195,10 +173,11 @@ class Crashes(commands.Cog):
         data = data[len(data) - 100000:]
         for crash in config.Crashes.fetch_all():
             if re.search(crash["crash"].lower(), data.lower()):
-                response = str(crash["response"])
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
-                        response = command["content"]
+                        await self.bot.reply_to_msg(message, command["content"])
+                else:
+                    await self.bot.reply_to_msg(message, str(crash["response"]))
 
-                sent = await self.bot.reply_to_msg(message, response)
+
         return sent
