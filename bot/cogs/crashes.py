@@ -99,7 +99,6 @@ class Crashes(commands.Cog):
                 sml_version = r[1]
             except TypeError:
                 sml_version = None
-            print(sml_version)
             try:
                 CL = int(data[:200000].split("-CL-")[1].split("\n")[0])
             except:
