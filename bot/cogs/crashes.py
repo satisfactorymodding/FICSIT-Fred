@@ -74,6 +74,7 @@ class Crashes(commands.Cog):
                     image = enhancerSharpness.enhance(10)
                     with ThreadPoolExecutor() as pool:
                         data = await self.bot.loop.run_in_executor(pool, image_to_string, image)
+                        self.bot.logger.info("OCR returned the following data :\n" + data)
 
 
                 except Exception as e:
