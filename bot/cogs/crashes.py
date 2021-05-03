@@ -121,8 +121,6 @@ class Crashes(commands.Cog):
             versionInfo += "CL : " + str(CL) + "\n"
         if sml_version:
             versionInfo += "SML : " + sml_version + "\n"
-        if smb_version:
-            versionInfo += "SMB : " + smb_version + "\n"
         if path:
             versionInfo += "Path : " + path + "\n"
         if launcherid:
@@ -146,13 +144,6 @@ class Crashes(commands.Cog):
             rData = json.loads(r.text)
             sml_versions = rData["data"]["getSMLVersions"]["sml_versions"]
             for i in range(0, len(sml_versions) - 1):
-                if hasMetadata:
-                    if sml_versions[i]["version"] == sml_version:
-                        if version.parse(sml_versions[i]["bootstrap_version"]) > version.parse(smb_version):
-                            sent = await self.bot.reply_to_msg(message,
-                                                               "Hi " + message.author.mention + " ! Your SMBootstrapper version is wrong. Please update it to " +
-                                                               sml_versions[i][
-                                                                   "bootstrap_version"] + ". This can often be done by switching to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
                 if sml_versions[i]["satisfactory_version"] > CL:
                     continue
                 else:
