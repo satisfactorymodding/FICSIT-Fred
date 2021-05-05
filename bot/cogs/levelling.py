@@ -63,7 +63,6 @@ class UserProfile:
     async def give_xp(self, xp):
         if xp <= 0:
             return
-        print("Giving xp")
         self.DB_user.xp_count += xp
         self.xp_count += xp
         await self.validate_rank()

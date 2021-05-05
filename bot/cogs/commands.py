@@ -12,6 +12,7 @@ from algoliasearch.search_client import SearchClient
 import requests
 import io
 import typing
+import aiohttp
 
 from discord.ext import commands
 
@@ -50,7 +51,13 @@ class Commands(commands.Cog):
         if message.content.startswith(self.bot.command_prefix):
             name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if command := config.Commands.fetch(name):
-                await self.bot.reply_to_msg(message, command["content"])
+                attachment = None
+                if command["attachment"]:
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(command["attachment"]) as resp:
+                            buff = io.BytesIO(await resp.read())
+                            attachment = discord.File(filename= command["attachment"].split("/")[-1], fp=buff)
+                await self.bot.reply_to_msg(message, command["content"], file=attachment)
                 return
 
     @commands.command()
@@ -191,8 +198,9 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
-                                                                          "``709509235028918334``"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``")
+                id = int(id)
 
         if config.MediaOnlyChannels.fetch(id):
             await self.bot.reply_to_msg(ctx.message, "This channel is already a media only channel")
@@ -209,8 +217,9 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
-                                                                          "``709509235028918334``"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``")
+                id = int(id)
 
         if not config.MediaOnlyChannels.fetch(id):
             await self.bot.reply_to_msg(ctx.message, "Media Only Channel could not be found !")
@@ -224,7 +233,7 @@ class Commands(commands.Cog):
         if args:
             command = args[0]
         else:
-            command = await Helper.waitResponse(self.bot, ctx.message, "What is the command? e.g. ``install``")
+            command, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the command? e.g. ``install``")
         command = command.lower()
         if config.Commands.fetch(command):
             await self.bot.reply_to_msg(ctx.message, "This command already exists !")
@@ -232,16 +241,16 @@ class Commands(commands.Cog):
         if config.ReservedCommands.fetch(command):
             await self.bot.reply_to_msg(ctx.message, "This command name is reserved")
             return
-
+        attachment = None
         if len(args) == 2:
             response = args[1]
         elif len(args) > 1:
             response = " ".join(args[1:])
         else:
-            response = await Helper.waitResponse(self.bot, ctx.message, "What is the response? e.g. ``Hello there`` "
+            response, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the response? e.g. ``Hello there`` "
                                                                         "or an image or link to an image")
-
-        config.Commands(name=command, content=response)
+        attachment = attachment.url if attachment else None
+        config.Commands(name=command, content=response, attachment=attachment)
         await self.bot.reply_to_msg(ctx.message, "Command '" + command + "' added !")
 
     @remove.command(name="command")
@@ -249,7 +258,7 @@ class Commands(commands.Cog):
         if args:
             commandname = args[0]
         else:
-            commandname = await Helper.waitResponse(self.bot, ctx.message, "What is the command? e.g. ``install``")
+            commandname, attachment, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the command? e.g. ``install``")
 
         if not config.Commands.fetch(commandname):
             await self.bot.reply_to_msg(ctx.message, "Command could not be found !")
@@ -263,9 +272,8 @@ class Commands(commands.Cog):
         if args:
             commandname = args[0]
         else:
-            commandname = await Helper.waitResponse(self.bot, ctx.message,
+            commandname, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                     "What is the command to modify ? e.g. ``install``")
-
         if config.ReservedCommands.fetch(commandname):
             await self.bot.reply_to_msg(ctx.message, "This command is special and cannot be modified")
             return
@@ -274,24 +282,26 @@ class Commands(commands.Cog):
         query = config.Commands.selectBy(name=commandname)
         results = list(query)
         if not results:
-            createcommand = await Helper.waitResponse(self.bot, ctx.message,
+            createcommand, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                       "Command could not be found ! Do you want to create it ?")
             if createcommand.lower() in ["0", "false", "no", "off"]:
                 await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
                 return
+        attachment = None
         if len(args) == 2:
             response = args[1]
         elif len(args) > 1:
             response = " ".join(args[1:])
         else:
-            response = await Helper.waitResponse(self.bot, ctx.message, "What is the response? e.g. ``Hello there`` "
-                                                                        "or an image or link to an image")
-
+            response, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the response? e.g. ``Hello there`` "
+                                                                        "and/or an image")
+        attachment = attachment.url if attachment else None
         if not results:
-            config.Commands(name=commandname, content=response)
+            config.Commands(name=commandname, content=response, attachment=attachment)
             await self.bot.reply_to_msg(ctx.message, "Command '" + commandname + "' added !")
         else:
             results[0].content = response
+            results[0].attachment = attachment
             await self.bot.reply_to_msg(ctx.message, "Command '" + commandname + "' modified !")
 
     @add.command(name="crash")
@@ -302,7 +312,7 @@ class Commands(commands.Cog):
         if len(args) > 0:
             name = args[0]
         else:
-            name = await Helper.waitResponse(self.bot, ctx.message, "What would you like to name this known "
+            name, attachment = await Helper.waitResponse(self.bot, ctx.message, "What would you like to name this known "
                                                                     "crash? e.g. ``CommandDave``")
         name = name.lower()
 
@@ -313,7 +323,7 @@ class Commands(commands.Cog):
         if len(args) > 1:
             crash = args[1]
         else:
-            crash = await Helper.waitResponse(self.bot, ctx.message, "What is the regular expression to match in the logs ?")
+            crash, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the regular expression to match in the logs ?")
 
         try:
             re.search(crash, "test")
@@ -326,7 +336,7 @@ class Commands(commands.Cog):
         if len(args) > 2:
             response = args[2]
         else:
-            response = await Helper.waitResponse(self.bot, ctx.message,
+            response, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                  "What response do you want it to provide? Responding with a command will make the response that command")
 
         config.Crashes(name=name, crash=crash, response=response)
@@ -337,7 +347,7 @@ class Commands(commands.Cog):
         if args:
             name = args[0]
         else:
-            name = await Helper.waitResponse(self.bot, ctx.message, "Which known crash do you want to remove ?")
+            name, attachment = await Helper.waitResponse(self.bot, ctx.message, "Which known crash do you want to remove ?")
 
         if not config.Crashes.fetch(name):
             await self.bot.reply_to_msg(ctx.message, "Crash could not be found!")
@@ -359,7 +369,7 @@ class Commands(commands.Cog):
             return
 
         if config.Dialogflow.fetch(id, data):
-            should_delete = await Helper.waitResponse(self.bot, ctx.message,
+            should_delete, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                       "Dialogflow response with this parameters already exists. Do you want to replace it? (Yes/No)")
             should_delete = should_delete.lower()
             if should_delete == 'no' or should_delete == 'n' or should_delete == 'false':
@@ -393,8 +403,9 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
-                                                                          "``709509235028918334``"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``")
+                id = int(id)
         if config.DialogflowChannels.fetch(id):
             await self.bot.reply_to_msg(ctx.message, "This channel is already a dialogflow channel")
             return
@@ -410,8 +421,9 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
-                                                                          "``709509235028918334``"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the channel? e.g. "
+                                                                          "``709509235028918334``")
+                id = int(id)
         index = 0
         if config.DialogflowChannels.fetch(id):
             config.DialogflowChannels.deleteBy(channel_id=id)
@@ -427,8 +439,9 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
-                                                                          "``809710343533232129``"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``")
+                id = int(id)
 
         if config.DialogflowExceptionRoles.fetch(id):
             await self.bot.reply_to_msg(ctx.message, "This role is already a dialogflow exception role")
@@ -445,8 +458,9 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
-                                                                          "``809710343533232129``"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``")
+                id = int(id)
         index = 0
         if config.DialogflowExceptionRoles.fetch(id):
             config.DialogflowExceptionRoles.deleteBy(role_id=id)
@@ -469,9 +483,11 @@ class Commands(commands.Cog):
                     rank = int(
                         await Helper.waitResponse(self.bot, ctx.message, "What is the rank for the role ? e.g. 5"))
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
-                                                                          "``809710343533232129``"))
-                rank = int(await Helper.waitResponse(self.bot, ctx.message, "What is the rank for the role ? e.g. 5"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``")
+                id = int(id)
+                rank, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the rank for the role ? e.g. 5")
+                rank = int(rank)
 
         if config.DialogflowExceptionRoles.fetch(id):
             await self.bot.reply_to_msg(ctx.message, "This role is already a rank role")
@@ -488,8 +504,9 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
-                                                                          "``809710343533232129``"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the ID for the role? e.g. "
+                                                                          "``809710343533232129``")
+                id = int(id)
 
         if config.RankRoles.fetch_by_role(id):
             config.RankRoles.deleteBy(role_id=id)
@@ -528,7 +545,7 @@ class Commands(commands.Cog):
         if len(args) > 0:
             data = " ".join(args)
         else:
-            data = await Helper.waitResponse(self.bot, ctx.message, "What should the welcome message be ? (Anything "
+            data, attachment = await Helper.waitResponse(self.bot, ctx.message, "What should the welcome message be ? (Anything "
                                                                     "under 10 characters will completely disable the "
                                                                     "mesage)")
         if len(data) < 10:
@@ -543,7 +560,7 @@ class Commands(commands.Cog):
         if len(args) > 0:
             data = " ".join(args)
         else:
-            data = await Helper.waitResponse(self.bot, ctx.message, "What should the welcome message be ? (Anything "
+            data, attachment = await Helper.waitResponse(self.bot, ctx.message, "What should the welcome message be ? (Anything "
                                                                     "under 10 characters will completely disable the "
                                                                     "mesage)")
         if len(data) < 10:
@@ -559,7 +576,7 @@ class Commands(commands.Cog):
         if len(args) > 0:
             data = args[0]
         else:
-            data = await Helper.waitResponse(self.bot, ctx.message,
+            data, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                              "What should be the rank value of the first rank ? e.g. '300'")
         data = int(data)
 
@@ -572,7 +589,7 @@ class Commands(commands.Cog):
         if len(args) > 0:
             data = args[0]
         else:
-            data = await Helper.waitResponse(self.bot, ctx.message,
+            data, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                              "By how much should the rank value be multiplied from one rank to the "
                                              "next ? e.g. '1.2'")
         data = float(data)
@@ -586,7 +603,7 @@ class Commands(commands.Cog):
         if len(args) > 0:
             data = args[0]
         else:
-            data = await Helper.waitResponse(self.bot, ctx.message,
+            data, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                              "How much xp should someone get for each message ? e.g '1'")
         data = int(data)
 
@@ -599,7 +616,7 @@ class Commands(commands.Cog):
         if len(args) > 0:
             data = args[0]
         else:
-            data = await Helper.waitResponse(self.bot, ctx.message,
+            data, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                              "How long should the xp gain delay be ? e.g '5' will mean that if "
                                              "someone sends a message and one again 4 seconds later, the second one "
                                              "will not give any xp")
@@ -635,15 +652,17 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                    "What is the ID of the person you want to give xp to ? e.g. "
-                                                   "``809710343533232129``"))
+                                                   "``809710343533232129``")
+                id = int(id)
         if len(args) > 1:
             amount = int(args[1])
         else:
-            amount = int(await Helper.waitResponse(self.bot, ctx.message,
+            amount, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                    "How much xp do you want to give ? e.g. "
-                                                   "``809710343533232129``"))
+                                                   "``809710343533232129``")
+            amount = int(amount)
         user = ctx.guild.get_member(id)
         if not user:
             self.bot.reply_to_msg(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
@@ -663,15 +682,17 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                    "What is the ID of the person you want to take xp from ? e.g. "
-                                                   "``809710343533232129``"))
+                                                   "``809710343533232129``")
+                id = int(id)
         if len(args) > 1:
             amount = int(args[1])
         else:
-            amount = int(await Helper.waitResponse(self.bot, ctx.message,
+            amount, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                    "How much xp do you want to take ? e.g. "
-                                                   "``809710343533232129``"))
+                                                   "``809710343533232129``")
+            amount = int(amount)
         user = ctx.guild.get_member(id)
         if not user:
             self.bot.reply_to_msg(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
@@ -691,15 +712,19 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                    "What is the ID of the person for which you want to set their xp "
-                                                   "multiplier e.g. ``809710343533232129``"))
+                                                   "multiplier e.g. ``809710343533232129``")
+                id = int(id)
+
         if len(args) > 1:
             amount = int(args[1])
         else:
-            amount = int(await Helper.waitResponse(self.bot, ctx.message,
+            amount, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                    "At how much should the xp multiplier be set ? e.g. "
-                                                   "``809710343533232129``"))
+                                                   "``809710343533232129``")
+            amount = int(amount)
+
         user = ctx.guild.get_member(id)
         if not user:
             self.bot.reply_to_msg(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
@@ -722,15 +747,18 @@ class Commands(commands.Cog):
             if len(args) > 0:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message,
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                    "What is the ID of the person for which you want to set their xp "
-                                                   "count e.g. ``809710343533232129``"))
+                                                   "count e.g. ``809710343533232129``")
+                id = int(id)
+
         if len(args) > 1:
             amount = int(args[1])
         else:
-            amount = int(await Helper.waitResponse(self.bot, ctx.message,
+            amount, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                    "At how much should the xp count be set ? e.g. "
-                                                   "``809710343533232129``"))
+                                                   "``809710343533232129``")
+            amount = int(amount)
         user = ctx.guild.get_member(id)
         if not user:
             self.bot.reply_to_msg(ctx.message, "Sorry, I was unable to get the member with ID {}".format(id))
@@ -764,8 +792,9 @@ class Commands(commands.Cog):
             if args:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message,
-                                                   "What is the ID for the channel? e.g. ``709509235028918334``"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                   "What is the ID for the channel? e.g. ``709509235028918334``")
+                id = int(id)
         config.Misc.change("filter_channel", id)
         await self.bot.reply_to_msg(ctx.message,
                                     "The filter channel for the engineers is now " + self.bot.get_channel(
@@ -780,8 +809,9 @@ class Commands(commands.Cog):
             if args:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message,
-                                                   "What is the ID for the channel? e.g. ``709509235028918334``"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                   "What is the ID for the channel? e.g. ``709509235028918334``")
+                id = int(id)
         config.Misc.change("mod_channel", id)
         await self.bot.reply_to_msg(ctx.message,
                                     "The filter channel for the moderators is now " + self.bot.get_channel(
@@ -796,8 +826,9 @@ class Commands(commands.Cog):
             if args:
                 id = int(args[0])
             else:
-                id = int(await Helper.waitResponse(self.bot, ctx.message,
-                                                   "What is the ID for the channel? e.g. ``709509235028918334``"))
+                id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                   "What is the ID for the channel? e.g. ``709509235028918334``")
+                id = int(id)
         config.Misc.change("githook_channel", id)
         await self.bot.reply_to_msg(ctx.message,
                                     "The channel for the github hooks is now " + self.bot.get_channel(

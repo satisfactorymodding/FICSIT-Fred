@@ -36,12 +36,13 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.8.6"
+        self.version = "2.9.0"
 
         self.running = True
         self.loop = asyncio.get_event_loop()
 
     async def on_ready(self):
+        await self.change_presence(activity=discord.Game("v" + self.version))
         self.modchannel = self.get_channel(config.Misc.fetch("mod_channel"))
         assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
         print('We have logged in as {0.user}'.format(self))

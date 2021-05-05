@@ -4,8 +4,6 @@ import asyncio
 
 
 async def waitResponse(client, message, question):
-    file = False
-    await asyncio.sleep(0.1)
     await client.reply_to_msg(message, question)
 
     def check(message2):
@@ -13,15 +11,11 @@ async def waitResponse(client, message, question):
 
     try:
         response = await client.wait_for('message', timeout=60.0, check=check)
-        try:
-            response.content = response.attachments[0].url
-        except:
-            pass
     except asyncio.TimeoutError:
         await client.reply_to_msg(message, "Timed out and aborted after 30 seconds.")
         raise asyncio.TimeoutError
-    time.sleep(0.1)
-    return response.content
+
+    return response.content, response.attachments[0] if response.attachments else None
 
 
 def formatDesc(desc):
