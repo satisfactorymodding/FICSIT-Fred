@@ -152,9 +152,9 @@ class Crashes(commands.Cog):
                     break
             if latest["version"] != sml_version:
                 sent = await self.bot.reply_to_msg(message,
-                                                   "Hi " + message.author.mention + " ! Your SML version is wrong. Please update it to " +
+                                                   "Hi " + message.author.mention + " ! Your SML version is wrong. It should be " +
                                                    latest[
-                                                       "version"] + ". This can often be done by switching to the \"vanilla\" SMM profile and switching back to \"modded\", without launching the game in-between.")
+                                                       "version"] + ". We advise starting a fresh new profile to make sure your install isn't corruputed. Please make sure to only install compatible mods")
 
         data = data.lower()
         try:
