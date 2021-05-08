@@ -163,7 +163,7 @@ class Crashes(commands.Cog):
             pass
         data = data[len(data) - 100000:]
         for crash in config.Crashes.fetch_all():
-            if re.search(crash["crash"]), data.lower()):
+            if re.search(crash["crash"], data.lower(), flags=re.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
                         await self.bot.reply_to_msg(message, command["content"])
