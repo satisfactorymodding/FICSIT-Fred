@@ -1,5 +1,6 @@
 import re
 import discord.ext.commands as commands
+from discord.ext.commands.view import StringView
 import requests
 from PIL import Image, ImageEnhance
 from packaging import version
@@ -156,19 +157,19 @@ class Crashes(commands.Cog):
                                                    latest[
                                                        "version"] + ". We advise starting a fresh new profile to make sure your install isn't corruputed. Please make sure to only install compatible mods")
 
-        data = data.lower()
         try:
             file.close()
         except:
             pass
         data = data[len(data) - 100000:]
         for crash in config.Crashes.fetch_all():
-            if re.search(crash["crash"], data.lower(), flags=re.IGNORECASE):
+            if match := re.search(crash["crash"], data, flags=re.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
                         await self.bot.reply_to_msg(message, command["content"])
                 else:
-                    await self.bot.reply_to_msg(message, str(crash["response"]))
+                    text = re.sub('{(\d+)}', lambda m: match.group(int(m.group(1))), str(crash["response"]))
+                    await self.bot.reply_to_msg(message, text)
 
 
         return sent

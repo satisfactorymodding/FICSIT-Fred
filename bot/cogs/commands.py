@@ -15,6 +15,7 @@ import typing
 import aiohttp
 
 from discord.ext import commands
+from discord.ext.commands.view import StringView
 
 
 async def t3_only(ctx):
@@ -57,7 +58,15 @@ class Commands(commands.Cog):
                         async with session.get(command["attachment"]) as resp:
                             buff = io.BytesIO(await resp.read())
                             attachment = discord.File(filename= command["attachment"].split("/")[-1], fp=buff)
-                await self.bot.reply_to_msg(message, command["content"], file=attachment)
+                args = []
+                view = StringView(message.content.lstrip(self.bot.command_prefix))
+                view.get_word() # command name
+                while not view.eof:
+                    view.skip_ws()
+                    args.append(view.get_quoted_word())
+                
+                text = re.sub('{(\d+)}', lambda match: args[int(match.group(1))] if int(match.group(1)) < len(args) else '(missing argument)', command["content"]).replace('{...}', ' '.join(args))
+                await self.bot.reply_to_msg(message, text, file=attachment)
                 return
 
     @commands.command()
