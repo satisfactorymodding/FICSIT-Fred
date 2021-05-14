@@ -296,6 +296,10 @@ class Commands(commands.Cog):
             if createcommand.lower() in ["0", "false", "no", "off"]:
                 await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
                 return
+            
+            await self.addcommand(ctx, *args if args else commandname)
+            return
+            
         attachment = None
         if len(args) == 2:
             response = args[1]
@@ -305,13 +309,9 @@ class Commands(commands.Cog):
             response, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the response? e.g. ``Hello there`` "
                                                                         "and/or an image")
         attachment = attachment.url if attachment else None
-        if not results:
-            config.Commands(name=commandname, content=response, attachment=attachment)
-            await self.bot.reply_to_msg(ctx.message, "Command '" + commandname + "' added !")
-        else:
-            results[0].content = response
-            results[0].attachment = attachment
-            await self.bot.reply_to_msg(ctx.message, "Command '" + commandname + "' modified !")
+        results[0].content = response
+        results[0].attachment = attachment
+        await self.bot.reply_to_msg(ctx.message, "Command '" + commandname + "' modified !")
 
     @add.command(name="crash")
     async def addcrash(self, ctx, *args):
@@ -364,6 +364,43 @@ class Commands(commands.Cog):
         name = name.lower()
         config.Crashes.deleteBy(name=name)
         await self.bot.reply_to_msg(ctx.message, "Crash removed!")
+
+    @modify.command(name="crash")
+    async def modifycrash(self, ctx, *args):
+        if args:
+            crashname = args[0]
+        else:
+            crashname, _ = await Helper.waitResponse(self.bot, ctx.message,
+                                                    "What is the crash to modify ? e.g. ``install``")
+
+        crashname = crashname.lower()
+        query = config.Crashes.selectBy(name=crashname)
+        results = list(query)
+        if not results:
+            createcrash, _ = await Helper.waitResponse(self.bot, ctx.message,
+                                                      "Command could not be found ! Do you want to create it ?")
+            if createcrash.lower() in ["0", "false", "no", "off"]:
+                await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
+                return
+            
+            await self.addcrash(ctx, *args if args else crashname)
+            return
+            
+        change_crash, _ = await Helper.waitResponse(self.bot, ctx.message, "Do you want to change the crash to match ?")
+        change_crash = change_crash.lower() not in ["0", "false", "no", "off"]
+        if change_crash:
+            crash, _ = await Helper.waitResponse(self.bot, ctx.message, "What is the regular expression to match in the logs ?")
+        
+        change_response, _ = await Helper.waitResponse(self.bot, ctx.message,"Do you want to change the response ?")
+        change_response = change_response.lower() not in ["0", "false", "no", "off"]
+        if change_response:
+            response, _ = await Helper.waitResponse(self.bot, ctx.message, "What response do you want it to provide? Responding with a command will make the response that command")
+        
+        if change_crash:
+            results[0].crash = crash
+        if change_response:
+            results[0].response = response
+        await self.bot.reply_to_msg(ctx.message, "Crash '" + crashname + "' modified !")
 
     @add.command(name="dialogflow")
     async def adddialogflow(self, ctx, id: str, response: typing.Union[bool, str], has_followup: bool, *args):
