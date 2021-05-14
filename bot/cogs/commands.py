@@ -18,6 +18,13 @@ from discord.ext import commands
 from discord.ext.commands.view import StringView
 
 
+def convert_to_bool(s: str):
+    if s.lower() in ["1", "true", "yes", "y", "on"]:
+        return True
+    if s.lower() in ["0", "false", "no", "n", "off"]:
+        return False
+    raise ValueError(f"Could not convert {s} to bool")
+
 async def t3_only(ctx):
     return (ctx.author.id == 227473074616795137 or
             ctx.author.permissions_in(ctx.bot.get_channel(config.Misc.fetch("filter_channel"))).send_messages)
@@ -293,7 +300,13 @@ class Commands(commands.Cog):
         if not results:
             createcommand, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                       "Command could not be found ! Do you want to create it ?")
-            if createcommand.lower() in ["0", "false", "no", "off"]:
+            try:
+                createcommand = convert_to_bool(createcommand)
+            except ValueError:
+                await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+                return
+
+            if not createcommand:
                 await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
                 return
             
@@ -379,7 +392,13 @@ class Commands(commands.Cog):
         if not results:
             createcrash, _ = await Helper.waitResponse(self.bot, ctx.message,
                                                       "Command could not be found ! Do you want to create it ?")
-            if createcrash.lower() in ["0", "false", "no", "off"]:
+            try:
+                createcrash = convert_to_bool(createcrash)
+            except ValueError:
+                await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+                return
+
+            if not createcrash:
                 await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
                 return
             
@@ -387,12 +406,22 @@ class Commands(commands.Cog):
             return
             
         change_crash, _ = await Helper.waitResponse(self.bot, ctx.message, "Do you want to change the crash to match ?")
-        change_crash = change_crash.lower() not in ["0", "false", "no", "off"]
+        try:
+            change_crash = convert_to_bool(change_crash)
+        except ValueError:
+            await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+            return
+        
         if change_crash:
             crash, _ = await Helper.waitResponse(self.bot, ctx.message, "What is the regular expression to match in the logs ?")
         
         change_response, _ = await Helper.waitResponse(self.bot, ctx.message,"Do you want to change the response ?")
-        change_response = change_response.lower() not in ["0", "false", "no", "off"]
+        try:
+            change_response = convert_to_bool(change_response)
+        except ValueError:
+            await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+            return
+        
         if change_response:
             response, _ = await Helper.waitResponse(self.bot, ctx.message, "What response do you want it to provide? Responding with a command will make the response that command")
         
@@ -564,7 +593,12 @@ class Commands(commands.Cog):
     async def setNLPstate(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
-            if data.lower() in ["0", "false", "no", "off"]:
+            try:
+                enabled = convert_to_bool(data)
+            except ValueError:
+                await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+                return
+            if not enabled:
                 config.Misc.change("dialogflow_state", False)
                 await self.bot.reply_to_msg(ctx.message, "The NLP is now off !")
             else:
@@ -577,7 +611,12 @@ class Commands(commands.Cog):
     async def setNLPdebug(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
-            if data.lower() in ["0", "false", "no", "off"]:
+            try:
+                enabled = convert_to_bool(data)
+            except ValueError:
+                await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+                return
+            if not enabled:
                 config.Misc.change("dialogflow_debug_state", False)
                 await self.bot.reply_to_msg(ctx.message, "The NLP debugging mode is now off !")
             else:
@@ -675,7 +714,12 @@ class Commands(commands.Cog):
     async def setlevellingstate(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
-            if data.lower() in ["0", "false", "no", "off"]:
+            try:
+                enabled = convert_to_bool(data)
+            except ValueError:
+                await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+                return
+            if not enabled:
                 config.Misc.change("levelling_state", False)
                 await self.bot.reply_to_msg(ctx.message, "The levelling system is now inactive !")
             else:
