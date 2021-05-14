@@ -15,7 +15,15 @@ import typing
 import aiohttp
 
 from discord.ext import commands
+from discord.ext.commands.view import StringView
 
+
+def convert_to_bool(s: str):
+    if s.lower() in ["1", "true", "yes", "y", "on"]:
+        return True
+    if s.lower() in ["0", "false", "no", "n", "off"]:
+        return False
+    raise ValueError(f"Could not convert {s} to bool")
 
 async def t3_only(ctx):
     return (ctx.author.id == 227473074616795137 or
@@ -57,7 +65,15 @@ class Commands(commands.Cog):
                         async with session.get(command["attachment"]) as resp:
                             buff = io.BytesIO(await resp.read())
                             attachment = discord.File(filename= command["attachment"].split("/")[-1], fp=buff)
-                await self.bot.reply_to_msg(message, command["content"], file=attachment)
+                args = []
+                view = StringView(message.content.lstrip(self.bot.command_prefix))
+                view.get_word() # command name
+                while not view.eof:
+                    view.skip_ws()
+                    args.append(view.get_quoted_word())
+                
+                text = re.sub('{(\d+)}', lambda match: args[int(match.group(1))] if int(match.group(1)) < len(args) else '(missing argument)', command["content"]).replace('{...}', ' '.join(args))
+                await self.bot.reply_to_msg(message, text, file=attachment)
                 return
 
     @commands.command()
@@ -284,9 +300,19 @@ class Commands(commands.Cog):
         if not results:
             createcommand, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                       "Command could not be found ! Do you want to create it ?")
-            if createcommand.lower() in ["0", "false", "no", "off"]:
+            try:
+                createcommand = convert_to_bool(createcommand)
+            except ValueError:
+                await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+                return
+
+            if not createcommand:
                 await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
                 return
+            
+            await self.addcommand(ctx, *args if args else commandname)
+            return
+            
         attachment = None
         if len(args) == 2:
             response = args[1]
@@ -296,13 +322,9 @@ class Commands(commands.Cog):
             response, attachment = await Helper.waitResponse(self.bot, ctx.message, "What is the response? e.g. ``Hello there`` "
                                                                         "and/or an image")
         attachment = attachment.url if attachment else None
-        if not results:
-            config.Commands(name=commandname, content=response, attachment=attachment)
-            await self.bot.reply_to_msg(ctx.message, "Command '" + commandname + "' added !")
-        else:
-            results[0].content = response
-            results[0].attachment = attachment
-            await self.bot.reply_to_msg(ctx.message, "Command '" + commandname + "' modified !")
+        results[0].content = response
+        results[0].attachment = attachment
+        await self.bot.reply_to_msg(ctx.message, "Command '" + commandname + "' modified !")
 
     @add.command(name="crash")
     async def addcrash(self, ctx, *args):
@@ -355,6 +377,59 @@ class Commands(commands.Cog):
         name = name.lower()
         config.Crashes.deleteBy(name=name)
         await self.bot.reply_to_msg(ctx.message, "Crash removed!")
+
+    @modify.command(name="crash")
+    async def modifycrash(self, ctx, *args):
+        if args:
+            crashname = args[0]
+        else:
+            crashname, _ = await Helper.waitResponse(self.bot, ctx.message,
+                                                    "What is the crash to modify ? e.g. ``install``")
+
+        crashname = crashname.lower()
+        query = config.Crashes.selectBy(name=crashname)
+        results = list(query)
+        if not results:
+            createcrash, _ = await Helper.waitResponse(self.bot, ctx.message,
+                                                      "Command could not be found ! Do you want to create it ?")
+            try:
+                createcrash = convert_to_bool(createcrash)
+            except ValueError:
+                await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+                return
+
+            if not createcrash:
+                await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
+                return
+            
+            await self.addcrash(ctx, *args if args else crashname)
+            return
+            
+        change_crash, _ = await Helper.waitResponse(self.bot, ctx.message, "Do you want to change the crash to match ?")
+        try:
+            change_crash = convert_to_bool(change_crash)
+        except ValueError:
+            await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+            return
+        
+        if change_crash:
+            crash, _ = await Helper.waitResponse(self.bot, ctx.message, "What is the regular expression to match in the logs ?")
+        
+        change_response, _ = await Helper.waitResponse(self.bot, ctx.message,"Do you want to change the response ?")
+        try:
+            change_response = convert_to_bool(change_response)
+        except ValueError:
+            await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+            return
+        
+        if change_response:
+            response, _ = await Helper.waitResponse(self.bot, ctx.message, "What response do you want it to provide? Responding with a command will make the response that command")
+        
+        if change_crash:
+            results[0].crash = crash
+        if change_response:
+            results[0].response = response
+        await self.bot.reply_to_msg(ctx.message, "Crash '" + crashname + "' modified !")
 
     @add.command(name="dialogflow")
     async def adddialogflow(self, ctx, id: str, response: typing.Union[bool, str], has_followup: bool, *args):
@@ -518,7 +593,12 @@ class Commands(commands.Cog):
     async def setNLPstate(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
-            if data.lower() in ["0", "false", "no", "off"]:
+            try:
+                enabled = convert_to_bool(data)
+            except ValueError:
+                await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+                return
+            if not enabled:
                 config.Misc.change("dialogflow_state", False)
                 await self.bot.reply_to_msg(ctx.message, "The NLP is now off !")
             else:
@@ -531,7 +611,12 @@ class Commands(commands.Cog):
     async def setNLPdebug(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
-            if data.lower() in ["0", "false", "no", "off"]:
+            try:
+                enabled = convert_to_bool(data)
+            except ValueError:
+                await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+                return
+            if not enabled:
                 config.Misc.change("dialogflow_debug_state", False)
                 await self.bot.reply_to_msg(ctx.message, "The NLP debugging mode is now off !")
             else:
@@ -629,7 +714,12 @@ class Commands(commands.Cog):
     async def setlevellingstate(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
-            if data.lower() in ["0", "false", "no", "off"]:
+            try:
+                enabled = convert_to_bool(data)
+            except ValueError:
+                await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
+                return
+            if not enabled:
                 config.Misc.change("levelling_state", False)
                 await self.bot.reply_to_msg(ctx.message, "The levelling system is now inactive !")
             else:
