@@ -1,6 +1,6 @@
-import time
 import re
 import asyncio
+from html.parser import HTMLParser
 
 
 async def waitResponse(client, message, question):
@@ -18,15 +18,47 @@ async def waitResponse(client, message, question):
     return response.content, response.attachments[0] if response.attachments else None
 
 
+class aTagParser(HTMLParser):
+    link = ''
+    viewtext = ''
+
+    def clear_output(self):
+        self.link = ''
+        self.viewtest = ''
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'a':
+            for attr in attrs:
+                if attr[0] == 'href':
+                    self.link = f'({attr[1]})'
+
+    def handle_endtag(self, tag):
+        pass
+
+    def handle_data(self, data):
+        self.viewtext = f'[{data}]'
+
+
 def formatDesc(desc):
-    dict = {
+    revisions = {
         "<b>": "**",
         "</b>": "**",
         "<u>": "__",
         "</u>": "__",
         "<br>": "",
     }
-    for x, y in dict.items():
-        desc = desc.replace(x, y)
+    for old, new in revisions.items():
+        desc = desc.replace(old, new)
+    items = []
+    embeds = dict()
+    items.extend([i.groups() for i in re.finditer('(<a.+>.+</a>)', desc)])  # Finds all unhandled links
+    for i in items:
+        i = i[0]  # regex returns a one-element tuple :/
+        parser = aTagParser()
+        parser.feed(i)
+        embeds.update({i: parser.viewtext + parser.link})
+    for old, new in embeds.items():
+        desc = desc.replace(old, new)
+
     desc = re.sub('#+ ', "", desc)
     return desc
