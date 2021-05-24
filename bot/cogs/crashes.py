@@ -152,7 +152,7 @@ class Crashes(commands.Cog):
                 sent = await self.bot.reply_to_msg(
                     message,
                     f"Hi {message.author.mention}! Your SML version is wrong. It should be {latest['version']}. "
-                    "We advise starting a fresh new profile to make sure your install isn't corruputed. "
+                    "We advise starting a fresh new profile to make sure your install isn't corrupted. "
                     "Please make sure to only install compatible mods")
 
         try:
