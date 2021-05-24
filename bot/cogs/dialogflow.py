@@ -56,9 +56,9 @@ class DialogFlow(commands.Cog):
         response_text = response.query_result.fulfillment_text
         response_data = response.query_result.parameters
         intent_id = response.query_result.intent.name.split('/')[-1]
-        query = config.Dialogflow.select(
-            "dialogflow.intent_id = '{}' AND ((dialogflow.data IS NULL) OR dialogflow.data = '{}')"
-                .format(intent_id, str(dict(response_data)).replace("'", '"')))
+        formatted_response = str(dict(response_data)).replace("'", '"')
+        query = config.Dialogflow.select(f"dialogflow.intent_id = '{intent_id}' AND ((dialogflow.data IS NULL) "
+                                         f"OR dialogflow.data = '{formatted_response}')")
         results = list(query)
         if not len(results):
             return
