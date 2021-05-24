@@ -20,7 +20,6 @@ class Crashes(commands.Cog):
     async def process_message(self, message):
         hasMetadata = False
         sml_version = ""
-        smb_version = ""
         CL = 0
         path = ""
 
