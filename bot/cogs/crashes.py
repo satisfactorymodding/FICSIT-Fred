@@ -84,8 +84,9 @@ class Crashes(commands.Cog):
         elif "https://pastebin.com/" in message.content:
             try:
                 data = urlopen(
-                    "https://pastebin.com/raw/" + message.content.split("https://pastebin.com/")[1].split(" ")[
-                        0]).read().decode("utf-8")
+                    f"https://pastebin.com/raw/"
+                    f"{message.content.split('https://pastebin.com/')[1].split(' ')[0].read().decode('utf-8')}"
+                )
             except:
                 data = ""
         else:
