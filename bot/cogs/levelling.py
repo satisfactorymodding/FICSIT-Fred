@@ -32,10 +32,10 @@ class UserProfile:
             self.DB_user.rank_role_id = role_id
             # self.rank_role_id = role_id
             if not self.member.permissions_in(self.bot.modchannel).send_messages:
-                for memberrole in self.member.roles:
-                    rank = config.RankRoles.fetch_by_role(memberrole.id)
+                for member_role in self.member.roles:
+                    rank = config.RankRoles.fetch_by_role(member_role.id)
                     if rank:
-                        await self.member.remove_roles(memberrole)
+                        await self.member.remove_roles(member_role)
                 await self.member.add_roles(role)
 
     async def validate_rank(self):
@@ -51,14 +51,20 @@ class UserProfile:
             self.DB_user.rank = expected_rank
             if self.DB_user.accepts_dms:
                 if expected_rank > self.rank:
-                    await self.bot.send_DM(self.member, "You went up from rank {} to rank {} ! Congratulations !".format(self.rank, expected_rank))
+                    await self.bot.send_DM(self.member,
+                                           f"You went up from rank {self.rank} to rank {expected_rank}! "
+                                           f"Congratulations!")
                 else:
-                    await self.bot.send_DM(self.member, "You went down from rank {} to rank {}.. Sorry about that".format(self.rank, expected_rank))
+                    await self.bot.send_DM(self.member,
+                                           f"You went down from rank {self.rank} to rank {expected_rank}... "
+                                           f"Sorry about that")
             self.rank = expected_rank
         await self.validate_role()
 
     async def increment_xp(self):
-        await self.give_xp(config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier * self.DB_user.role_xp_multiplier)
+        await self.give_xp(
+            config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier * self.DB_user.role_xp_multiplier
+        )
 
     async def give_xp(self, xp):
         if xp <= 0:
@@ -76,7 +82,6 @@ class UserProfile:
         self.DB_user.xp_count = xp
         self.xp_count = xp
         await self.validate_rank()
-
 
 
 class Levelling(commands.Cog):
