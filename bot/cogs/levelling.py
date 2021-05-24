@@ -32,10 +32,10 @@ class UserProfile:
             self.DB_user.rank_role_id = role_id
             # self.rank_role_id = role_id
             if not self.member.permissions_in(self.bot.modchannel).send_messages:
-                for memberrole in self.member.roles:
-                    rank = config.RankRoles.fetch_by_role(memberrole.id)
+                for member_role in self.member.roles:
+                    rank = config.RankRoles.fetch_by_role(member_role.id)
                     if rank:
-                        await self.member.remove_roles(memberrole)
+                        await self.member.remove_roles(member_role)
                 await self.member.add_roles(role)
 
     async def validate_rank(self):
