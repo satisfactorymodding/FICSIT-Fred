@@ -80,7 +80,7 @@ class DialogFlow(commands.Cog):
                 return message2.author == message.author and message2.channel == message.channel
 
             try:
-                response = await self.bot.wait_for('message', timeout=SESSION_LIFETIME, check=check)
+                await self.bot.wait_for('message', timeout=SESSION_LIFETIME, check=check)
             except asyncio.TimeoutError:
                 del self.session_ids[message.author.id]
         else:
