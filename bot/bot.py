@@ -112,8 +112,7 @@ class Bot(discord.ext.commands.Bot):
             channel = " in #" + args[0].channel.name
         else:
             channel = ""
-        tbs = "```Fred v" + self.version + "\n\n" + type.__name__ + " exception handled in " + event + channel + " : " + str(
-            value) + "\n\n"
+        tbs = f"```Fred v{self.version}\n\n{type.__name__} exception handled in {event}{channel}: {value}\n\n"
         for string in traceback.format_tb(tb):
             tbs = tbs + string
         tbs = tbs + "```"
