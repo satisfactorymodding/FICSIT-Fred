@@ -8,6 +8,7 @@ import threading
 import discord.ext.commands as commands
 import asyncio
 
+
 def runServer(self, bot):
     server = HTTPServerV6((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MakeGithookHandler(bot))
     server.serve_forever()
@@ -19,17 +20,18 @@ class Githook(commands.Cog):
         self.bot = bot
         # Run Github webhook handling server
         try:
-            list = [bot, bot]
-            daemon = threading.Thread(target=runServer, args=list)
+            botargs = [bot, bot]
+            daemon = threading.Thread(target=runServer, args=botargs)
             daemon.daemon = True
             daemon.start()
-        except Exception as e:
+        except Exception:
             print("Failed to run the githook server")
             type, value, tb = sys.exc_info()
             tbs = ""
             for string in traceback.format_tb(tb):
                 tbs = tbs + string
             self.bot.logger.error(tbs)
+
 
 # handle POST events from github server
 # We should also make sure to ignore requests from the IRC, which can clutter
