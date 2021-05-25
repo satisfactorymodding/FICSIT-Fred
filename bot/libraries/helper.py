@@ -24,7 +24,7 @@ class aTagParser(HTMLParser):
 
     def clear_output(self):
         self.link = ''
-        self.viewtest = ''
+        self.viewtext = ''
 
     def handle_starttag(self, tag, attrs):
         if tag == 'a':
