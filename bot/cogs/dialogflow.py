@@ -6,7 +6,6 @@ import uuid
 import asyncio
 import json
 import config
-from sqlobject.sqlbuilder import *
 
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(
