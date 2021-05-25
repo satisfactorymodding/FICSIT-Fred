@@ -1,5 +1,4 @@
 import re
-from datetime import datetime, timedelta
 import discord
 import asyncio
 import config
@@ -8,7 +7,6 @@ import libraries.createembed as CreateEmbed
 import json
 import libraries.helper as Helper
 from algoliasearch.search_client import SearchClient
-import requests
 import io
 import typing
 import aiohttp
