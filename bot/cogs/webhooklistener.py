@@ -1,11 +1,9 @@
-import socketserver
 import traceback
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import sys
 import socket
 import os
-from typing import Tuple
 import threading
 import discord.ext.commands as commands
 import asyncio
