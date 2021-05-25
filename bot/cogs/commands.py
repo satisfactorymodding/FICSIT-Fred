@@ -1,5 +1,4 @@
 import re
-from datetime import datetime, timedelta
 import discord
 import asyncio
 import config
@@ -8,7 +7,6 @@ import libraries.createembed as CreateEmbed
 import json
 import libraries.helper as Helper
 from algoliasearch.search_client import SearchClient
-import requests
 import io
 import typing
 import aiohttp
@@ -72,10 +70,13 @@ class Commands(commands.Cog):
                     view.skip_ws()
                     args.append(view.get_quoted_word())
 
-                text = re.sub('{(\d+)}',
-                              lambda match: args[int(match.group(1))] if int(match.group(1)) < len(args) else '(missing argument)',
-                              command["content"]
-                              ).replace('{...}', ' '.join(args))
+                text = re.sub(
+                    '{(\d+)}',
+                    lambda match: args[int(match.group(1))]
+                    if int(match.group(1)) < len(args)
+                    else '(missing argument)',
+                    command["content"]
+                ).replace('{...}', ' '.join(args))
 
                 await self.bot.reply_to_msg(message, text, file=attachment)
                 return
@@ -759,14 +760,14 @@ class Commands(commands.Cog):
                 id = int(args[0])
             else:
                 id, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                           "What is the ID of the person you want to ~~bribe~~ "
+                                                           "What is the ID of the person you want to "
                                                            "give xp to? e.g. ``809710343533232129``")
                 id = int(id)
         if len(args) > 1:
             amount = int(args[1])
         else:
             amount, attachment = await Helper.waitResponse(self.bot, ctx.message, "How much xp do you want to give? "
-                                                                                  "e.g. ``809710343533232129``")
+                                                                                  "e.g. 123456")
             amount = int(amount)
         user = ctx.guild.get_member(id)
         if not user:
@@ -794,7 +795,7 @@ class Commands(commands.Cog):
         else:
             amount, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                            "How much xp do you want to take? "
-                                                           "e.g. ``809710343533232129``")
+                                                           "e.g. 123456")
             amount = int(amount)
         user = ctx.guild.get_member(id)
         if not user:
@@ -802,8 +803,14 @@ class Commands(commands.Cog):
             return
         profile = levelling.UserProfile(id, ctx.guild, self.bot)
         await profile.take_xp(amount)
-        await self.bot.reply_to_msg(ctx.message, f"Took {amount} xp from {user.name}. "
-                                                 f"They are now rank {profile.rank} ({profile.xp_count} xp)")
+        if profile.xp_count:
+            await self.bot.reply_to_msg(ctx.message, f"Took {amount} xp from {user.name}. "
+                                                     f"They are now rank {profile.rank} ({profile.xp_count} xp)")
+        else:
+            await self.bot.reply_to_msg(ctx.message, f"Took {amount} xp from {user.name}. "
+                                                     f"They are now rank {profile.rank} ({profile.xp_count} xp)"
+                                                     f"OOF")
+
 
     @xp.command(name="multiplier")
     async def xpmultiplier(self, ctx, *args):

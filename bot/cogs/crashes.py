@@ -1,9 +1,7 @@
 import re
 import discord.ext.commands as commands
-from discord.ext.commands.view import StringView
 import requests
 from PIL import Image, ImageEnhance
-from packaging import version
 from pytesseract import image_to_string
 import zipfile
 from urllib.request import urlopen
