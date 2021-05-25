@@ -114,7 +114,7 @@ class Commands(commands.Cog):
                 await newmessage.add_reaction("📋")
                 await asyncio.sleep(0.5)
 
-                def check(reaction):
+                def check(reaction, user):
                     if reaction.emoji == "📋" and reaction.message.id == newmessage.id:
                         return True
 
