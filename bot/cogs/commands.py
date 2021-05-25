@@ -70,10 +70,13 @@ class Commands(commands.Cog):
                     view.skip_ws()
                     args.append(view.get_quoted_word())
 
-                text = re.sub('{(\d+)}',
-                              lambda match: args[int(match.group(1))] if int(match.group(1)) < len(args) else '(missing argument)',
-                              command["content"]
-                              ).replace('{...}', ' '.join(args))
+                text = re.sub(
+                    '{(\d+)}',
+                    lambda match: args[int(match.group(1))]
+                    if int(match.group(1)) < len(args)
+                    else '(missing argument)',
+                    command["content"]
+                ).replace('{...}', ' '.join(args))
 
                 await self.bot.reply_to_msg(message, text, file=attachment)
                 return
