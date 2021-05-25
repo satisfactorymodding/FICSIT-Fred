@@ -66,24 +66,24 @@ def MakeGithookHandler(bot):
             content_len = int(self.headers['content-length'])
             event_type = self.headers['x-github-event']
 
-            # Return error if some moron set the payload type to be that other weird format instead of a normal fucking json!
+            # Return error if the payload type is that other weird format instead of a normal json
             if content_type != "application/json":
                 self.send_error(400, "Bad Request", "Expected a JSON request")
                 return
 
-            # Decrypt that shit into a json, idk wtf it means otherwise!
+            # Decrypt it into a json
             data = self.rfile.read(content_len)
             if sys.version_info < (3, 6):
                 data = data.decode()
             data = json.loads(data)
             data["type"] = event_type
 
-            # Respond to GitHub saying the payload arrived, as it fucking should!
+            # Respond to GitHub saying the payload arrived
             self.send_response(200)
             self.send_header('content-type', 'text/html')
             self.end_headers()
             self.wfile.write(bytes('FICSIT-Fred received the payload', 'utf-8'))
-            # Send that shit !
+            # Send it!
             asyncio.run_coroutine_threadsafe(bot.githook_send(data), bot.loop)
             return
 
