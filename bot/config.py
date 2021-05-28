@@ -328,4 +328,4 @@ def convert_old_config():
                 for i in v:
                     ReservedCommands(name=i["command"])
             else:
-                raise Exception(f"found non supported config key: {k}"
+                raise Exception(f"found non supported config key: {k}")
