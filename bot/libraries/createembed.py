@@ -6,6 +6,8 @@ import libraries.helper as Helper
 import os
 import shutil
 
+line_return = '\n'  # needed later for f-strings because finicky interpreter
+
 if not os.path.exists("../config/config.json"):
     shutil.copyfile("../config/config_example.json", "../config/config.json")
 with open("../config/config.json", "r") as file:
@@ -19,7 +21,7 @@ async def run(data, client):
         global repo_name
         repo_name = data["repository"]["full_name"]
         global repo_full_name
-        repo_full_name = str(data["repository"]["name"] + "/" + data["ref"].split("/")[2])
+        repo_full_name = f'{data["repository"]["name"]}/{data["ref"].split("/")[2]}'
     except:
         repo_name = "None"
         repo_full_name = "None"
@@ -42,22 +44,24 @@ async def run(data, client):
         print(data)
     return embed
 
+
 def leaderboard(data: list):
-    desc = "Here is the {} people with the highest xp count".format(len(data))
+    desc = f"Here are the {len(data)} people with the highest xp count"
 
     embed = discord.Embed(title="XP Leaderboard", colour=config.ActionColours.fetch("purple"), description=desc)
 
     for user in data:
-        embed.add_field(name=user["name"], value="XP : {} | Rank : {}".format(user["count_and_rank"]["count"],
-                                                                              user["count_and_rank"]["rank"]))
+        embed.add_field(name=user["name"],
+                        value=f'XP: {user["count_and_rank"]["count"]} | Rank: {user["count_and_rank"]["rank"]}')
 
     return embed
+
 
 def DM(text):
     embed = discord.Embed(colour=config.ActionColours.fetch("purple"), description=text)
 
-    embed.set_footer(text="To stop getting DM messages from me, type 'stop'. If you ever want to reactivate it, "
-                          "type 'start'")
+    embed.set_footer(text="To stop getting DM messages from me, type 'stop'. "
+                          "If you ever want to reactivate it, type 'start'")
     return embed
 
 
@@ -80,23 +84,25 @@ def push(data):
 
     desc = ""
     for commit in commits:
-        desc = desc + "[`" + commit["id"][:7] + "`](" + commit["url"] + ") " + commit["message"].split("\n")[
-            0] + " - " + commit["committer"]["name"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(
-            len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
+        desc = f'{desc}[`{commit["id"][:7]}`]({commit["url"]}) ' \
+               f'{commit["message"].split(line_return)[0]} - {commit["committer"]["name"]}\n' \
+               f'✅ {len(commit["added"])} ❌ {len(commit["removed"])} 📝 {len(commit["modified"])}\n'
 
     commitLength = len(commits)
     while len(desc) > 2030:
         commitLength -= 1
         desc = ""
         for commit in commits[:commitLength]:
-            desc = desc + "[`" + commit["id"][:7] + "`](" + commit["url"] + ") " + commit["message"].split("\n")[
-                0] + " - " + commit["committer"]["name"] + "\n✅ " + str(len(commit["added"])) + " ❌ " + str(
-                len(commit["removed"])) + " 📝 " + str(len(commit["modified"])) + "\n"
+            desc = f'{desc}[`{commit["id"][:7]}`]({commit["url"]}) ' \
+                   f'{commit["message"].split(line_return)[0]} - {commit["committer"]["name"]}\n' \
+                   f'✅ {len(commit["added"])} ❌ {len(commit["removed"])} 📝 {len(commit["modified"])}\n'
 
     if commitLength != len(commits):
-        desc = desc + "\n And " + str(len(commits) - commitLength) + " more..."
-    embed = discord.Embed(title=forced + "Pushed " + str(len(data["commits"])) + " commit(s) to " + repo_full_name,
-                          colour=colour, url=data["compare"],
+        desc = f'{desc}\n And {len(commits) - commitLength} more...'
+
+    embed = discord.Embed(title=f'{forced} Pushed {len(data["commits"])} commit(s) to {repo_full_name}',
+                          colour=colour,
+                          url=data["compare"],
                           description=desc)
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
@@ -105,8 +111,10 @@ def push(data):
 
 
 def contributer_added(data):
-    embed = discord.Embed(title=str("__**" + data["member"]["login"] + "**__ has been added to the Repository !"),
-                          colour=config.ActionColours.fetch("Green"), url=data["repository"]["html_url"], description=" ")
+    embed = discord.Embed(title=f'__**{data["member"]["login"]}**__ has been added to the Repository!',
+                          colour=config.ActionColours.fetch("Green"),
+                          url=data["repository"]["html_url"],
+                          description=" ")
 
     embed.set_author(name=repo_full_name)
     return embed
@@ -132,18 +140,19 @@ def pull_request(data):
         else:
             action = "closed without merging"
             colour = config.ActionColours.fetch("Red")
-    embed = discord.Embed(title=str("Pull Request " + action + " in " + data["repository"]["full_name"]),
-                          colour=colour, url=data["pull_request"]["html_url"],
+    embed = discord.Embed(title=f'Pull Request {action} in {data["repository"]["full_name"]}',
+                          colour=colour,
+                          url=data["pull_request"]["html_url"],
                           description=data["pull_request"]["title"])
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
-    stats = str("\n📋 " + str(data["pull_request"]["commits"]) +
-                "\n✅ " + str(data["pull_request"]["additions"]) +
-                " ❌ " + str(data["pull_request"]["deletions"]) +
-                " 📝 " + str(data["pull_request"]["changed_files"]))
+    stats = f'\n📋 {data["pull_request"]["commits"]}' \
+            f'\n✅ {data["pull_request"]["additions"]}' \
+            f'\n❌ {data["pull_request"]["deletions"]}' \
+            f'\n📝 {data["pull_request"]["changed_files"]}'
 
-    direction = str(data["pull_request"]["head"]["ref"] + " -> " + data["pull_request"]["base"]["ref"])
+    direction = f'{data["pull_request"]["head"]["ref"]} -> {data["pull_request"]["base"]["ref"]}'
     embed.add_field(name=direction, value=stats)
 
     embed.set_footer(text=Config["prefix"] + "legend to understand the emojis")
@@ -160,8 +169,9 @@ def create(data):
         ref_type = "Branch"
     else:
         ref_type = data["ref"]
-    embed = discord.Embed(title=str(ref_type + " \"" + ref_name + "\"" + " created in " + repo_name),
-                          colour=config.ActionColours.fetch("Green"), url=data["repository"]["html_url"])
+    embed = discord.Embed(title=f'{ref_type} "{ref_name}" created in {repo_name}',
+                          colour=config.ActionColours.fetch("Green"),
+                          url=data["repository"]["html_url"])
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
@@ -171,8 +181,9 @@ def create(data):
 def delete(data):
     ref_type = data["ref"].split("/")[1]
     ref_name = data["ref"].split("/")[2]
-    embed = discord.Embed(title=str(ref_type + " \"" + ref_name + "\"" + " deleted in " + repo_name),
-                          colour=config.ActionColours.fetch("Red"), url=data["repository"]["html_url"])
+    embed = discord.Embed(title=f'{ref_type} "{ref_name}" deleted in {repo_name}',
+                          colour=config.ActionColours.fetch("Red"),
+                          url=data["repository"]["html_url"])
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
@@ -184,8 +195,9 @@ def release(data):
         state = "pre-release"
     else:
         state = "release"
-    embed = discord.Embed(title="A new " + state + " for " + data["repository"]["name"] + " is available !",
-                          colour=config.ActionColours.fetch("Green"), url=data["release"]["html_url"])
+    embed = discord.Embed(title=f'A new {state} for {data["repository"]["name"]} is available!',
+                          colour=config.ActionColours.fetch("Green"),
+                          url=data["release"]["html_url"])
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
@@ -201,9 +213,9 @@ def issue(data):
         colour = config.ActionColours.fetch("Red")
 
     embed = discord.Embed(
-        title=data["action"].capitalize() + " issue #" + str(data["issue"]["number"]) + " in " + data["repository"][
-            "full_name"],
-        colour=colour, url=data["issue"]["html_url"])
+        title=f'{data["action"].capitalize()} issue #{data["issue"]["number"]} in {data["repository"]["full_name"]}',
+        colour=colour,
+        url=data["issue"]["html_url"])
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
     return embed
@@ -245,9 +257,9 @@ def mod(name):
                 data = data[:10]
             desc = ""
             for mod in data:
-                desc = desc + "" + mod["name"] + "[™](" + str("https://ficsit.app/mod/" + mod["id"]) + ")\n"
+                desc = f'{desc}{mod["name"]}[™](https://ficsit.app/mod/{mod["id"]})\n'
             if cut:
-                desc += "\n*And " + str(cut) + " more...*"
+                desc += f"\n*And {cut} more...*"
             embed = discord.Embed(title="Multiple mods found:",
                                   colour=config.ActionColours.fetch("Light Blue"),
                                   description=desc)
@@ -259,14 +271,13 @@ def mod(name):
             return None, None
         else:
             data = data[0]
-    date = str(data["last_version_date"][0:10] + " " + data["last_version_date"][11:19])
+    date = f'{data["last_version_date"][0:10]} {data["last_version_date"][11:19]}'
 
     embed = discord.Embed(title=data["name"],
                           colour=config.ActionColours.fetch("Light Blue"),
                           url=str("https://ficsit.app/mod/" + data["id"]),
-                          description=str(data["short_description"] +
-                                          "\n\n Last Updated: " + date +
-                                          "\nCreated by: " + data["authors"][0]["user"]["username"]))
+                          description=f'{data["short_description"]}\n\n Last Updated: {date}\n'
+                                      f'Created by: {data["authors"][0]["user"]["username"]}')
 
     embed.set_thumbnail(url=data["logo"])
     embed.set_author(name="ficsit.app Mod Lookup")
@@ -285,35 +296,42 @@ def desc(full_desc):
 
 # Generic Bot Embed Formats
 def command_list(client, full=False, here=False):
-    desc = "**__GitHook__**\n*I fetch payloads from Github and show relevant info in* " + client.get_channel(
-        client.config["githook channel"]).mention + "\n\n"
+    desc = f'**__GitHook__**\n*I fetch payloads from Github and show relevant info in* ' \
+           f'{client.get_channel(client.config["githook channel"]).mention}\n\n'
 
-    desc = desc + "**__Special Commands__**\n*These are special commands doing something else than just replying with a predetermined answer.*\n\n"
+    desc = desc + """**__Special Commands__**
+    *These are special commands doing something else than just replying with a predetermined answer.*
+    
+    """
 
     for command in client.config["special commands"]:
-        desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command["response"] + "```"
+        desc = f'{desc}**{client.config["prefix"]}{command["command"]}**\n```{command["response"]}```\n'
 
-    desc = desc + "\n**__Media Only Channels__**\n*These channels only allow users to post files (inc. images).*\n"
+    desc = f'{desc}\n**__Media Only Channels__**\n*These channels only allow users to post files (inc. images).*\n'
     for id in client.config["media only channels"]:
-        desc = desc + client.get_channel(id).mention + "\n"
+        desc = f'{desc}{client.get_channel(id).mention}\n'
 
-    specialities = discord.Embed(title=str("What I do..."), colour=client.config.ActionColours.fetch("Purple"),
+    specialities = discord.Embed(title=str("What I do..."),
+                                 colour=client.config.ActionColours.fetch("Purple"),
                                  description=desc)
 
     if here:
         specialities.set_footer(text="Please do not spam the reactions for this embed to work properly.")
     else:
         specialities.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
-                                     "cannot remove your reactions in direct messages, navigation in here could be a "
-                                     "little weird")
+                                     "cannot remove your reactions in direct messages, "
+                                     "navigation in here could be a little weird")
 
-    desc = "**__Known Crashes__**\n*The bot respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*\n\n"
+    desc = """**__Known Crashes__**
+    *The bot respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*
+    
+    """
 
     for command in client.config["known crashes"]:
-        desc = desc + "**" + command["name"] + "**\nError:\n```" + command["crash"] + "```Response:\n```" + command[
-            "response"] + "```"
+        desc = f'{desc}**{command["name"]}**\nError:\n{command["crash"]}```Response:\n{command["response"]}```'
 
-    crashes = discord.Embed(title=str("What I do..."), colour=client.config.ActionColours.fetch("Purple"),
+    crashes = discord.Embed(title=str("What I do..."),
+                            colour=client.config.ActionColours.fetch("Purple"),
                             description=desc)
 
     if here:
@@ -331,10 +349,10 @@ def command_list(client, full=False, here=False):
             byPM = " (By Direct Message)"
         else:
             byPM = ""
-        desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command[
-            "response"] + "```" + byPM + "\n"
+        desc = f'{desc}**{client.config["prefix"]}{command["command"]}**\n```{command["response"]}```{byPM}\n'
 
-    commands.append(discord.Embed(title=str("What I do..."), colour=client.config.ActionColours.fetch("Purple"),
+    commands.append(discord.Embed(title=str("What I do..."),
+                                  colour=client.config.ActionColours.fetch("Purple"),
                                   description=desc))
     desc = ""
     for command in client.config["commands"][half:]:
@@ -342,55 +360,62 @@ def command_list(client, full=False, here=False):
             byPM = " (By Direct Message)"
         else:
             byPM = ""
-        desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command[
-            "response"] + "```" + byPM + "\n"
+        desc = f'{desc}**{client.config["prefix"]}{command["command"]}**\n```{command["response"]}```{byPM}\n'
 
-    commands.append(discord.Embed(title=str("What I do..."), colour=client.config.ActionColours.fetch("Purple"),
+    commands.append(discord.Embed(title=str("What I do..."),
+                                  colour=client.config.ActionColours.fetch("Purple"),
                                   description=desc))
 
     for command in commands:
-        command.description = "**__Commands__**\n*These are normal commands that can be called by stating their name.*\n\n" + command.description
+        command.description = f"**__Commands__**\n*These are normal commands that can be called " \
+                              f"by stating their name.*\n\n{command.description}"
         if here:
             command.set_footer(text="Please do not spam the reactions for this embed to work properly.")
         else:
-            command.set_footer(
-                text="Please do not spam the reactions for this embed to work properly. Also, since I "
-                     "cannot remove your reactions in direct messages, navigation in here could be a "
-                     "little weird")
+            command.set_footer(text="Please do not spam the reactions for this embed to work properly. "
+                                    "Also, since I cannot remove your reactions in direct messages, "
+                                    "navigation in here could be a little weird")
 
     if full:
         desc = "**__Management Commands__**\n*These are commands to manage the bot and its automations.*\n\n"
 
         for command in client.config["management commands"]:
-            desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command[
-                "response"] + "```\n"
+            desc = f'{desc}**{client.config["prefix"]}{command["command"]}**\n```{command["response"]}```\n'
 
-        management = discord.Embed(title=str("What I do..."), colour=client.config.ActionColours.fetch("Purple"),
+        management = discord.Embed(title=str("What I do..."),
+                                   colour=client.config.ActionColours.fetch("Purple"),
                                    description=desc)
 
         if here:
             management.set_footer(text="Please do not spam the reactions for this embed to work properly.")
         else:
-            management.set_footer(
-                text="Please do not spam the reactions for this embed to work properly. Also, since I "
-                     "cannot remove your reactions in direct messages, navigation in here could be a "
-                     "little weird")
+            management.set_footer(text="Please do not spam the reactions for this embed to work properly. "
+                                       "Also, since I cannot remove your reactions in direct messages, "
+                                       "navigation in here could be a little weird")
 
         desc = "**__Miscellaneous commands__**\n*It's all in the title*\n\n"
 
         for command in client.config["miscellaneous commands"]:
-            desc = desc + "**" + client.config["prefix"] + command["command"] + "**\n```" + command["response"] + "```"
+            desc = f'{desc}**{client.config["prefix"]}{command["command"]}**\n```{command["response"]}```'
 
-        desc = desc + "\n**__Additional information__**\nThis info is relevant if you are an engineer or above, which you should be if you are seeing this page.\n\n```*You can react to any of the bot's message with ❌ to remove it\n*You can add 'here' after the help command to send the embed in the channel you typed the command in. This will make the embed not be full by default, but you can override that by adding another argument, 'full'```"
+        desc = desc + "**__Additional information__**\n" \
+                      "This info is relevant if you are an engineer or above, " \
+                      "which you should be if you are seeing this page.\n\n" \
+                      "```*You can react to any of the bot's message with ❌ to remove it\n" \
+                      " *You can add 'here' after the help command " \
+                      "to send the embed in the channel you typed the command in. " \
+                      "This will make the embed not be full by default, " \
+                      "but you can override that by adding another argument, 'full'```"
 
-        misc = discord.Embed(title=str("What I do..."), colour=client.config.ActionColours.fetch("Purple"),
+        misc = discord.Embed(title=str("What I do..."),
+                             colour=client.config.ActionColours.fetch("Purple"),
                              description=desc)
         if here:
             misc.set_footer(text="Please do not spam the reactions for this embed to work properly.")
         else:
-            misc.set_footer(text="Please do not spam the reactions for this embed to work properly. Also, since I "
-                                 "cannot remove your reactions in direct messages, navigation in here could be a "
-                                 "little weird")
+            misc.set_footer(text="Please do not spam the reactions for this embed to work properly. "
+                                 "Also, since I cannot remove your reactions in direct messages, "
+                                 "navigation in here could be a little weird")
     else:
         management = False
         misc = False

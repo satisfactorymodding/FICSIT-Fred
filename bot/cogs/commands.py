@@ -71,7 +71,7 @@ class Commands(commands.Cog):
                     args.append(view.get_quoted_word())
 
                 text = re.sub(
-                    '{(\d+)}',
+                    r'{(\d+)}',
                     lambda match: args[int(match.group(1))]
                     if int(match.group(1)) < len(args)
                     else '(missing argument)',
@@ -456,14 +456,17 @@ class Commands(commands.Cog):
             return
 
         if config.Dialogflow.fetch(id, data):
-            should_delete, attachment = await Helper.waitResponse(
-                self.bot, ctx.message,
-                "Dialogflow response with this parameters already exists. Do you want to replace it? (Yes/No)")
-            should_delete = should_delete.lower()
-            if should_delete in ('no', 'n', 'false', 'wait no'):
-                return  # do not delete
-            else:
+            delete, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                           "Dialogflow response with this parameters already exists. "
+                                                           "Do you want to replace it? (Yes/No)")
+            try:
+                delete = convert_to_bool(delete)
+            except ValueError:
+                delete = False
+            if delete:
                 await self.removedialogflow(ctx, id, *args)
+            else:
+                return
 
         config.Dialogflow(intent_id=id, data=data, response=response, has_followup=has_followup)
         await self.bot.reply_to_msg(
@@ -810,7 +813,6 @@ class Commands(commands.Cog):
             await self.bot.reply_to_msg(ctx.message, f"Took {amount} xp from {user.name}. "
                                                      f"They are now rank {profile.rank} ({profile.xp_count} xp)"
                                                      f"OOF")
-
 
     @xp.command(name="multiplier")
     async def xpmultiplier(self, ctx, *args):

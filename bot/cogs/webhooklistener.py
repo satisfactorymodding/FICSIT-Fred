@@ -1,14 +1,13 @@
-import socketserver
 import traceback
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import sys
 import socket
 import os
-from typing import Tuple
 import threading
 import discord.ext.commands as commands
 import asyncio
+
 
 def runServer(self, bot):
     server = HTTPServerV6((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MakeGithookHandler(bot))
@@ -21,17 +20,18 @@ class Githook(commands.Cog):
         self.bot = bot
         # Run Github webhook handling server
         try:
-            list = [bot, bot]
-            daemon = threading.Thread(target=runServer, args=list)
+            botargs = [bot, bot]
+            daemon = threading.Thread(target=runServer, args=botargs)
             daemon.daemon = True
             daemon.start()
-        except Exception as e:
+        except Exception:
             print("Failed to run the githook server")
             type, value, tb = sys.exc_info()
             tbs = ""
             for string in traceback.format_tb(tb):
                 tbs = tbs + string
             self.bot.logger.error(tbs)
+
 
 # handle POST events from github server
 # We should also make sure to ignore requests from the IRC, which can clutter
@@ -66,24 +66,24 @@ def MakeGithookHandler(bot):
             content_len = int(self.headers['content-length'])
             event_type = self.headers['x-github-event']
 
-            # Return error if some moron set the payload type to be that other weird format instead of a normal fucking json!
+            # Return error if the payload type is that other weird format instead of a normal json
             if content_type != "application/json":
                 self.send_error(400, "Bad Request", "Expected a JSON request")
                 return
 
-            # Decrypt that shit into a json, idk wtf it means otherwise!
+            # Decrypt it into a json
             data = self.rfile.read(content_len)
             if sys.version_info < (3, 6):
                 data = data.decode()
             data = json.loads(data)
             data["type"] = event_type
 
-            # Respond to GitHub saying the payload arrived, as it fucking should!
+            # Respond to GitHub saying the payload arrived
             self.send_response(200)
             self.send_header('content-type', 'text/html')
             self.end_headers()
             self.wfile.write(bytes('FICSIT-Fred received the payload', 'utf-8'))
-            # Send that shit !
+            # Send it!
             asyncio.run_coroutine_threadsafe(bot.githook_send(data), bot.loop)
             return
 
