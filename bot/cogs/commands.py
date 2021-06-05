@@ -23,6 +23,7 @@ def convert_to_bool(s: str):
     raise ValueError(f"Could not convert {s} to bool")
 
 
+# TODO: find and replace all t3_only and mod_only with new check_perms function
 async def t3_only(ctx):
     return (ctx.author.id == 227473074616795137 or
             ctx.author.permissions_in(ctx.bot.get_channel(config.Misc.fetch("filter_channel"))).send_messages)
@@ -31,6 +32,21 @@ async def t3_only(ctx):
 async def mod_only(ctx):
     return (ctx.author.id == 227473074616795137 or
             ctx.author.permissions_in(ctx.bot.modchannel).send_messages)
+
+
+async def check_perms(ctx, access_level):
+    if ctx.author.id == 227473074616795137:
+        return True
+    role_config = {}
+    for role in ctx.author.roles:
+        try:
+            if role_config[role.id] >= access_level:
+                return True
+        except KeyError:
+            # the role has no associated access level
+            pass
+    else:
+        return False
 
 
 class Commands(commands.Cog):
