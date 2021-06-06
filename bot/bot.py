@@ -18,7 +18,7 @@ ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_HOST", "FRED_SQL_PORT"]
 
 for var in ENVVARS:
-    assert (os.environ.get(var)), "The ENV variable '{}' isn't set".format(var)
+    assert (os.environ.get(var)), f"The ENV variable '{var}' isn't set"
 
 
 class Bot(discord.ext.commands.Bot):
@@ -45,7 +45,7 @@ class Bot(discord.ext.commands.Bot):
         await self.change_presence(activity=discord.Game("v" + self.version))
         self.modchannel = self.get_channel(config.Misc.fetch("mod_channel"))
         assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
-        print('We have logged in as {0.user}'.format(self))
+        print(f'We have logged in as {self.user}')
 
     async def on_reaction_add(self, reaction, user):
         if not user.bot and reaction.message.author.bot and reaction.emoji == "❌":
@@ -58,7 +58,7 @@ class Bot(discord.ext.commands.Bot):
         host = os.environ.get("FRED_SQL_HOST")
         port = os.environ.get("FRED_SQL_PORT")
         dbname = os.environ.get("FRED_SQL_DB")
-        uri = "postgresql://{}:{}@{}:{}/{}".format(user, password, host, port, dbname)
+        uri = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
         try:
             connection = sql.connectionForURI(uri)
             sql.sqlhub.processConnection = connection
