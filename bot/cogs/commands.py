@@ -869,8 +869,7 @@ class Commands(commands.Cog):
         profile = levelling.UserProfile(id, ctx.guild, self.bot)
         success = await profile.set_xp(amount)
         if not success:
-            self.bot.reply_to_msg(ctx.message,
-                                  'n0')
+            await self.bot.reply_to_msg(ctx.message, 'n0')
         if amount == 0:
             await self.bot.reply_to_msg(ctx.message,
                                         f"Set {user.name}'s xp count to {amount}."
