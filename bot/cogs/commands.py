@@ -849,25 +849,28 @@ class Commands(commands.Cog):
             id = int(ctx.message.mentions[0].id)
         else:
             if len(args) > 0:
-                id = int(args[0])
+                id = args[0]
             else:
                 id, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                            "What is the ID of the person whose xp you want to set?"
                                                            " e.g. ``809710343533232129``")
-                id = int(id)
+            id = int(id)
 
         if len(args) > 1:
-            amount = int(args[1])
+            amount = args[1]
         else:
             amount, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                            "How much xp shall this user have? e.g. 123456")
-            amount = int(amount)
+        amount = float(amount)
         user = ctx.guild.get_member(id)
         if not user:
             self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {id}")
             return
         profile = levelling.UserProfile(id, ctx.guild, self.bot)
-        await profile.set_xp(amount)
+        success = await profile.set_xp(amount)
+        if not success:
+            self.bot.reply_to_msg(ctx.message,
+                                  'n0')
         if amount == 0:
             await self.bot.reply_to_msg(ctx.message,
                                         f"Set {user.name}'s xp count to {amount}."

@@ -66,22 +66,27 @@ class UserProfile:
             config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier * self.DB_user.role_xp_multiplier
         )
 
-    async def give_xp(self, xp):
+    async def give_xp(self, xp: float):
         if xp <= 0:
             return
         self.DB_user.xp_count += xp
         self.xp_count += xp
         await self.validate_rank()
 
-    async def take_xp(self, xp):
+    async def take_xp(self, xp: float):
+        if xp <= 0:
+            return
         self.DB_user.xp_count -= xp
         self.xp_count -= xp
         await self.validate_rank()
 
-    async def set_xp(self, xp):
+    async def set_xp(self, xp: float):
+        if xp <= 0:
+            return False
         self.DB_user.xp_count = xp
         self.xp_count = xp
         await self.validate_rank()
+        return True
 
 
 class Levelling(commands.Cog):
