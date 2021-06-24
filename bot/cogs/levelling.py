@@ -1,9 +1,8 @@
 import discord.ext.commands as commands
 from discord import DMChannel
-
+from libraries.helper import cube_root
 import config
 from datetime import *
-import math
 
 
 class UserProfile:
@@ -39,13 +38,13 @@ class UserProfile:
                 await self.member.add_roles(role)
 
     async def validate_rank(self):
-        expected_rank = math.log(self.xp_count / config.Misc.fetch("base_rank_value")) / math.log(
-            config.Misc.fetch("rank_value_multiplier"))
-        if expected_rank < 0:
-            expected_rank = 0
-        else:
-            expected_rank += 1
-        expected_rank = int(expected_rank)
+        # xp = 6rank^3 + 494
+        # xp - 494 = 5rank^3
+        # (xp - 494) / 5 = rank^3
+        # cube root of [(xp - 494) / 5] = rank
+        expected_rank = round(cube_root((self.xp_count - 494) / 5))
+        expected_rank = 0 if expected_rank < 0 else expected_rank
+
         if expected_rank != self.rank:
             self.bot.logger.info(f"Correcting a mismatched rank from {self.rank} to {expected_rank}")
             self.DB_user.rank = expected_rank
