@@ -65,11 +65,11 @@ def formatDesc(desc):
 
 
 def cube_root(x: float):
-    print(x)
+
     if x < 0:
         x = abs(x)
         result = x ** (1 / 3) * (-1)
     else:
         result = x ** (1 / 3)
-    print(result)
+
     return result
