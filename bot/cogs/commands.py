@@ -23,17 +23,6 @@ def convert_to_bool(s: str):
     raise ValueError(f"Could not convert {s} to bool")
 
 
-# TODO: find and replace all t3_only and mod_only with new check_perms function
-async def t3_only(ctx):
-    return (ctx.author.id == 227473074616795137 or
-            ctx.author.permissions_in(ctx.bot.get_channel(config.Misc.fetch("filter_channel"))).send_messages)
-
-
-async def mod_only(ctx):
-    return (ctx.author.id == 227473074616795137 or
-            ctx.author.permissions_in(ctx.bot.modchannel).send_messages)
-
-
 async def check_perms(ctx, access_level):
     if ctx.author.id == 227473074616795137:
         return True
@@ -185,35 +174,35 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, f"{user.name} is rank {DB_user.rank} with {DB_user.xp_count} xp")
 
     @commands.group()
-    @commands.check(t3_only)
+    @commands.check(Helper.t3_only)
     async def add(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(t3_only)
+    @commands.check(Helper.t3_only)
     async def remove(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(t3_only)
+    @commands.check(Helper.t3_only)
     async def set(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(t3_only)
+    @commands.check(Helper.t3_only)
     async def modify(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(mod_only)
+    @commands.check(Helper.mod_only)
     async def xp(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
@@ -691,7 +680,7 @@ class Commands(commands.Cog):
             config.Misc.change("latest_info", data)
             await self.bot.reply_to_msg(ctx.message, "The latest info message has been changed!")
 
-    @commands.check(mod_only)
+    @commands.check(Helper.mod_only)
     @set.command(name="base_rank_value")
     async def setbaserankvalue(self, ctx, *args):
         if len(args) > 0:
@@ -704,7 +693,7 @@ class Commands(commands.Cog):
         config.Misc.change("base_rank_value", data)
         await self.bot.reply_to_msg(ctx.message, "The base rank value has been changed!")
 
-    @commands.check(mod_only)
+    @commands.check(Helper.mod_only)
     @set.command(name="rank_value_multiplier")
     async def setrankvaluemultiplier(self, ctx, *args):
         if len(args) > 0:
@@ -718,7 +707,7 @@ class Commands(commands.Cog):
         config.Misc.change("rank_value_multiplier", data)
         await self.bot.reply_to_msg(ctx.message, "The rank value multiplier has been changed!")
 
-    @commands.check(mod_only)
+    @commands.check(Helper.mod_only)
     @set.command(name="xp_gain_value")
     async def setxpgainvalue(self, ctx, *args):
         if len(args) > 0:
@@ -731,7 +720,7 @@ class Commands(commands.Cog):
         config.Misc.change("xp_gain_value", data)
         await self.bot.reply_to_msg(ctx.message, "The xp gain value has been changed!")
 
-    @commands.check(mod_only)
+    @commands.check(Helper.mod_only)
     @set.command(name="xp_gain_delay")
     async def setxpgaindelay(self, ctx, *args):
         if len(args) > 0:
@@ -764,7 +753,7 @@ class Commands(commands.Cog):
         else:
             config.Misc.change("levelling_state", not config.Misc.fetch("levelling_state"))
 
-    @commands.check(mod_only)
+    @commands.check(Helper.mod_only)
     @set.command(name="main_guild")
     async def setmainguild(self, ctx):
         config.Misc.change("main_guild_id", ctx.guild.id)
@@ -899,7 +888,7 @@ class Commands(commands.Cog):
                                         f"They are now rank {profile.rank} ({profile.xp_count})")
 
     @commands.command()
-    @commands.check(t3_only)
+    @commands.check(Helper.t3_only)
     async def saveconfig(self, ctx):
         sent = self.bot.send_DM(ctx.author,  content="WARNING: THIS IS OUTDATED, config is now managed via the DB",
                                 file=discord.File(open("../config/config.json", "r"), filename="config.json"))
@@ -911,7 +900,7 @@ class Commands(commands.Cog):
                                         "Please check your discord settings regarding those!")
 
     @commands.command()
-    @commands.check(mod_only)
+    @commands.check(Helper.mod_only)
     async def engineers(self, ctx, *args):
         if ctx.message.channel_mentions:
             id = int(ctx.message.channel_mentions[0].id)
@@ -929,7 +918,7 @@ class Commands(commands.Cog):
                                     f"{self.bot.get_channel(int(id)).mention}!")
 
     @commands.command()
-    @commands.check(mod_only)
+    @commands.check(Helper.mod_only)
     async def moderators(self, ctx, *args):
         if ctx.message.channel_mentions:
             id = int(ctx.message.channel_mentions[0].id)
@@ -947,7 +936,7 @@ class Commands(commands.Cog):
                                     f"{self.bot.get_channel(int(id)).mention}!")
 
     @commands.command()
-    @commands.check(mod_only)
+    @commands.check(Helper.mod_only)
     async def githook(self, ctx, *args):
         if ctx.message.channel_mentions:
             id = int(ctx.message.channel_mentions[0].id)
@@ -964,7 +953,7 @@ class Commands(commands.Cog):
                                     f"The channel for the github hooks is now {self.bot.get_channel(int(id)).mention}!")
 
     @commands.command()
-    @commands.check(mod_only)
+    @commands.check(Helper.mod_only)
     async def prefix(self, ctx, *args):
         if not args:
             await self.bot.reply_to_msg(ctx.message, "Please specify a prefix")

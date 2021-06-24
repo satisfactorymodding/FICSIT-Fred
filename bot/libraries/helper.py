@@ -3,6 +3,16 @@ import asyncio
 from html.parser import HTMLParser
 
 
+async def t3_only(ctx):
+    return (ctx.author.id == 227473074616795137 or
+            ctx.author.permissions_in(ctx.bot.get_channel(config.Misc.fetch("filter_channel"))).send_messages)
+
+
+async def mod_only(ctx):
+    return (ctx.author.id == 227473074616795137 or
+            ctx.author.permissions_in(ctx.bot.modchannel).send_messages)
+
+
 async def waitResponse(client, message, question):
     await client.reply_to_msg(message, question)
 
