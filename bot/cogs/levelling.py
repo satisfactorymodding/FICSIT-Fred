@@ -42,7 +42,7 @@ class UserProfile:
         # xp - 494 = 5rank^3
         # (xp - 494) / 5 = rank^3
         # cube root of [(xp - 494) / 5] = rank
-        expected_rank = round(cube_root((self.xp_count - 494) / 5))
+        expected_rank = int(cube_root((self.xp_count - 494) / 5) // 1)
         expected_rank = 0 if expected_rank < 0 else expected_rank
 
         if expected_rank != self.rank:
