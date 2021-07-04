@@ -1,7 +1,6 @@
 import re
 import asyncio
 from html.parser import HTMLParser
-from bot import config
 
 
 async def t3_only(ctx):
