@@ -1,5 +1,6 @@
 import discord.ext.commands as commands
 import config
+from libraries.helper import t3_only
 
 
 class MediaOnly(commands.Cog):
@@ -7,9 +8,8 @@ class MediaOnly(commands.Cog):
         self.bot = bot
 
     async def process_message(self, message):
-        if message.author.permissions_in(self.bot.get_channel(
-                config.Misc.fetch("filter_channel"))).send_messages or message.author.id == 227473074616795137:
-            return
+        if t3_only(message):
+            return False
         if len(message.embeds) > 0 or len(message.attachments) > 0:
             return
         if config.MediaOnlyChannels.fetch(message.channel.id):
