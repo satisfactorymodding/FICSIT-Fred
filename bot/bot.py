@@ -36,7 +36,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.9.2"
+        self.version = "2.11.1"
 
         self.running = True
         self.loop = asyncio.get_event_loop()
@@ -112,8 +112,7 @@ class Bot(discord.ext.commands.Bot):
             channel = " in #" + args[0].channel.name
         else:
             channel = ""
-        tbs = "```Fred v" + self.version + "\n\n" + type.__name__ + " exception handled in " + event + channel + " : " + str(
-            value) + "\n\n"
+        tbs = f"```Fred v{self.version}\n\n{type.__name__} exception handled in {event}{channel}: {value}\n\n"
         for string in traceback.format_tb(tb):
             tbs = tbs + string
         tbs = tbs + "```"

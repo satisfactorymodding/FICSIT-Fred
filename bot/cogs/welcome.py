@@ -13,5 +13,5 @@ class Welcome(commands.Cog):
         if welcome:
             await self.bot.send_DM(member, welcome)
         if info:
-            info = "Here's the latest information :\n\n" + info
+            info = f"Here's the latest information :\n\n{info}"
             await self.bot.send_DM(member, info)

@@ -6,7 +6,6 @@ import uuid
 import asyncio
 import json
 import config
-from sqlobject.sqlbuilder import *
 
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(
@@ -56,9 +55,9 @@ class DialogFlow(commands.Cog):
         response_text = response.query_result.fulfillment_text
         response_data = response.query_result.parameters
         intent_id = response.query_result.intent.name.split('/')[-1]
-        query = config.Dialogflow.select(
-            "dialogflow.intent_id = '{}' AND ((dialogflow.data IS NULL) OR dialogflow.data = '{}')"
-                .format(intent_id, str(dict(response_data)).replace("'", '"')))
+        formatted_response = str(dict(response_data)).replace("'", '"')
+        query = config.Dialogflow.select(f"dialogflow.intent_id = '{intent_id}' AND ((dialogflow.data IS NULL) "
+                                         f"OR dialogflow.data = '{formatted_response}')")
         results = list(query)
         if not len(results):
             return
@@ -80,7 +79,7 @@ class DialogFlow(commands.Cog):
                 return message2.author == message.author and message2.channel == message.channel
 
             try:
-                response = await self.bot.wait_for('message', timeout=SESSION_LIFETIME, check=check)
+                await self.bot.wait_for('message', timeout=SESSION_LIFETIME, check=check)
             except asyncio.TimeoutError:
                 del self.session_ids[message.author.id]
         else:

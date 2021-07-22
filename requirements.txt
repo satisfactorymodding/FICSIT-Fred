@@ -11,3 +11,4 @@ python-logstash-async
 google-cloud-dialogflow
 sqlobject
 psycopg2
+aiohttp

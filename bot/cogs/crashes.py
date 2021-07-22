@@ -2,7 +2,6 @@ import re
 import discord.ext.commands as commands
 import requests
 from PIL import Image, ImageEnhance
-from packaging import version
 from pytesseract import image_to_string
 import zipfile
 from urllib.request import urlopen
@@ -19,7 +18,6 @@ class Crashes(commands.Cog):
     async def process_message(self, message):
         hasMetadata = False
         sml_version = ""
-        smb_version = ""
         CL = 0
         path = ""
 
@@ -76,18 +74,17 @@ class Crashes(commands.Cog):
                         data = await self.bot.loop.run_in_executor(pool, image_to_string, image)
                         self.bot.logger.info("OCR returned the following data :\n" + data)
 
-
                 except Exception as e:
                     print(e)
                     data = ""
-
 
         # Pastebin links
         elif "https://pastebin.com/" in message.content:
             try:
                 data = urlopen(
-                    "https://pastebin.com/raw/" + message.content.split("https://pastebin.com/")[1].split(" ")[
-                        0]).read().decode("utf-8")
+                    f"https://pastebin.com/raw/"
+                    f"{message.content.split('https://pastebin.com/')[1].split(' ')[0].read().decode('utf-8')}"
+                )
             except:
                 data = ""
         else:
@@ -151,24 +148,24 @@ class Crashes(commands.Cog):
                     latest = sml_versions[i]
                     break
             if latest["version"] != sml_version:
-                sent = await self.bot.reply_to_msg(message,
-                                                   "Hi " + message.author.mention + " ! Your SML version is wrong. It should be " +
-                                                   latest[
-                                                       "version"] + ". We advise starting a fresh new profile to make sure your install isn't corruputed. Please make sure to only install compatible mods")
+                sent = await self.bot.reply_to_msg(
+                    message,
+                    f"Hi {message.author.mention}! Your SML version is wrong. It should be {latest['version']}. "
+                    "We advise starting a fresh new profile to make sure your install isn't corrupted. "
+                    "Please make sure to only install compatible mods")
 
-        data = data.lower()
         try:
             file.close()
         except:
             pass
         data = data[len(data) - 100000:]
         for crash in config.Crashes.fetch_all():
-            if re.search(crash["crash"], data.lower(), flags=re.IGNORECASE):
+            if match := re.search(crash["crash"], data, flags=re.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
                         await self.bot.reply_to_msg(message, command["content"])
                 else:
-                    await self.bot.reply_to_msg(message, str(crash["response"]))
-
+                    text = re.sub('{(\d+)}', lambda m: match.group(int(m.group(1))), str(crash["response"]))
+                    await self.bot.reply_to_msg(message, text)
 
         return sent
