@@ -36,7 +36,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.11.1"
+        self.version = "2.12.0"
 
         self.running = True
         self.loop = asyncio.get_event_loop()
@@ -144,8 +144,8 @@ class Bot(discord.ext.commands.Bot):
             print(e)
             return None
 
-    async def reply_to_msg(self, message, content=None, **kwargs):
-        reference = message.reference or message
+    async def reply_to_msg(self, message, content=None, propagate_reply=True, **kwargs):
+        reference = (message.reference if propagate_reply else None) or message
         if isinstance(reference, discord.MessageReference):
             reference.fail_if_not_exists = False
         return await message.channel.send(content, reference=reference, **kwargs)
