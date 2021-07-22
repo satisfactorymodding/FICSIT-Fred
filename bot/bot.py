@@ -144,8 +144,8 @@ class Bot(discord.ext.commands.Bot):
             print(e)
             return None
 
-    async def reply_to_msg(self, message, content=None, **kwargs):
-        reference = message.reference or message
+    async def reply_to_msg(self, message, content=None, propagate_reply=True, **kwargs):
+        reference = (message.reference if propagate_reply else None) or message
         if isinstance(reference, discord.MessageReference):
             reference.fail_if_not_exists = False
         return await message.channel.send(content, reference=reference, **kwargs)
