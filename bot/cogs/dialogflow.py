@@ -25,8 +25,9 @@ class DialogFlow(commands.Cog):
         if not config.Misc.fetch("dialogflow_state"):
             return
         if not config.Misc.fetch("dialogflow_debug_state"):
-            if not config.DialogflowChannels.fetch(message.channel.id):
-                return
+            # Trying out global NLP
+            # if not config.DialogflowChannels.fetch(message.channel.id):
+            #     return
             roles = message.author.roles[1:]
             exceptionroles = config.DialogflowExceptionRoles.fetch_all()
             if len(roles) != 0 and len(roles) != len(exceptionroles):
