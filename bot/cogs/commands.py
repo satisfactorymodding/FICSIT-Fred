@@ -811,13 +811,8 @@ class Commands(commands.Cog):
             return
         profile = levelling.UserProfile(id, ctx.guild, self.bot)
         await profile.take_xp(amount)
-        if profile.xp_count:
-            await self.bot.reply_to_msg(ctx.message, f"Took {amount} xp from {user.name}. "
-                                                     f"They are now rank {profile.rank} ({profile.xp_count} xp)")
-        else:
-            await self.bot.reply_to_msg(ctx.message, f"Took {amount} xp from {user.name}. "
-                                                     f"They are now rank {profile.rank} ({profile.xp_count} xp)"
-                                                     f"OOF")
+        await self.bot.reply_to_msg(ctx.message, f"Took {amount} xp from {user.name}. "
+                                                 f"They are now rank {profile.rank} ({profile.xp_count} xp)")
 
     @xp.command(name="multiplier")
     async def xpmultiplier(self, ctx, *args):
