@@ -15,7 +15,8 @@ class Crashes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def extract_game_info_from_text(self, text):
+    @staticmethod
+    def extract_game_info_from_text(text):
         try:
             r = re.search(r"Satisfactory Mod Loader v\.(\d+\.\d+\.\d+)", text)
             sml_version = r[1]
@@ -30,34 +31,36 @@ class Crashes(commands.Cog):
         except:
             path = ""
         try:
-            launcherid = text.split("LogInit: Launcher ID: ")[1].split("\n")[0]
+            launcher_id = text.split("LogInit: Launcher ID: ")[1].split("\n")[0]
         except:
-            launcherid = ""
+            launcher_id = ""
         try:
             commandline = text.split("LogInit: Command Line: ")[1].split("\n")[0]
         except:
             commandline = ""
-        return sml_version, CL, path, launcherid, commandline
+        return sml_version, CL, path, launcher_id, commandline
 
-    def make_version_info_message(self, smm_version, CL, sml_version, path, launcherid, commandline) -> str:
-        versionInfo = ""
+    @staticmethod
+    def make_version_info_message(smm_version, CL, sml_version, path, launcher_id, commandline) -> str:
+        version_info = ""
 
         if smm_version:
-            versionInfo += "SMM : " + smm_version + "\n"
+            version_info += f"SMM: {smm_version}\n"
         if CL:
-            versionInfo += "CL : " + str(CL) + "\n"
+            version_info += f"CL: {CL}\n"
         if sml_version:
-            versionInfo += "SML : " + sml_version + "\n"
+            version_info += f"SML: {sml_version}\n"
         if path:
-            versionInfo += "Path : " + path + "\n"
-        if launcherid:
-            versionInfo += "Launcher ID : " + launcherid + "\n"
+            version_info += f"Path: {path}\n"
+        if launcher_id:
+            version_info += f"Launcher ID: {launcher_id}\n"
         if commandline:
-            versionInfo += "Command Line : " + commandline + "\n"
+            version_info += f"Command Line: {commandline}\n"
         
-        return versionInfo
+        return version_info
 
-    def make_sml_version_message(self, CL, sml_version):
+    @staticmethod
+    def make_sml_version_message(CL, sml_version):
         if CL and sml_version:
             # Check the right SML for that CL
             query = """{
@@ -92,7 +95,7 @@ class Crashes(commands.Cog):
             sml_version = ""
             CL = 0
             path = ""
-            launcherid = ""
+            launcher_id = ""
             commandline = ""
 
             with zipfile.ZipFile(file) as zip_f:
@@ -115,13 +118,14 @@ class Crashes(commands.Cog):
                     # Try to find CL and SML versions in FactoryGame.log
                     with zip_f.open("FactoryGame.log") as fg_log:
                         fg_log_content = fg_log.read().decode("utf-8")
-                        sml_version, CL, path, launcherid, commandline = self.extract_game_info_from_text(fg_log_content[:200000])
+                        sml_version, CL, path, launcher_id, commandline = \
+                            self.extract_game_info_from_text(fg_log_content[:200000])
             
-            smlOutdated = self.make_sml_version_message(CL, sml_version)
-            if smlOutdated:
-                messages.append(smlOutdated)
+            sml_outdated = self.make_sml_version_message(CL, sml_version)
+            if sml_outdated:
+                messages.append(sml_outdated)
 
-            versionInfo = self.make_version_info_message(smm_version, CL, sml_version, path, launcherid, commandline)
+            versionInfo = self.make_version_info_message(smm_version, CL, sml_version, path, launcher_id, commandline)
             if versionInfo:
                 messages.append(versionInfo)
             
@@ -130,13 +134,13 @@ class Crashes(commands.Cog):
             text = file.read().decode("utf-8", errors="ignore")
             messages = self.process_text(text)
 
-            sml_version, CL, path, launcherid, commandline = self.extract_game_info_from_text(text)
+            sml_version, CL, path, launcher_id, commandline = self.extract_game_info_from_text(text)
             
-            smlOutdated = self.make_sml_version_message(CL, sml_version)
-            if smlOutdated:
-                messages.append(smlOutdated)
+            sml_outdated = self.make_sml_version_message(CL, sml_version)
+            if sml_outdated:
+                messages.append(sml_outdated)
 
-            versionInfo = self.make_version_info_message(None, CL, sml_version, path, launcherid, commandline)
+            versionInfo = self.make_version_info_message(None, CL, sml_version, path, launcher_id, commandline)
             if versionInfo:
                 messages.append(versionInfo)
             
@@ -146,12 +150,11 @@ class Crashes(commands.Cog):
                 image = Image.open(file)
                 ratio = 2160 / image.height
                 if ratio > 1:
-                    image = image.resize((round(image.width * ratio), round(image.height * ratio)),
-                                            Image.LANCZOS)
+                    image = image.resize((round(image.width * ratio), round(image.height * ratio)), Image.LANCZOS)
 
-                enhancerContrast = ImageEnhance.Contrast(image)
+                enhancer_contrast = ImageEnhance.Contrast(image)
 
-                image = enhancerContrast.enhance(2)
+                image = enhancer_contrast.enhance(2)
                 enhancerSharpness = ImageEnhance.Sharpness(image)
                 image = enhancerSharpness.enhance(10)
                 with ThreadPoolExecutor() as pool:
@@ -160,7 +163,7 @@ class Crashes(commands.Cog):
                     return self.process_text(image_text)
 
             except Exception as e:
-                self.bot.logger.error("OCR errored:\n" + e)
+                self.bot.logger.error("OCR error:\n" + str(e))
                 return []
 
     def process_text(self, text):
@@ -208,28 +211,28 @@ class Crashes(commands.Cog):
                     f"{message.content.split('https://pastebin.com/')[1].split(' ')[0].read().decode('utf-8')}"
                 )
                 responses = self.process_text(text)
-                sml_version, CL, path, launcherid, commandline = self.extract_game_info_from_text(message.content)
+                sml_version, CL, path, launcher_id, commandline = self.extract_game_info_from_text(message.content)
             
                 smlOutdated = self.make_sml_version_message(CL, sml_version)
                 if smlOutdated:
                     responses.append(smlOutdated)
 
-                versionInfo = self.make_version_info_message(None, CL, sml_version, path, launcherid, commandline)
-                if versionInfo:
-                    responses.append(versionInfo)
+                version_info = self.make_version_info_message(None, CL, sml_version, path, launcher_id, commandline)
+                if version_info:
+                    responses.append(version_info)
             except:
                 pass
         else:
             responses = self.process_text(message.content)
-            sml_version, CL, path, launcherid, commandline = self.extract_game_info_from_text(message.content)
+            sml_version, CL, path, launcher_id, commandline = self.extract_game_info_from_text(message.content)
             
             smlOutdated = self.make_sml_version_message(CL, sml_version)
             if smlOutdated:
                 responses.append(smlOutdated)
 
-            versionInfo = self.make_version_info_message(None, CL, sml_version, path, launcherid, commandline)
-            if versionInfo:
-                responses.append(versionInfo)
+            version_info = self.make_version_info_message(None, CL, sml_version, path, launcher_id, commandline)
+            if version_info:
+                responses.append(version_info)
 
         for response in responses:
             await self.bot.reply_to_msg(message, response, propagate_reply=False)

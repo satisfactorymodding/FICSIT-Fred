@@ -3,11 +3,12 @@ import asyncio
 from html.parser import HTMLParser
 import config
 
+
 async def t3_only(ctx):
     return ctx.author.id == 227473074616795137 or permission_check(ctx.author, 2)
 
 
-def permission_check(member, level:int):
+def permission_check(member, level: int):
     perms = config.PermissionRoles.fetch_by_lvl(level)
     has_roles = [role.id for role in member.roles]
     for role in perms:
@@ -40,11 +41,11 @@ async def waitResponse(client, message, question):
 
 class aTagParser(HTMLParser):
     link = ''
-    viewtext = ''
+    view_text = ''
 
     def clear_output(self):
         self.link = ''
-        self.viewtext = ''
+        self.view_text = ''
 
     def handle_starttag(self, tag, attrs):
         if tag == 'a':
@@ -56,7 +57,7 @@ class aTagParser(HTMLParser):
         pass
 
     def handle_data(self, data):
-        self.viewtext = f'[{data}]'
+        self.view_text = f'[{data}]'
 
 
 def formatDesc(desc):
@@ -76,7 +77,7 @@ def formatDesc(desc):
         i = i[0]  # regex returns a one-element tuple :/
         parser = aTagParser()
         parser.feed(i)
-        embeds.update({i: parser.viewtext + parser.link})
+        embeds.update({i: parser.view_text + parser.link})
     for old, new in embeds.items():
         desc = desc.replace(old, new)
 
