@@ -22,5 +22,4 @@ class MediaOnly(commands.Cog):
                                    f"```\n{message.content}\n```")
             await message.delete()
             return True
-        print("Skipped MediaOnly for some unfathomable reason")
         return False
