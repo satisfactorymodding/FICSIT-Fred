@@ -11,7 +11,7 @@ class MediaOnly(commands.Cog):
 
         if len(message.embeds) > 0 or len(message.attachments) > 0:
             return
-        if await t3_only(message, self.bot):
+        if await t3_only(message):
             return False
         if config.MediaOnlyChannels.fetch(message.channel.id):
             await self.bot.send_DM(message.author,
