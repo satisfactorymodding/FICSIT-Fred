@@ -15,11 +15,12 @@ def permission_check(member, level:int):
             if role.role_id in has_roles:
                 return True
         else:
-            return False
+            break
+    return False
 
 
 async def mod_only(ctx):
-    return 227473074616795137 or permission_check(ctx.author, 3)
+    return ctx.author.id == 227473074616795137 or permission_check(ctx.author, 3)
 
 
 async def waitResponse(client, message, question):
