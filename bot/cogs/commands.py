@@ -61,7 +61,7 @@ class Commands(commands.Cog):
             return
         if message.content.startswith(self.bot.command_prefix):
             name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
-            if (command := config.Commands.fetch(name)):
+            if command := config.Commands.fetch(name):
                 attachment = None
                 if command["attachment"]:
                     async with aiohttp.ClientSession() as session:
@@ -209,7 +209,7 @@ class Commands(commands.Cog):
             return
 
     @add.command(name="mediaonly")
-    async def addmediaonly(self, ctx, *args):
+    async def add_mediaonly(self, ctx, *args):
         if ctx.message.channel_mentions:
             where = int(ctx.message.channel_mentions[0].id)
         else:
@@ -229,7 +229,7 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, f"Media only channel {self.bot.get_channel(where).mention} added!")
 
     @remove.command(name="mediaonly")
-    async def removemediaonly(self, ctx, *args):
+    async def remove_mediaonly(self, ctx, *args):
         if ctx.message.channel_mentions:
             where = int(ctx.message.channel_mentions[0].id)
         else:
@@ -249,7 +249,7 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, "Media Only Channel removed!")
 
     @add.command(name="command")
-    async def addcommand(self, ctx, *args):
+    async def add_command(self, ctx, *args):
         if args:
             command = args[0]
         else:
@@ -276,7 +276,7 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, f"Command '{command}' added!")
 
     @remove.command(name="command")
-    async def removecommand(self, ctx, *args):
+    async def remove_command(self, ctx, *args):
         if args:
             command_name = args[0]
         else:
@@ -291,7 +291,7 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, "Command removed!")
 
     @modify.command(name="command")
-    async def modifycommand(self, ctx, *args):
+    async def modify_command(self, ctx, *args):
         if args:
             command_name = args[0]
         else:
@@ -318,7 +318,7 @@ class Commands(commands.Cog):
                 await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
                 return
 
-            await self.addcommand(ctx, *args if args else command_name)
+            await self.add_command(ctx, *args if args else command_name)
             return
 
         attachment = None
@@ -336,9 +336,9 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, "Command '" + command_name + "' modified!")
 
     @add.command(name="crash")
-    async def addcrash(self, ctx, *args):
+    async def add_crash(self, ctx, *args):
         if len(args) > 3:
-            self.bot.reply_to_msg(ctx.message, "Please put your parameters between double quotes `\"...\"`.")
+            self.bot.reply_to_msg(ctx.message, 'Please put your parameters between double quotes `"..."`.')
             return
         if len(args) > 0:
             name = args[0]
@@ -378,7 +378,7 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, "Known crash '" + name + "' added!")
 
     @remove.command(name="crash")
-    async def removecrash(self, ctx, *args):
+    async def remove_crash(self, ctx, *args):
         if args:
             name = args[0]
         else:
@@ -393,30 +393,30 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, "Crash removed!")
 
     @modify.command(name="crash")
-    async def modifycrash(self, ctx, *args):
+    async def modify_crash(self, ctx, *args):
         if args:
-            crashname = args[0]
+            crash_name = args[0]
         else:
-            crashname, _ = await Helper.waitResponse(self.bot, ctx.message,
-                                                     "What is the crash to modify? e.g. ``install``")
+            crash_name, _ = await Helper.waitResponse(self.bot, ctx.message,
+                                                      "What is the crash to modify? e.g. ``install``")
 
-        crashname = crashname.lower()
-        query = config.Crashes.selectBy(name=crashname)
+        crash_name = crash_name.lower()
+        query = config.Crashes.selectBy(name=crash_name)
         results = list(query)
         if not results:
-            createcrash, _ = await Helper.waitResponse(self.bot, ctx.message,
-                                                       "Command could not be found! Do you want to create it?")
+            create_crash, _ = await Helper.waitResponse(self.bot, ctx.message,
+                                                        "Command could not be found! Do you want to create it?")
             try:
-                createcrash = convert_to_bool(createcrash)
+                create_crash = convert_to_bool(create_crash)
             except ValueError:
                 await self.bot.reply_to_msg(ctx.message, "Invalid bool string")
                 return
 
-            if not createcrash:
+            if not create_crash:
                 await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
                 return
 
-            await self.addcrash(ctx, *args if args else crashname)
+            await self.add_crash(ctx, *args if args else crash_name)
             return
 
         change_crash, _ = await Helper.waitResponse(self.bot, ctx.message, "Do you want to change the crash to match?")
@@ -446,7 +446,7 @@ class Commands(commands.Cog):
             results[0].crash = crash
         if change_response:
             results[0].response = response
-        await self.bot.reply_to_msg(ctx.message, "Crash '" + crashname + "' modified!")
+        await self.bot.reply_to_msg(ctx.message, "Crash '" + crash_name + "' modified!")
 
     @add.command(name="dialogflow")
     async def add_dialogflow(self, ctx, id: str, response: typing.Union[bool, str], has_followup: bool, *args):
@@ -615,7 +615,7 @@ class Commands(commands.Cog):
             await self.bot.reply_to_msg(ctx.message, "Rank role could not be found!")
 
     @set.command(name="NLP_state")
-    async def setNLPstate(self, ctx, *args):
+    async def set_NLP_state(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
             try:
@@ -633,7 +633,7 @@ class Commands(commands.Cog):
             config.Misc.change("dialogflow_state", config.Misc.fetch("dialogflow_state"))
 
     @set.command(name="NLP_debug")
-    async def setNLPdebug(self, ctx, *args):
+    async def set_NLP_debug(self, ctx, *args):
         if len(args) > 0:
             data = args[0]
             try:
