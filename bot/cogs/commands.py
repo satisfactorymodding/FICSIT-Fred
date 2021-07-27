@@ -765,18 +765,18 @@ class Commands(commands.Cog):
             who = int(ctx.message.mentions[0].id)
         else:
             if len(args) > 0:
-                who = int(args[0])
+                who = args[0]
             else:
                 who, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                             "What is the ID of the person you want to "
                                                             "give xp to? e.g. ``809710343533232129``")
-                who = int(who)
+            who = int(who)
         if len(args) > 1:
-            amount = int(args[1])
+            amount = args[1]
         else:
             amount, attachment = await Helper.waitResponse(self.bot, ctx.message, "How much xp do you want to give? "
                                                                                   "e.g. 123456")
-            amount = int(amount)
+        amount = float(amount)
         user = ctx.guild.get_member(who)
         if not user:
             self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {who}")
@@ -792,19 +792,19 @@ class Commands(commands.Cog):
             who = int(ctx.message.mentions[0].id)
         else:
             if len(args) > 0:
-                who = int(args[0])
+                who = args[0]
             else:
                 who, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                             "What is the ID of the person you want to "
                                                             "take xp from? e.g. ``809710343533232129``")
-                who = int(who)
+            who = int(who)
         if len(args) > 1:
-            amount = int(args[1])
+            amount = args[1]
         else:
             amount, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                            "How much xp do you want to take? "
                                                            "e.g. 123456")
-            amount = int(amount)
+        amount = float(amount)
         user = ctx.guild.get_member(who)
         if not user:
             self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {who}")
@@ -820,19 +820,19 @@ class Commands(commands.Cog):
             who = int(ctx.message.mentions[0].id)
         else:
             if len(args) > 0:
-                who = int(args[0])
+                who = args[0]
             else:
                 who, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                             "What is the ID of the person whose xp multiplier "
                                                             "will change? e.g. ``809710343533232129``")
-                who = int(who)
+            who = int(who)
 
         if len(args) > 1:
-            amount = int(args[1])
+            amount = args[1]
         else:
             amount, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                            "What is the new xp multiplier? e.g. '4'")
-            amount = int(amount)
+        amount = float(amount)
 
         user = ctx.guild.get_member(who)
         if not user:
@@ -854,19 +854,19 @@ class Commands(commands.Cog):
             who = int(ctx.message.mentions[0].id)
         else:
             if len(args) > 0:
-                who = int(args[0])
+                who = args[0]
             else:
                 who, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                             "What is the ID of the person whose xp you want to set?"
                                                             " e.g. ``809710343533232129``")
-                who = int(who)
+            who = int(who)
 
         if len(args) > 1:
             amount = args[1]
         else:
             amount, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                            "How much xp shall this user have? e.g. 123456")
-            amount = float(amount)
+        amount = float(amount)
         user = ctx.guild.get_member(who)
         if not user:
             self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {who}")
@@ -903,12 +903,13 @@ class Commands(commands.Cog):
             where = int(ctx.message.channel_mentions[0].id)
         else:
             if args:
-                where = int(args[0])
+                where = args[0]
             else:
                 where, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                               "What is the ID for the channel? "
                                                               "e.g. ``709509235028918334``")
-                where = int(where)
+            where = int(where)
+
         config.Misc.change("filter_channel", where)
         await self.bot.reply_to_msg(ctx.message,
                                     "The filter channel for the engineers is now "
@@ -921,12 +922,13 @@ class Commands(commands.Cog):
             where = int(ctx.message.channel_mentions[0].id)
         else:
             if args:
-                where = int(args[0])
+                where = args[0]
             else:
                 where, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                               "What is the ID for the channel? "
                                                               "e.g. ``709509235028918334``")
-                where = int(where)
+            where = int(where)
+
         config.Misc.change("mod_channel", where)
         await self.bot.reply_to_msg(ctx.message,
                                     "The filter channel for the moderators is now "
@@ -939,12 +941,13 @@ class Commands(commands.Cog):
             where = int(ctx.message.channel_mentions[0].id)
         else:
             if args:
-                where = int(args[0])
+                where = args[0]
             else:
                 where, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                               "What is the ID for the channel? "
                                                               "e.g. ``709509235028918334``")
-                where = int(where)
+            where = int(where)
+
         config.Misc.change("githook_channel", where)
         await self.bot.reply_to_msg(ctx.message,
                                     f"The channel for the github hooks is now "
