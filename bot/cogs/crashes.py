@@ -24,7 +24,7 @@ class Crashes(commands.Cog):
             sml_version = None
         try:
             game_version = int(text.split("-CL-")[1].split("\n")[0])
-        except ValueError:
+        except IndexError:
             game_version = 0
         try:
             path = text.split("LogInit: Base Directory: ")[1].split("\n")[0]
