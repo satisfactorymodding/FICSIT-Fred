@@ -1,6 +1,5 @@
 import discord.ext.commands as commands
 from discord import DMChannel
-from libraries.helper import cube_root
 import config
 from datetime import *
 
@@ -19,6 +18,8 @@ class UserProfile:
 
         self.rank = self.DB_user.rank
         self.xp_count = self.DB_user.xp_count
+        self._xp_exp = 1.05
+        self._xp_base = 200
 
     async def validate_role(self):
         if not self.member:
@@ -37,13 +38,29 @@ class UserProfile:
                         await self.member.remove_roles(member_role)
                 await self.member.add_roles(role)
 
+    def _xp_cost(self, level: int) -> float:
+        return 0 if level < 1 else self._xp_base * pow(self._xp_exp, level - 1)
+
+    def xp_requirement(self, level: int) -> float:
+        if level < 1:
+            return 0
+        else:
+            return self.xp_requirement(level - 1) + \
+                   self._xp_cost(level)
+
     async def validate_rank(self):
-        # xp = 6rank^3 + 494
-        # xp - 494 = 5rank^3
-        # (xp - 494) / 5 = rank^3
-        # cube root of [(xp - 494) / 5] = rank
-        expected_rank = int(cube_root((self.xp_count - 494) / 5) // 1)
-        expected_rank = 0 if expected_rank < 0 else expected_rank
+        expected_rank = self.rank
+        print("Validating rank.")
+        while True:
+            if self.xp_count < self.xp_requirement(self.rank):
+                expected_rank -= 1
+                print(self.member.name, "will advance one rank!")
+            elif self.xp_count >= self.xp_requirement(self.rank + 1):
+                print(self.member.name, "will decrease one rank!")
+                expected_rank += 1
+            else:
+                print(f"{self.member.name}'s rank remains unchanged.")
+                break
 
         if expected_rank != self.rank:
             self.bot.logger.info(f"Correcting a mismatched rank from {self.rank} to {expected_rank}")
