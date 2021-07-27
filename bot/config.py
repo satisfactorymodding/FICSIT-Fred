@@ -2,6 +2,20 @@ from sqlobject import *
 import json
 
 
+class AccessLevels(SQLObject):
+    class sqlmeta:
+        table = "access_levels"
+
+    role_id = BigIntCol()
+    access_lvl = IntCol()
+
+    @staticmethod
+    def fetch():
+        query = AccessLevels.select()
+        result = {id_: lvl for id_, lvl in query}
+        return result
+
+
 class RankRoles(SQLObject):
     class sqlmeta:
         table = "rank_roles"

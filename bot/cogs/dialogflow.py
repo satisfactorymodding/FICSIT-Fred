@@ -25,8 +25,9 @@ class DialogFlow(commands.Cog):
         if not config.Misc.fetch("dialogflow_state"):
             return
         if not config.Misc.fetch("dialogflow_debug_state"):
-            if not config.DialogflowChannels.fetch(message.channel.id):
-                return
+            # Trying out global NLP
+            # if not config.DialogflowChannels.fetch(message.channel.id):
+            #     return
             roles = message.author.roles[1:]
             exceptionroles = config.DialogflowExceptionRoles.fetch_all()
             if len(roles) != 0 and len(roles) != len(exceptionroles):
@@ -59,6 +60,11 @@ class DialogFlow(commands.Cog):
         query = config.Dialogflow.select(f"dialogflow.intent_id = '{intent_id}' AND ((dialogflow.data IS NULL) "
                                          f"OR dialogflow.data = '{formatted_response}')")
         results = list(query)
+
+        if intent_id == config.Misc.fetch("dialogflow_steam_scam_intent_id"):
+            await message.delete()
+            return
+
         if not len(results):
             return
         dialogflowReply = results[0].as_dict()
