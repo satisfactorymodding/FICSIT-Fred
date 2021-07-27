@@ -50,16 +50,12 @@ class UserProfile:
 
     async def validate_rank(self):
         expected_rank = self.rank
-        print("Validating rank.")
         while True:
-            if self.xp_count < self.xp_requirement(self.rank):
+            if self.xp_count < self.xp_requirement(expected_rank - 1):
                 expected_rank -= 1
-                print(self.member.name, "will advance one rank!")
-            elif self.xp_count >= self.xp_requirement(self.rank + 1):
-                print(self.member.name, "will decrease one rank!")
+            elif self.xp_count >= self.xp_requirement(expected_rank + 1):
                 expected_rank += 1
             else:
-                print(f"{self.member.name}'s rank remains unchanged.")
                 break
 
         if expected_rank != self.rank:
@@ -97,7 +93,7 @@ class UserProfile:
         await self.validate_rank()
 
     async def set_xp(self, xp: float):
-        if xp <= 0:
+        if xp < 0:
             return False
         self.DB_user.xp_count = xp
         self.xp_count = xp
