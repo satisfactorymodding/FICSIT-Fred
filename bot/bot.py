@@ -64,7 +64,11 @@ class Bot(discord.ext.commands.Bot):
             sql.sqlhub.processConnection = connection
             config.create_missing_tables()
         except sql.dberrors.OperationalError:
-            con = psycopg2.connect(dbname="postgres", user=user, password=password, host=host, port=port)
+            try:
+                con = psycopg2.connect(dbname="postgres", user=user, password=password, host=host, port=port)
+            except psycopg2.OperationalError:
+                raise EnvironmentError("Run the DB, dummy!")
+
             autocommit = psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT
             con.set_isolation_level(autocommit)
             cursor = con.cursor()
