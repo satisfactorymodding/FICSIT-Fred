@@ -36,18 +36,19 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.12.1"
+        self.version = "2.12.2"
 
         self.running = True
         self.loop = asyncio.get_event_loop()
 
     async def on_ready(self):
         await self.change_presence(activity=discord.Game("v" + self.version))
-        self.modchannel = self.get_channel(config.Misc.fetch("mod_channel"))
-        assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
+        self.mod_channel = self.get_channel(config.Misc.fetch("mod_channel"))
+        assert self.mod_channel, "I couldn't fetch the mod channel, please check the config!"
         print(f'We have logged in as {self.user}')
 
-    async def on_reaction_add(self, reaction, user):
+    @staticmethod
+    async def on_reaction_add(reaction, user):
         if not user.bot and reaction.message.author.bot and reaction.emoji == "❌":
             await reaction.message.delete()
 
@@ -83,7 +84,7 @@ class Bot(discord.ext.commands.Bot):
         try:
             config.Commands.get(1)
         except:
-            self.logger.warning("There is no registered command. Populating the database with the old config file")
+            self.logger.warning("There is no registered command. Populating the database with the old config file.")
             config.convert_old_config()
 
     def setup_logger(self):
@@ -132,7 +133,8 @@ class Bot(discord.ext.commands.Bot):
             channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
 
-    async def send_DM(self, user, content, embed=None, file=None):
+    @staticmethod
+    async def send_DM(user, content, embed=None, file=None):
         DB_user = config.Users.create_if_missing(user)
         if not DB_user.accepts_dms:
             return None
@@ -148,7 +150,8 @@ class Bot(discord.ext.commands.Bot):
             print(e)
             return None
 
-    async def reply_to_msg(self, message, content=None, propagate_reply=True, **kwargs):
+    @staticmethod
+    async def reply_to_msg(message, content=None, propagate_reply=True, **kwargs):
         reference = (message.reference if propagate_reply else None) or message
         if isinstance(reference, discord.MessageReference):
             reference.fail_if_not_exists = False
@@ -170,14 +173,14 @@ class Bot(discord.ext.commands.Bot):
                                         "message, please use an appropriate channel in the Modding Discord instead.")
             return
 
-        removed = await self.MediaOnly.process_message(message)
+        removed = await self.MediaOnly.process_message(message) or await self.NoShortUrl.process_message(message)
         if not removed:
-            removed = await self.NoShortUrl.process_message(message)
-        if not removed:
-            reacted = await self.Crashes.process_message(message)
-            if not reacted:
+            if message.content.startswith(self.command_prefix):
                 await self.process_commands(message)
-                await self.DialogFlow.process_message(message)
+            else:
+                reacted = await self.Crashes.process_message(message)
+                if not reacted:
+                    await self.DialogFlow.process_message(message)
 
 
 intents = discord.Intents.default()

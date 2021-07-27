@@ -26,19 +26,19 @@ async def run(data, client):
         repo_name = "None"
         repo_full_name = "None"
     try:
-        type = data["type"]
+        data_type = data["type"]
     except KeyError:
         print("data didn't have a type field")
         return
-    if type == "push":
+    if data_type == "push":
         embed = push(data)
-    elif type == "pull_request":
+    elif data_type == "pull_request":
         embed = pull_request(data)
-    elif type == "member" and data["action"] == "added":
+    elif data_type == "member" and data["action"] == "added":
         embed = contributer_added(data)
-    elif type == "release" and not data["release"]["draft"] and data["action"] in ["released", "prereleased"]:
+    elif data_type == "release" and not data["release"]["draft"] and data["action"] in ["released", "prereleased"]:
         embed = release(data)
-    elif type == "issue":
+    elif data_type == "issue":
         embed = issue(data)
     else:
         print(data)
