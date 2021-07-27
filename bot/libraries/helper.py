@@ -76,14 +76,3 @@ def formatDesc(desc):
 
     desc = re.sub('#+ ', "", desc)
     return desc
-
-
-def cube_root(x: float):
-
-    if x < 0:
-        x = abs(x)
-        result = x ** (1 / 3) * (-1)
-    else:
-        result = x ** (1 / 3)
-
-    return result
