@@ -2,18 +2,24 @@ from sqlobject import *
 import json
 
 
-class AccessLevels(SQLObject):
+class PermissionRoles(SQLObject):
     class sqlmeta:
-        table = "access_levels"
+        table = "role_perms"
 
     role_id = BigIntCol()
-    access_lvl = IntCol()
+    perm_lvl = IntCol()
 
     @staticmethod
-    def fetch():
-        query = AccessLevels.select()
-        result = {id_: lvl for id_, lvl in query}
-        return result
+    def fetch_by_lvl(perm_lvl):
+        query = PermissionRoles.select(PermissionRoles.q.perm_lvl >= perm_lvl).orderBy("-perm_lvl")
+        results = list(query)
+        return results
+
+    @staticmethod
+    def fetch_by_role(role_id):
+        query = PermissionRoles.selectBy(role_id=role_id)
+        results = list(query)
+        return results
 
 
 class RankRoles(SQLObject):
@@ -279,10 +285,22 @@ def create_missing_tables():
         "commands": Commands,
         "crashes": Crashes,
         "reserved_commands": ReservedCommands,
-        "miscellaneous": Misc
+        "miscellaneous": Misc,
+        "permission_roles": PermissionRoles
     }
     for table in tables.values():
         table.createTable(ifNotExists=True)
+    '''
+    PermissionRoles(role_id=829443769786564638, perm_lvl=1)
+    PermissionRoles(role_id=555432362498850817, perm_lvl=2)
+    PermissionRoles(role_id=829455392621985873, perm_lvl=2)
+    PermissionRoles(role_id=829446002209194074, perm_lvl=2)
+    PermissionRoles(role_id=855582239277187082, perm_lvl=3)
+    PermissionRoles(role_id=571819240609284096, perm_lvl=3)
+    PermissionRoles(role_id=740318257164058654, perm_lvl=3)
+    PermissionRoles(role_id=555431049300017162, perm_lvl=4)
+    PermissionRoles(role_id=555426814177181701, perm_lvl=5)
+    '''
 
 
 def convert_old_config():
