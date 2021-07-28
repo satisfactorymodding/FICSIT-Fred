@@ -25,14 +25,15 @@ class DialogFlow(commands.Cog):
         if not config.Misc.fetch("dialogflow_state"):
             return
         if not config.Misc.fetch("dialogflow_debug_state"):
-            if not config.DialogflowChannels.fetch(message.channel.id):
-                return
+            # Trying out global NLP
+            # if not config.DialogflowChannels.fetch(message.channel.id):
+            #     return
             roles = message.author.roles[1:]
-            exceptionroles = config.DialogflowExceptionRoles.fetch_all()
-            if len(roles) != 0 and len(roles) != len(exceptionroles):
+            exception_roles = config.DialogflowExceptionRoles.fetch_all()
+            if len(roles) != 0 and len(roles) != len(exception_roles):
                 return
             for role in roles:
-                if role.id not in exceptionroles:
+                if role.id not in exception_roles:
                     return
 
         if message.author.id in self.session_ids:
@@ -59,22 +60,28 @@ class DialogFlow(commands.Cog):
         query = config.Dialogflow.select(f"dialogflow.intent_id = '{intent_id}' AND ((dialogflow.data IS NULL) "
                                          f"OR dialogflow.data = '{formatted_response}')")
         results = list(query)
+
+        if intent_id == config.Misc.fetch("dialogflow_steam_scam_intent_id"):
+            await message.delete()
+            return
+
         if not len(results):
             return
-        dialogflowReply = results[0].as_dict()
 
-        if not dialogflowReply["response"]:
+        dialogflow_reply = results[0].as_dict()
+
+        if not dialogflow_reply["response"]:
             await self.bot.reply_to_msg(message, response_text)
         else:
-            if dialogflowReply["response"].startswith(self.bot.command_prefix):
-                commandname = dialogflowReply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]
-                if command := config.Commands.fetch(commandname):
+            if dialogflow_reply["response"].startswith(self.bot.command_prefix):
+                command_name = dialogflow_reply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]
+                if command := config.Commands.fetch(command_name):
                     await self.bot.reply_to_msg(message, command.response)
 
             else:
-                await self.bot.reply_to_msg(message, dialogflowReply["response"])
+                await self.bot.reply_to_msg(message, dialogflow_reply["response"])
 
-        if dialogflowReply["has_followup"]:
+        if dialogflow_reply["has_followup"]:
             def check(message2):
                 return message2.author == message.author and message2.channel == message.channel
 

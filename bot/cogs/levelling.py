@@ -16,7 +16,7 @@ class UserProfile:
             self.DB_user = DB_user
         else:
             self.DB_user = config.Users(user_id=user_id,
-                                        full_name="{}#{}".format(self.member.name, self.member.discriminator))
+                                        full_name=f"{self.member.name}#{self.member.discriminator}")
 
         self.rank = self.DB_user.rank
         self.xp_count = self.DB_user.xp_count

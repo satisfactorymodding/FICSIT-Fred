@@ -18,7 +18,7 @@ ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_HOST", "FRED_SQL_PORT"]
 
 for var in ENVVARS:
-    assert (os.environ.get(var)), "The ENV variable '{}' isn't set".format(var)
+    assert (os.environ.get(var)), f"The ENV variable '{var}' isn't set"
 
 
 class Bot(discord.ext.commands.Bot):
@@ -43,11 +43,12 @@ class Bot(discord.ext.commands.Bot):
 
     async def on_ready(self):
         await self.change_presence(activity=discord.Game("v" + self.version))
-        self.modchannel = self.get_channel(config.Misc.fetch("mod_channel"))
-        assert self.modchannel, "I couldn't fetch the mod channel, please check the config"
-        print('We have logged in as {0.user}'.format(self))
+        self.mod_channel = self.get_channel(config.Misc.fetch("mod_channel"))
+        assert self.mod_channel, "I couldn't fetch the mod channel, please check the config!"
+        print(f'We have logged in as {self.user}')
 
-    async def on_reaction_add(self, reaction, user):
+    @staticmethod
+    async def on_reaction_add(reaction, user):
         if not user.bot and reaction.message.author.bot and reaction.emoji == "❌":
             await reaction.message.delete()
 
@@ -58,7 +59,7 @@ class Bot(discord.ext.commands.Bot):
         host = os.environ.get("FRED_SQL_HOST")
         port = os.environ.get("FRED_SQL_PORT")
         dbname = os.environ.get("FRED_SQL_DB")
-        uri = "postgresql://{}:{}@{}:{}/{}".format(user, password, host, port, dbname)
+        uri = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
         try:
             connection = sql.connectionForURI(uri)
             sql.sqlhub.processConnection = connection
@@ -79,7 +80,7 @@ class Bot(discord.ext.commands.Bot):
         try:
             config.Commands.get(1)
         except:
-            self.logger.warning("There is no registered command. Populating the database with the old config file")
+            self.logger.warning("There is no registered command. Populating the database with the old config file.")
             config.convert_old_config()
 
     def setup_logger(self):
@@ -128,7 +129,8 @@ class Bot(discord.ext.commands.Bot):
             channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
 
-    async def send_DM(self, user, content, embed=None, file=None):
+    @staticmethod
+    async def send_DM(user, content, embed=None, file=None):
         DB_user = config.Users.create_if_missing(user)
         if not DB_user.accepts_dms:
             return None
@@ -144,8 +146,9 @@ class Bot(discord.ext.commands.Bot):
             print(e)
             return None
 
-    async def reply_to_msg(self, message, content=None, **kwargs):
-        reference = message.reference or message
+    @staticmethod
+    async def reply_to_msg(message, content=None, propagate_reply=True, **kwargs):
+        reference = (message.reference if propagate_reply else None) or message
         if isinstance(reference, discord.MessageReference):
             reference.fail_if_not_exists = False
         return await message.channel.send(content, reference=reference, **kwargs)

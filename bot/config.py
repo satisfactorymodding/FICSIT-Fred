@@ -286,7 +286,7 @@ def create_missing_tables():
 
 
 def convert_old_config():
-    reservedcommands = ["management commands", "special commands", "miscellaneous commands"]
+    reserved_commands = ["management commands", "special commands", "miscellaneous commands"]
 
     Misc(key="welcome_message", value="")
     Misc(key="latest_info", value="")
@@ -338,7 +338,7 @@ def convert_old_config():
             elif k == "known crashes":
                 for i in v:
                     Crashes(name=i["name"], crash=i["crash"], response=i["response"])
-            elif k in reservedcommands:
+            elif k in reserved_commands:
                 for i in v:
                     ReservedCommands(name=i["command"])
             else:

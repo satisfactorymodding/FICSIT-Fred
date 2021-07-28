@@ -34,11 +34,11 @@ async def waitResponse(client, message, question):
 
 class aTagParser(HTMLParser):
     link = ''
-    viewtext = ''
+    view_text = ''
 
     def clear_output(self):
         self.link = ''
-        self.viewtext = ''
+        self.view_text = ''
 
     def handle_starttag(self, tag, attrs):
         if tag == 'a':
@@ -50,7 +50,7 @@ class aTagParser(HTMLParser):
         pass
 
     def handle_data(self, data):
-        self.viewtext = f'[{data}]'
+        self.view_text = f'[{data}]'
 
 
 def formatDesc(desc):
@@ -70,7 +70,7 @@ def formatDesc(desc):
         i = i[0]  # regex returns a one-element tuple :/
         parser = aTagParser()
         parser.feed(i)
-        embeds.update({i: parser.viewtext + parser.link})
+        embeds.update({i: parser.view_text + parser.link})
     for old, new in embeds.items():
         desc = desc.replace(old, new)
 
