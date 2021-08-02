@@ -173,14 +173,14 @@ class Bot(discord.ext.commands.Bot):
                                         "message, please use an appropriate channel in the Modding Discord instead.")
             return
 
-        removed = await self.MediaOnly.process_message(message)
+        removed = await self.MediaOnly.process_message(message) or await self.NoShortUrl.process_message(message)
         if not removed:
-            removed = await self.NoShortUrl.process_message(message)
-        if not removed:
-            reacted = await self.Crashes.process_message(message)
-            if not reacted:
+            if message.content.startswith(self.command_prefix):
                 await self.process_commands(message)
-                await self.DialogFlow.process_message(message)
+            else:
+                reacted = await self.Crashes.process_message(message)
+                if not reacted:
+                    await self.DialogFlow.process_message(message)
 
 
 intents = discord.Intents.default()
