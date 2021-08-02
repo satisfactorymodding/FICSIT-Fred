@@ -3,18 +3,25 @@ import asyncio
 from html.parser import HTMLParser
 import config
 
-async def t3_only(ctx, bot=None):
-    if bot is None:
-        bot = ctx.bot
-    return (ctx.author.id == 227473074616795137 or
-            ctx.author.permissions_in(bot.get_channel(config.Misc.fetch("filter_channel"))).send_messages)
+
+async def t3_only(ctx):
+    return ctx.author.id == 227473074616795137 or permission_check(ctx.author, 2)
 
 
-async def mod_only(ctx, bot=None):
-    if bot is None:
-        bot = ctx.bot
-    return (ctx.author.id == 227473074616795137 or
-            ctx.author.permissions_in(bot.modchannel).send_messages)
+def permission_check(member, level: int):
+    perms = config.PermissionRoles.fetch_by_lvl(level)
+    has_roles = [role.id for role in member.roles]
+    for role in perms:
+        if role.perm_lvl >= level:
+            if role.role_id in has_roles:
+                return True
+        else:
+            break
+    return False
+
+
+async def mod_only(ctx):
+    return ctx.author.id == 227473074616795137 or permission_check(ctx.author, 3)
 
 
 async def waitResponse(client, message, question):
