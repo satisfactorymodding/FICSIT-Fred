@@ -176,8 +176,8 @@ class Crashes(commands.Cog):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
                         messages.append(command["content"])
                 else:
-                    text = re.sub("{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
-                    messages.append(text)
+                    response = re.sub("{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
+                    messages.append(response)
         return messages
 
     async def process_message(self, message):
