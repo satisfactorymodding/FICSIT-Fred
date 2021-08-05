@@ -169,7 +169,11 @@ class Crashes(commands.Cog):
             with zipfile.ZipFile(file) as zip_f:
                 for zip_file_name in zip_f.namelist():
                     with zip_f.open(zip_file_name) as zip_file:
-                        zip_file_content = zip_file.read().decode("utf-8")
+                        try:
+                            zip_file_content = zip_file.read().decode("utf-8")
+                        except zipfile.BadZipFile:
+                            return ["This zipfile is invalid! Its contents may have been changed after zipping."]
+
                         for message in self.process_text(zip_file_content):
                             messages.append(message)
 

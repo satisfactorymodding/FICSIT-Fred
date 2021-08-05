@@ -33,7 +33,7 @@ async def waitResponse(client, message, question):
     try:
         response = await client.wait_for('message', timeout=60.0, check=check)
     except asyncio.TimeoutError:
-        await client.reply_to_msg(message, "Timed out and aborted after 30 seconds.")
+        await client.reply_to_msg(message, "Timed out and aborted after 60 seconds.")
         raise asyncio.TimeoutError
 
     return response.content, response.attachments[0] if response.attachments else None
