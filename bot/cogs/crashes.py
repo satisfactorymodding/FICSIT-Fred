@@ -9,6 +9,7 @@ import io
 import json
 import config
 from concurrent.futures import ThreadPoolExecutor
+from time import strptime
 
 
 class Crashes(commands.Cog):
@@ -85,6 +86,72 @@ class Crashes(commands.Cog):
                 return f"Your SML version is old. You should update to {latest['version']}."
         return None
 
+    @staticmethod
+    def make_outdated_mods_message(mods):
+        header = f"You are attempting to use {len(mods)} mod{'s' if len(mods) > 1 else ''} that no longer work! \n```"
+        mod_list = "\n".join(mods)
+        footer = "```Please attempt to remove/disable these mods, " \
+                 "so that they no longer force the old SML to be used (this is why your mods don't load)"
+        return header + mod_list + footer
+
+    @staticmethod
+    def filter_enabled(mod_list):
+        enabled = []
+        print("Checking which mods are enabled")
+        for item in mod_list:
+            print("\tChecking mod", item["id"])
+            if item["enabled"]:
+                enabled += [item["id"]]
+                print('\t\t', item["id"], "is enabled")
+
+        return enabled
+
+    async def check_for_outdated_mods(self, mod_list: list):
+
+        enabled_mods: list = self.filter_enabled(mod_list)
+        if not enabled_mods:
+            return enabled_mods
+        else:
+            query_mods, count = str(enabled_mods).replace("'", '"'), str(len(enabled_mods))
+
+        print(enabled_mods, '\n')
+        # Replace argument smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
+        query = """
+        {
+            getMods(
+                filter: {
+                    references: """ + query_mods + """
+                    limit: """ + count + """
+                }
+            ) {
+                mods {
+                    name
+                    last_version_date
+                }
+            }
+            getSMLVersion(smlVersionID: "9DgqKh9KVL2cuu") { 
+                date
+            }
+        }"""
+        response = requests.post("https://api.ficsit.app/v2/query", json={"query": query})
+        result = json.loads(response.text)
+        print(result, '\n')
+        mods_with_dates = result["data"]["getMods"]["mods"]
+        print(mods_with_dates, '\n')
+        latest_compatible_loader = strptime(result["data"]["getSMLVersion"]["date"], "%Y-%m-%dT%H:%M:%SZ")
+        names_with_dates = {mod["name"]: mod["last_version_date"] for mod in mods_with_dates}
+        print(names_with_dates)
+
+        incompatible_mods = []
+        print("Checking mods against SML date")
+        for mod in names_with_dates:
+            print("\tChecking mod", mod)
+            if latest_compatible_loader > strptime(names_with_dates[mod], "%Y-%m-%dT%H:%M:%S.%fZ"):
+                incompatible_mods += [mod]
+                print('\t\t', mod, "is incompatible!")
+
+        return incompatible_mods
+
     async def process_file(self, file, extension):
         if extension == "":
             return []
@@ -97,6 +164,7 @@ class Crashes(commands.Cog):
             path = ""
             launcher_id = ""
             commandline = ""
+            outdated_mods = []
 
             with zipfile.ZipFile(file) as zip_f:
                 for zip_file_name in zip_f.namelist():
@@ -108,12 +176,17 @@ class Crashes(commands.Cog):
                 if 'metadata.json' in zip_f.namelist():
                     with zip_f.open("metadata.json") as metadataFile:
                         metadata = json.load(metadataFile)
-                        if metadata["selectedInstall"]:
+                        if "selectedInstall" in metadata:
                             game_version = int(metadata["selectedInstall"]["version"])
                             path = metadata["selectedInstall"]["installLocation"]
+                        if "selectedProfile" in metadata:
+                            if metadata["selectedProfile"]["name"] != "development":
+                                outdated_mods = await self.check_for_outdated_mods(metadata["selectedProfile"]["items"])
+
                         if "smlVersion" in metadata:
                             sml_version = metadata["smlVersion"]
                         smm_version = metadata["smmVersion"]
+
                 elif 'FactoryGame.log' in zip_f.namelist():
                     # Try to find CL and SML versions in FactoryGame.log
                     with zip_f.open("FactoryGame.log") as fg_log:
@@ -124,6 +197,9 @@ class Crashes(commands.Cog):
             sml_outdated = self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
                 messages.append(sml_outdated)
+
+            if outdated_mods:
+                messages += [self.make_outdated_mods_message(outdated_mods)]
 
             version_info = self.make_version_info_message(smm_version, game_version, sml_version,
                                                           path, launcher_id, commandline)
