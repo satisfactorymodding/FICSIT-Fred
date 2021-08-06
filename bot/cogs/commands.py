@@ -51,6 +51,10 @@ class Commands(commands.Cog):
                 return
         elif isinstance(error, commands.CheckFailure):
             await ctx.send("Sorry, but you do not have enough permissions to do this")
+        elif isinstance(error, commands.errors.CommandInvokeError):
+            # use error.original here because error is discord.ext.commands.errors.CommandInvokeError
+            if isinstance(error.original, asyncio.exceptions.TimeoutError):
+                pass  # this is raised to escape a bunch of value passing if timed out, but should not raise big errors.
         else:
             await ctx.send("I encountered an error while trying to call this command. Feyko has been notified")
             raise error
