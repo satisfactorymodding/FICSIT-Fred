@@ -1,16 +1,22 @@
 import re
 import asyncio
 from html.parser import HTMLParser
+from discord.ext import commands
 import config
 
 
 async def t3_only(ctx):
-    return ctx.author.id == 227473074616795137 or permission_check(ctx.author, 2)
+    return ctx.author.id == 227473074616795137 or permission_check(ctx, 2)
 
 
-def permission_check(member, level: int):
+def permission_check(ctx, level: int):
     perms = config.PermissionRoles.fetch_by_lvl(level)
-    has_roles = [role.id for role in member.roles]
+    main_guild = ctx.bot.get_guild(config.Misc.fetch("main_guild_id"))
+    if (main_guild_member := main_guild.get_member(ctx.author.id)) is None:
+        return False
+
+    has_roles = [role.id for role in (main_guild_member.roles)]
+
     for role in perms:
         if role.perm_lvl >= level:
             if role.role_id in has_roles:
@@ -21,7 +27,7 @@ def permission_check(member, level: int):
 
 
 async def mod_only(ctx):
-    return ctx.author.id == 227473074616795137 or permission_check(ctx.author, 3)
+    return ctx.author.id == 227473074616795137 or permission_check(ctx, 3)
 
 
 async def waitResponse(client, message, question):

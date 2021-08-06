@@ -50,7 +50,7 @@ class Commands(commands.Cog):
             if config.Commands.fetch(command):
                 return
         elif isinstance(error, commands.CheckFailure):
-            await ctx.send("Sorry, but you do not have enough permissions to do this")
+            await ctx.send("Sorry, but you do not have enough permissions to do this.")
         elif isinstance(error, commands.errors.CommandInvokeError):
             # use error.original here because error is discord.ext.commands.errors.CommandInvokeError
             if isinstance(error.original, asyncio.exceptions.TimeoutError):
