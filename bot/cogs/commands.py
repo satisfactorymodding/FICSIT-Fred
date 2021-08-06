@@ -23,21 +23,6 @@ def convert_to_bool(s: str):
     raise ValueError(f"Could not convert {s} to bool")
 
 
-async def check_perms(ctx, access_level):
-    if ctx.author.id == 227473074616795137:
-        return True
-    role_config = {}
-    for role in ctx.author.roles:
-        try:
-            if role_config[role.id] >= access_level:
-                return True
-        except KeyError:
-            # the role has no associated access level
-            pass
-    else:
-        return False
-
-
 class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
