@@ -36,7 +36,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.12.1"
+        self.version = "2.13.0"
 
         self.running = True
         self.loop = asyncio.get_event_loop()
@@ -109,10 +109,14 @@ class Bot(discord.ext.commands.Bot):
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
         if event == "on_message":
-            channel = " in #" + args[0].channel.name
+            channel = args[0].channel
+            if isinstance(channel, discord.DMChannel):
+                channelstr = f" in {channel.recipient.name}#{channel.recipient.discriminator}'s DMs"
+            else:
+                channelstr = f" in #{args[0].channel.name}"
         else:
-            channel = ""
-        tbs = f"```Fred v{self.version}\n\n{type.__name__} exception handled in {event}{channel}: {value}\n\n"
+            channelstr = ""
+        tbs = f"```Fred v{self.version}\n\n{type.__name__} exception handled in {event}{channelstr}: {value}\n\n"
         for string in traceback.format_tb(tb):
             tbs = tbs + string
         tbs = tbs + "```"
@@ -157,14 +161,11 @@ class Bot(discord.ext.commands.Bot):
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
                 await self.reply_to_msg(message, "You will now receive rank changes notifications !")
+                return
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
                 await self.reply_to_msg(message, "You will no longer receive rank changes notifications !")
-            else:
-                await self.reply_to_msg(message,
-                                        "I do not allow commands other than 'start' and 'stop' to be used by direct "
-                                        "message, please use an appropriate channel in the Modding Discord instead.")
-            return
+                return
 
         removed = await self.MediaOnly.process_message(message)
         if not removed:
