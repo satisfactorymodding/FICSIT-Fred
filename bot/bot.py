@@ -36,10 +36,13 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.13.0"
+        self.version = "2.13.1"
 
-        self.running = True
         self.loop = asyncio.get_event_loop()
+
+    @staticmethod
+    def is_running():
+        return config.Misc.fetch("is_running")
 
     async def on_ready(self):
         await self.change_presence(activity=discord.Game("v" + self.version))
@@ -155,7 +158,7 @@ class Bot(discord.ext.commands.Bot):
         return await message.channel.send(content, reference=reference, **kwargs)
 
     async def on_message(self, message):
-        if message.author.bot or not self.running:
+        if message.author.bot or not self.is_running():
             return
         if isinstance(message.channel, discord.DMChannel):
             if message.content.lower() == "start":
