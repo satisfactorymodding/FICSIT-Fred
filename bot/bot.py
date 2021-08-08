@@ -36,10 +36,13 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.12.69"
+        self.version = "2.13.1"
 
-        self.running = True
         self.loop = asyncio.get_event_loop()
+
+    @staticmethod
+    def is_running():
+        return config.Misc.fetch("is_running")
 
     async def on_ready(self):
         await self.change_presence(activity=discord.Game("v" + self.version))
@@ -114,10 +117,14 @@ class Bot(discord.ext.commands.Bot):
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
         if event == "on_message":
-            channel = " in #" + args[0].channel.name
+            channel = args[0].channel
+            if isinstance(channel, discord.DMChannel):
+                channelstr = f" in {channel.recipient.name}#{channel.recipient.discriminator}'s DMs"
+            else:
+                channelstr = f" in #{args[0].channel.name}"
         else:
-            channel = ""
-        tbs = f"```Fred v{self.version}\n\n{type.__name__} exception handled in {event}{channel}: {value}\n\n"
+            channelstr = ""
+        tbs = f"```Fred v{self.version}\n\n{type.__name__} exception handled in {event}{channelstr}: {value}\n\n"
         for string in traceback.format_tb(tb):
             tbs = tbs + string
         tbs = tbs + "```"
@@ -158,20 +165,17 @@ class Bot(discord.ext.commands.Bot):
         return await message.channel.send(content, reference=reference, **kwargs)
 
     async def on_message(self, message):
-        if message.author.bot or not self.running:
+        if message.author.bot or not self.is_running():
             return
         if isinstance(message.channel, discord.DMChannel):
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
                 await self.reply_to_msg(message, "You will now receive rank changes notifications !")
+                return
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
                 await self.reply_to_msg(message, "You will no longer receive rank changes notifications !")
-            else:
-                await self.reply_to_msg(message,
-                                        "I do not allow commands other than 'start' and 'stop' to be used by direct "
-                                        "message, please use an appropriate channel in the Modding Discord instead.")
-            return
+                return
 
         removed = await self.MediaOnly.process_message(message) or await self.NoShortUrl.process_message(message)
         if not removed:

@@ -46,7 +46,7 @@ class Commands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.bot or not self.bot.running:
+        if message.author.bot or not self.bot.is_running():
             return
         if message.content.startswith(self.bot.command_prefix):
             name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]

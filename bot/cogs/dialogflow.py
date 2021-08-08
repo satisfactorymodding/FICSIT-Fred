@@ -6,6 +6,7 @@ import uuid
 import asyncio
 import json
 import config
+import discord
 
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(
@@ -23,6 +24,9 @@ class DialogFlow(commands.Cog):
         if message.content.startswith(self.bot.command_prefix):
             return
         if not config.Misc.fetch("dialogflow_state"):
+            return
+        if isinstance(message.author, discord.User):
+            # We're in a DM channel
             return
         if not config.Misc.fetch("dialogflow_debug_state"):
             # Trying out global NLP
