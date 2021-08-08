@@ -1,7 +1,9 @@
 import discord.ext.commands as commands
 from discord import DMChannel
+
 import config
 from datetime import *
+import math
 
 
 class UserProfile:
@@ -18,8 +20,6 @@ class UserProfile:
 
         self.rank = self.DB_user.rank
         self.xp_count = self.DB_user.xp_count
-        self._xp_exp = 1.05
-        self._xp_base = 200
 
     async def validate_role(self):
         if not self.member:
@@ -38,26 +38,14 @@ class UserProfile:
                         await self.member.remove_roles(member_role)
                 await self.member.add_roles(role)
 
-    def _xp_cost(self, level: int) -> float:
-        return 0 if level < 1 else self._xp_base * pow(self._xp_exp, level - 1)
-
-    def xp_requirement(self, level: int) -> float:
-        if level < 1:
-            return 0
-        else:
-            return self.xp_requirement(level - 1) + \
-                   self._xp_cost(level)
-
     async def validate_rank(self):
-        expected_rank = self.rank
-        while True:
-            if self.xp_count < self.xp_requirement(expected_rank - 1):
-                expected_rank -= 1
-            elif self.xp_count >= self.xp_requirement(expected_rank + 1):
-                expected_rank += 1
-            else:
-                break
-
+        expected_rank = math.log(self.xp_count / config.Misc.fetch("base_rank_value")) / math.log(
+            config.Misc.fetch("rank_value_multiplier"))
+        if expected_rank < 0:
+            expected_rank = 0
+        else:
+            expected_rank += 1
+        expected_rank = int(expected_rank)
         if expected_rank != self.rank:
             self.bot.logger.info(f"Correcting a mismatched rank from {self.rank} to {expected_rank}")
             self.DB_user.rank = expected_rank
@@ -78,27 +66,22 @@ class UserProfile:
             config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier * self.DB_user.role_xp_multiplier
         )
 
-    async def give_xp(self, xp: float):
+    async def give_xp(self, xp):
         if xp <= 0:
             return
         self.DB_user.xp_count += xp
         self.xp_count += xp
         await self.validate_rank()
 
-    async def take_xp(self, xp: float):
-        if xp <= 0:
-            return
+    async def take_xp(self, xp):
         self.DB_user.xp_count -= xp
         self.xp_count -= xp
         await self.validate_rank()
 
-    async def set_xp(self, xp: float):
-        if xp < 0:
-            return False
+    async def set_xp(self, xp):
         self.DB_user.xp_count = xp
         self.xp_count = xp
         await self.validate_rank()
-        return True
 
 
 class Levelling(commands.Cog):
