@@ -152,10 +152,10 @@ class Commands(commands.Cog):
             user = ctx.message.mentions[0]
         else:
             if args:
-                who = int(args[0])
-                user = self.bot.get_user(who)
+                user_id = int(args[0])
+                user = self.bot.get_user(user_id)
                 if not user:
-                    self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to find the user with id {who}")
+                    self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to find the user with id {user_id}")
                     return
             else:
                 user = ctx.author
@@ -200,42 +200,44 @@ class Commands(commands.Cog):
     @add.command(name="mediaonly")
     async def add_mediaonly(self, ctx, *args):
         if ctx.message.channel_mentions:
-            where = int(ctx.message.channel_mentions[0].id)
+            channel_id = ctx.message.channel_mentions[0].id
         else:
             if len(args) > 0:
-                where = args[0]
+                channel_id = args[0]
             else:
-                where, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                              "What is the ID for the channel? "
-                                                              "e.g. ``709509235028918334``")
-            where = int(where)
+                channel_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What is the ID for the channel? "
+                                                                   "e.g. ``709509235028918334``")
+        channel_id = int(channel_id)
 
-        if config.MediaOnlyChannels.fetch(where):
+        if config.MediaOnlyChannels.fetch(channel_id):
             await self.bot.reply_to_msg(ctx.message, "This channel is already a media only channel")
             return
 
-        config.MediaOnlyChannels(channel_id=where)
-        await self.bot.reply_to_msg(ctx.message, f"Media only channel {self.bot.get_channel(where).mention} added!")
+        config.MediaOnlyChannels(channel_id=channel_id)
+        await self.bot.reply_to_msg(ctx.message,
+                                    f"Media Only channel {self.bot.get_channel(channel_id).mention} added!")
 
     @remove.command(name="mediaonly")
     async def remove_mediaonly(self, ctx, *args):
         if ctx.message.channel_mentions:
-            where = int(ctx.message.channel_mentions[0].id)
+            channel_id = ctx.message.channel_mentions[0].id
         else:
             if len(args) > 0:
-                where = args[0]
+                channel_id = args[0]
             else:
-                where, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                              "What is the ID for the channel? "
-                                                              "e.g. ``709509235028918334``")
-            where = int(where)
+                channel_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What is the ID for the channel? "
+                                                                   "e.g. ``709509235028918334``")
+        channel_id = int(channel_id)
 
-        if not config.MediaOnlyChannels.fetch(where):
+        if not config.MediaOnlyChannels.fetch(channel_id):
             await self.bot.reply_to_msg(ctx.message, "Media Only Channel could not be found!")
             return
 
-        config.MediaOnlyChannels.deleteBy(channel_id=where)
-        await self.bot.reply_to_msg(ctx.message, "Media Only Channel removed!")
+        config.MediaOnlyChannels.deleteBy(channel_id=channel_id)
+        await self.bot.reply_to_msg(ctx.message,
+                                    f"Media Only channel {self.bot.get_channel(channel_id).mention} removed!")
 
     @add.command(name="command")
     async def add_command(self, ctx, *args):
@@ -484,75 +486,78 @@ class Commands(commands.Cog):
     @add.command(name="dialogflowChannel")
     async def add_dialogflow_channel(self, ctx, *args):
         if ctx.message.channel_mentions:
-            where = int(ctx.message.channel_mentions[0].id)
+            channel_id = ctx.message.channel_mentions[0].id
         else:
             if len(args) > 0:
-                where = args[0]
+                channel_id = args[0]
             else:
-                where, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                              "What is the ID for the channel? "
-                                                              "e.g. ``709509235028918334``")
-            where = int(where)
+                channel_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What is the ID for the channel? "
+                                                                   "e.g. ``709509235028918334``")
+        channel_id = int(channel_id)
 
-        if config.DialogflowChannels.fetch(where):
-            await self.bot.reply_to_msg(ctx.message, "This channel is already a dialogflow channel")
-            return
-
-        config.DialogflowChannels(channel_id=where)
-        await self.bot.reply_to_msg(ctx.message, f"Dialogflow channel {self.bot.get_channel(where).mention} added!")
+        if config.DialogflowChannels.fetch(channel_id):
+            await self.bot.reply_to_msg(ctx.message, "This channel is already a dialogflow channel!")
+        else:
+            config.DialogflowChannels(channel_id=channel_id)
+            await self.bot.reply_to_msg(ctx.message,
+                                        f"Dialogflow channel {self.bot.get_channel(channel_id).mention} added!")
 
     @remove.command(name="dialogflowChannel")
     async def remove_dialogflow_channel(self, ctx, *args):
         if ctx.message.channel_mentions:
-            where = int(ctx.message.channel_mentions[0].id)
+            channel_id = ctx.message.channel_mentions[0].id
         else:
             if len(args) > 0:
-                where = args[0]
+                channel_id = args[0]
             else:
-                where, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                              "What is the ID for the channel? "
-                                                              "e.g. ``709509235028918334``")
-            where = int(where)
+                channel_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What is the ID for the channel? "
+                                                                   "e.g. ``709509235028918334``")
+        channel_id = int(channel_id)
 
-        if config.DialogflowChannels.fetch(where):
-            config.DialogflowChannels.deleteBy(channel_id=where)
-            await self.bot.reply_to_msg(ctx.message, "Dialogflow Channel removed!")
+        if config.DialogflowChannels.fetch(channel_id):
+            config.DialogflowChannels.deleteBy(channel_id=channel_id)
+            await self.bot.reply_to_msg(ctx.message,
+                                        f"Dialogflow Channel {self.bot.get_channel(channel_id).mention} removed!")
         else:
             await self.bot.reply_to_msg(ctx.message, "Dialogflow channel could not be found!")
 
     @add.command(name="dialogflowRole")
     async def add_dialogflow_role(self, ctx, *args):
         if ctx.message.role_mentions:
-            who = int(ctx.message.role_mentions[0].id)
+            role_id = ctx.message.role_mentions[0].id
         else:
             if len(args) > 0:
-                who = args[0]
+                role_id = args[0]
             else:
-                who, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                            "What is the ID for the role? e.g. ``809710343533232129``")
-            who = int(who)
+                role_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                "What is the ID for the role? "
+                                                                "e.g. ``809710343533232129``")
+        role_id = int(role_id)
 
-        if config.DialogflowExceptionRoles.fetch(who):
+        if config.DialogflowExceptionRoles.fetch(role_id):
             await self.bot.reply_to_msg(ctx.message, "This role is already a dialogflow exception role")
             return
 
-        config.DialogflowExceptionRoles(role_id=who)
-        await self.bot.reply_to_msg(ctx.message, f"Dialogflow role {ctx.message.guild.get_role(who).name} added!")
+        config.DialogflowExceptionRoles(role_id=role_id)
+        await self.bot.reply_to_msg(ctx.message, f"Dialogflow role {ctx.message.guild.get_role(role_id).name} added!")
 
     @remove.command(name="dialogflowRole")
     async def remove_dialogflow_role(self, ctx, *args):
         if ctx.message.role_mentions:
-            who = int(ctx.message.role_mentions[0].id)
+            role_id = ctx.message.role_mentions[0].id
         else:
             if len(args) > 0:
-                who = args[0]
+                role_id = args[0]
             else:
-                who, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                            "What is the ID for the role? e.g. ``809710343533232129``")
-            who = int(who)
+                role_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                "What is the ID for the role? "
+                                                                "e.g. ``809710343533232129``")
+        role_id = int(role_id)
 
-        if config.DialogflowExceptionRoles.fetch(who):
-            config.DialogflowExceptionRoles.deleteBy(role_id=who)
+        if config.DialogflowExceptionRoles.fetch(role_id):
+            config.DialogflowExceptionRoles.deleteBy(role_id=role_id)
             await self.bot.reply_to_msg(ctx.message, "Dialogflow role removed!")
         else:
             await self.bot.reply_to_msg(ctx.message, "Dialogflow role could not be found!")
@@ -560,45 +565,50 @@ class Commands(commands.Cog):
     @add.command(name="rank_role")
     async def add_rank_role(self, ctx, *args):
         if ctx.message.role_mentions:
-            who = int(ctx.message.role_mentions[0].id)
+            role_id = ctx.message.role_mentions[0].id
             if args:
-                rank = int(args[0])
+                rank = args[0]
+            else:
+                rank, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                             "What is the rank for the role? e.g. 5")
         else:
             if len(args) > 0:
-                who = args[0]
+                role_id = args[0]
                 if len(args) > 1:
                     rank = args[1]
                 else:
                     rank = await Helper.waitResponse(self.bot, ctx.message, "What is the rank for the role? e.g. 5")
             else:
-                who, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                            "What is the ID for the role? e.g. ``809710343533232129``")
+                role_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                "What is the ID for the role? "
+                                                                "e.g. ``809710343533232129``")
                 rank, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                              "What is the rank for the role? e.g. 5")
-            who = int(who)
-            rank = int(rank)
+        role_id = int(role_id)
+        rank = int(rank)
 
-        if config.DialogflowExceptionRoles.fetch(who):
+        if config.DialogflowExceptionRoles.fetch(role_id):
             await self.bot.reply_to_msg(ctx.message, "This role is already a rank role")
             return
 
-        config.RankRoles(role_id=who, rank=rank)
-        await self.bot.reply_to_msg(ctx.message, "Rank role " + ctx.message.guild.get_role(who).name + " added!")
+        config.RankRoles(role_id=role_id, rank=rank)
+        await self.bot.reply_to_msg(ctx.message, "Rank role " + ctx.message.guild.get_role(role_id).name + " added!")
 
     @remove.command(name="rank_role")
     async def remove_rank_role(self, ctx, *args):
         if ctx.message.role_mentions:
-            who = int(ctx.message.role_mentions[0].id)
+            role_id = ctx.message.role_mentions[0].id
         else:
             if len(args) > 0:
-                who = args[0]
+                role_id = args[0]
             else:
-                who, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                            "What is the ID for the role? e.g. ``809710343533232129``")
-            who = int(who)
+                role_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                "What is the ID for the role? "
+                                                                "e.g. ``809710343533232129``")
+        role_id = int(role_id)
 
-        if config.RankRoles.fetch_by_role(who):
-            config.RankRoles.deleteBy(role_id=who)
+        if config.RankRoles.fetch_by_role(role_id):
+            config.RankRoles.deleteBy(role_id=role_id)
             await self.bot.reply_to_msg(ctx.message, "Rank role removed!")
         else:
             await self.bot.reply_to_msg(ctx.message, "Rank role could not be found!")
@@ -751,26 +761,28 @@ class Commands(commands.Cog):
     @xp.command(name="give")
     async def xp_give(self, ctx, *args):
         if ctx.message.mentions:
-            who = int(ctx.message.mentions[0].id)
+            user_id = ctx.message.mentions[0].id
         else:
             if len(args) > 0:
-                who = args[0]
+                user_id = args[0]
             else:
-                who, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                            "What is the ID of the person you want to "
-                                                            "give xp to? e.g. ``809710343533232129``")
-            who = int(who)
+                user_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                "What is the ID of the person you want to "
+                                                                "give xp to? e.g. ``809710343533232129``")
+        user_id = int(user_id)
+
+        if not (user := ctx.guild.get_member(user_id)):
+            self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {user_id}")
+            return
+
         if len(args) > 1:
             amount = args[1]
         else:
             amount, attachment = await Helper.waitResponse(self.bot, ctx.message, "How much xp do you want to give? "
                                                                                   "e.g. 123456")
         amount = float(amount)
-        user = ctx.guild.get_member(who)
-        if not user:
-            self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {who}")
-            return
-        profile = levelling.UserProfile(who, ctx.guild, self.bot)
+
+        profile = levelling.UserProfile(user_id, ctx.guild, self.bot)
         await profile.give_xp(amount)
         await self.bot.reply_to_msg(ctx.message, f"Gave {amount} xp to {user.name}. "
                                                  f"They are now rank {profile.rank} ({profile.xp_count} xp)")
@@ -778,15 +790,20 @@ class Commands(commands.Cog):
     @xp.command(name="take")
     async def xp_take(self, ctx, *args):
         if ctx.message.mentions:
-            who = int(ctx.message.mentions[0].id)
+            user_id = ctx.message.mentions[0].id
         else:
             if len(args) > 0:
-                who = args[0]
+                user_id = args[0]
             else:
-                who, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                            "What is the ID of the person you want to "
-                                                            "take xp from? e.g. ``809710343533232129``")
-            who = int(who)
+                user_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                "What is the ID of the person you want to "
+                                                                "take xp from? e.g. ``809710343533232129``")
+        user_id = int(user_id)
+
+        if not (user := ctx.guild.get_member(user_id)):
+            self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {user_id}")
+            return
+
         if len(args) > 1:
             amount = args[1]
         else:
@@ -794,11 +811,7 @@ class Commands(commands.Cog):
                                                            "How much xp do you want to take? "
                                                            "e.g. 123456")
         amount = float(amount)
-        user = ctx.guild.get_member(who)
-        if not user:
-            self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {who}")
-            return
-        profile = levelling.UserProfile(who, ctx.guild, self.bot)
+        profile = levelling.UserProfile(user_id, ctx.guild, self.bot)
         await profile.take_xp(amount)
         await self.bot.reply_to_msg(ctx.message, f"Took {amount} xp from {user.name}. "
                                                  f"They are now rank {profile.rank} ({profile.xp_count} xp)")
@@ -806,15 +819,19 @@ class Commands(commands.Cog):
     @xp.command(name="multiplier")
     async def xp_multiplier(self, ctx, *args):
         if ctx.message.mentions:
-            who = int(ctx.message.mentions[0].id)
+            user_id = ctx.message.mentions[0].id
         else:
             if len(args) > 0:
-                who = args[0]
+                user_id = args[0]
             else:
-                who, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                            "What is the ID of the person whose xp multiplier "
-                                                            "will change? e.g. ``809710343533232129``")
-            who = int(who)
+                user_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                "What is the ID of the person whose xp multiplier "
+                                                                "will change? e.g. ``809710343533232129``")
+        user_id = int(user_id)
+
+        if not (user := ctx.guild.get_member(user_id)):
+            self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {user_id}")
+            return
 
         if len(args) > 1:
             amount = args[1]
@@ -823,32 +840,31 @@ class Commands(commands.Cog):
                                                            "What is the new xp multiplier? e.g. '4'")
         amount = float(amount)
 
-        user = ctx.guild.get_member(who)
-        if not user:
-            self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {who}")
-            return
         DB_user = config.Users.create_if_missing(user)
-        if amount < 0:
-            amount = 0
+        amount = 0 if amount < 0 else amount  # no negative gain, thank you
         DB_user.xp_multiplier = amount
 
         if amount == 0:
-            await self.bot.reply_to_msg(ctx.message, f"{user.name} has been banned from xp gain\nget rekt lmao")
+            await self.bot.reply_to_msg(ctx.message, f"{user.name} has been banned from xp gain lmao")
         else:
             await self.bot.reply_to_msg(ctx.message, f"Set {user.name}'s xp multiplier to {amount}")
 
     @xp.command(name="set")
     async def xp_set(self, ctx, *args):
         if ctx.message.mentions:
-            who = int(ctx.message.mentions[0].id)
+            user_id = ctx.message.mentions[0].id
         else:
             if len(args) > 0:
-                who = args[0]
+                user_id = args[0]
             else:
-                who, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                            "What is the ID of the person whose xp you want to set?"
-                                                            " e.g. ``809710343533232129``")
-            who = int(who)
+                user_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                "What is the ID of the person whose xp you want to set?"
+                                                                " e.g. ``809710343533232129``")
+        user_id = int(user_id)
+
+        if not (user := ctx.guild.get_member(user_id)):
+            self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {user_id}")
+            return
 
         if len(args) > 1:
             amount = args[1]
@@ -856,23 +872,20 @@ class Commands(commands.Cog):
             amount, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                            "How much xp shall this user have? e.g. 123456")
         amount = float(amount)
-        user = ctx.guild.get_member(who)
-        if not user:
-            self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to get the member with ID {who}")
-            return
-        profile = levelling.UserProfile(who, ctx.guild, self.bot)
+
+        profile = levelling.UserProfile(user_id, ctx.guild, self.bot)
         success = await profile.set_xp(amount)
+
         if not success:
             await self.bot.reply_to_msg(ctx.message, 'n0\nnegative numbers for xp are not allowed!')
 
         elif amount == 0:
             await self.bot.reply_to_msg(ctx.message,
-                                        f"Set {user.name}'s xp count to {amount}. "
-                                        f"They are now at the very bottom.")
+                                        f"Yeet!\n{user.name} is now rank {profile.rank} ({profile.xp_count} xp)")
         else:
             await self.bot.reply_to_msg(ctx.message,
                                         f"Set {user.name}'s xp count to {amount}. "
-                                        f"They are now rank {profile.rank} ({profile.xp_count})")
+                                        f"They are now rank {profile.rank} ({profile.xp_count} xp)")
 
     @commands.command()
     @commands.check(Helper.t3_only)
@@ -890,58 +903,58 @@ class Commands(commands.Cog):
     @commands.check(Helper.mod_only)
     async def engineers(self, ctx, *args):
         if ctx.message.channel_mentions:
-            where = int(ctx.message.channel_mentions[0].id)
+            channel_id = ctx.message.channel_mentions[0].id
         else:
             if args:
-                where = args[0]
+                channel_id = args[0]
             else:
-                where, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                              "What is the ID for the channel? "
-                                                              "e.g. ``709509235028918334``")
-            where = int(where)
+                channel_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What is the ID for the channel? "
+                                                                   "e.g. ``709509235028918334``")
+        channel_id = int(channel_id)
 
-        config.Misc.change("filter_channel", where)
+        config.Misc.change("filter_channel", channel_id)
         await self.bot.reply_to_msg(ctx.message,
                                     "The filter channel for the engineers is now "
-                                    f"{self.bot.get_channel(where).mention}!")
+                                    f"{self.bot.get_channel(channel_id).mention}!")
 
     @commands.command()
     @commands.check(Helper.mod_only)
     async def moderators(self, ctx, *args):
         if ctx.message.channel_mentions:
-            where = int(ctx.message.channel_mentions[0].id)
+            channel_id = ctx.message.channel_mentions[0].id
         else:
             if args:
-                where = args[0]
+                channel_id = args[0]
             else:
-                where, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                              "What is the ID for the channel? "
-                                                              "e.g. ``709509235028918334``")
-            where = int(where)
+                channel_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What is the ID for the channel? "
+                                                                   "e.g. ``709509235028918334``")
+        channel_id = int(channel_id)
 
-        config.Misc.change("mod_channel", where)
+        config.Misc.change("mod_channel", channel_id)
         await self.bot.reply_to_msg(ctx.message,
-                                    "The filter channel for the moderators is now "
-                                    f"{self.bot.get_channel(where).mention}!")
+                                    f"The filter channel for the moderators is now "
+                                    f"{self.bot.get_channel(channel_id).mention}!")
 
     @commands.command()
     @commands.check(Helper.mod_only)
     async def set_git_hook_channel(self, ctx, *args):
         if ctx.message.channel_mentions:
-            where = int(ctx.message.channel_mentions[0].id)
+            channel_id = ctx.message.channel_mentions[0].id
         else:
             if args:
-                where = args[0]
+                channel_id = args[0]
             else:
-                where, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                              "What is the ID for the channel? "
-                                                              "e.g. ``709509235028918334``")
-            where = int(where)
+                channel_id, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What is the ID for the channel? "
+                                                                   "e.g. ``709509235028918334``")
+        channel_id = int(channel_id)
 
-        config.Misc.change("githook_channel", where)
+        config.Misc.change("githook_channel", channel_id)
         await self.bot.reply_to_msg(ctx.message,
                                     f"The channel for the github hooks is now "
-                                    f"{self.bot.get_channel(where).mention}!")
+                                    f"{self.bot.get_channel(channel_id).mention}!")
 
     @commands.command()
     @commands.check(Helper.mod_only)
