@@ -8,6 +8,7 @@ class PermissionRoles(SQLObject):
 
     role_id = BigIntCol()
     perm_lvl = IntCol()
+    role_name = StringCol()
 
     @staticmethod
     def fetch_by_lvl(perm_lvl):
@@ -290,17 +291,20 @@ def create_missing_tables():
     }
     for table in tables.values():
         table.createTable(ifNotExists=True)
-    '''
-    PermissionRoles(role_id=829443769786564638, perm_lvl=1)
-    PermissionRoles(role_id=555432362498850817, perm_lvl=2)
-    PermissionRoles(role_id=829455392621985873, perm_lvl=2)
-    PermissionRoles(role_id=829446002209194074, perm_lvl=2)
-    PermissionRoles(role_id=855582239277187082, perm_lvl=3)
-    PermissionRoles(role_id=571819240609284096, perm_lvl=3)
-    PermissionRoles(role_id=740318257164058654, perm_lvl=3)
-    PermissionRoles(role_id=555431049300017162, perm_lvl=4)
-    PermissionRoles(role_id=555426814177181701, perm_lvl=5)
-    '''
+    if not PermissionRoles.fetch_by_lvl(1):
+        PermissionRoles(role_id=555432362498850817, perm_lvl=1, role_name="Trainee Modder")
+        PermissionRoles(role_id=829455392621985873, perm_lvl=2, role_name="Regular")
+        PermissionRoles(role_id=829446002209194074, perm_lvl=3, role_name="Helpful")
+        PermissionRoles(role_id=849612375858741259, perm_lvl=3, role_name="Documentation Contributor")
+        PermissionRoles(role_id=851186120301084682, perm_lvl=3, role_name="Tool Developer")
+        PermissionRoles(role_id=555432397395722260, perm_lvl=3, role_name="Legacy Engineer")
+        PermissionRoles(role_id=858084420815421490, perm_lvl=3, role_name="Master Modder")
+        PermissionRoles(role_id=855582239277187082, perm_lvl=4, role_name="Certified Engineer")
+        PermissionRoles(role_id=571819240609284096, perm_lvl=5, role_name="Infrastructure Engineer")
+        PermissionRoles(role_id=740318257164058654, perm_lvl=5, role_name="Critical Engineer")
+        PermissionRoles(role_id=555431049300017162, perm_lvl=6, role_name="Moderator")
+        PermissionRoles(role_id=555426814177181701, perm_lvl=7, role_name="Server Admin")
+        PermissionRoles(role_id=590597379569352714, perm_lvl=7, role_name="Admin")
 
 
 def convert_old_config():
