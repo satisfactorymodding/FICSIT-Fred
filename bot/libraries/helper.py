@@ -1,20 +1,33 @@
 import re
 import asyncio
 from html.parser import HTMLParser
+from discord.ext import commands
 import config
 
-async def t3_only(ctx, bot=None):
-    if bot is None:
-        bot = ctx.bot
-    return (ctx.author.id == 227473074616795137 or
-            ctx.author.permissions_in(bot.get_channel(config.Misc.fetch("filter_channel"))).send_messages)
+
+async def t3_only(ctx):
+    return ctx.author.id == 227473074616795137 or permission_check(ctx, 2)
 
 
-async def mod_only(ctx, bot=None):
-    if bot is None:
-        bot = ctx.bot
-    return (ctx.author.id == 227473074616795137 or
-            ctx.author.permissions_in(bot.modchannel).send_messages)
+def permission_check(ctx, level: int):
+    perms = config.PermissionRoles.fetch_by_lvl(level)
+    main_guild = ctx.bot.get_guild(config.Misc.fetch("main_guild_id"))
+    if (main_guild_member := main_guild.get_member(ctx.author.id)) is None:
+        return False
+
+    has_roles = [role.id for role in (main_guild_member.roles)]
+
+    for role in perms:
+        if role.perm_lvl >= level:
+            if role.role_id in has_roles:
+                return True
+        else:
+            break
+    return False
+
+
+async def mod_only(ctx):
+    return ctx.author.id == 227473074616795137 or permission_check(ctx, 3)
 
 
 async def waitResponse(client, message, question):
@@ -26,7 +39,7 @@ async def waitResponse(client, message, question):
     try:
         response = await client.wait_for('message', timeout=60.0, check=check)
     except asyncio.TimeoutError:
-        await client.reply_to_msg(message, "Timed out and aborted after 30 seconds.")
+        await client.reply_to_msg(message, "Timed out and aborted after 60 seconds.")
         raise asyncio.TimeoutError
 
     return response.content, response.attachments[0] if response.attachments else None
@@ -34,11 +47,11 @@ async def waitResponse(client, message, question):
 
 class aTagParser(HTMLParser):
     link = ''
-    viewtext = ''
+    view_text = ''
 
     def clear_output(self):
         self.link = ''
-        self.viewtext = ''
+        self.view_text = ''
 
     def handle_starttag(self, tag, attrs):
         if tag == 'a':
@@ -50,7 +63,7 @@ class aTagParser(HTMLParser):
         pass
 
     def handle_data(self, data):
-        self.viewtext = f'[{data}]'
+        self.view_text = f'[{data}]'
 
 
 def formatDesc(desc):
@@ -70,7 +83,7 @@ def formatDesc(desc):
         i = i[0]  # regex returns a one-element tuple :/
         parser = aTagParser()
         parser.feed(i)
-        embeds.update({i: parser.viewtext + parser.link})
+        embeds.update({i: parser.view_text + parser.link})
     for old, new in embeds.items():
         desc = desc.replace(old, new)
 

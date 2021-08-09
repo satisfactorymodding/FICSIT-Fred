@@ -16,7 +16,7 @@ class UserProfile:
             self.DB_user = DB_user
         else:
             self.DB_user = config.Users(user_id=user_id,
-                                        full_name="{}#{}".format(self.member.name, self.member.discriminator))
+                                        full_name=f"{self.member.name}#{self.member.discriminator}")
 
         self.rank = self.DB_user.rank
         self.xp_count = self.DB_user.xp_count
@@ -47,7 +47,7 @@ class UserProfile:
             expected_rank += 1
         expected_rank = int(expected_rank)
         if expected_rank != self.rank:
-            self.bot.logger.info("Correcting a mismatched rank from {} to {}".format(self.rank, expected_rank))
+            self.bot.logger.info(f"Correcting a mismatched rank from {self.rank} to {expected_rank}")
             self.DB_user.rank = expected_rank
             if self.DB_user.accepts_dms:
                 if expected_rank > self.rank:
