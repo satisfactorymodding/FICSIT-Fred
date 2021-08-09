@@ -11,7 +11,8 @@ class MediaOnly(commands.Cog):
 
         if len(message.embeds) > 0 or len(message.attachments) > 0:
             return
-        if await t3_only(message, self.bot):
+        ctx = await self.bot.get_context(message)
+        if await t3_only(ctx):
             return False
         if config.MediaOnlyChannels.fetch(message.channel.id):
             await self.bot.send_DM(message.author,
@@ -22,5 +23,4 @@ class MediaOnly(commands.Cog):
                                    f"```\n{message.content}\n```")
             await message.delete()
             return True
-        print("Skipped MediaOnly for some unfathomable reason")
         return False

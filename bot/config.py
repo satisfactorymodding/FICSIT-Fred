@@ -2,18 +2,25 @@ from sqlobject import *
 import json
 
 
-class AccessLevels(SQLObject):
+class PermissionRoles(SQLObject):
     class sqlmeta:
-        table = "access_levels"
+        table = "role_perms"
 
     role_id = BigIntCol()
-    access_lvl = IntCol()
+    perm_lvl = IntCol()
+    role_name = StringCol()
 
     @staticmethod
-    def fetch():
-        query = AccessLevels.select()
-        result = {id_: lvl for id_, lvl in query}
-        return result
+    def fetch_by_lvl(perm_lvl):
+        query = PermissionRoles.select(PermissionRoles.q.perm_lvl >= perm_lvl).orderBy("-perm_lvl")
+        results = list(query)
+        return results
+
+    @staticmethod
+    def fetch_by_role(role_id):
+        query = PermissionRoles.selectBy(role_id=role_id)
+        results = list(query)
+        return results
 
 
 class RankRoles(SQLObject):
@@ -279,14 +286,29 @@ def create_missing_tables():
         "commands": Commands,
         "crashes": Crashes,
         "reserved_commands": ReservedCommands,
-        "miscellaneous": Misc
+        "miscellaneous": Misc,
+        "permission_roles": PermissionRoles
     }
     for table in tables.values():
         table.createTable(ifNotExists=True)
+    if not PermissionRoles.fetch_by_lvl(1):
+        PermissionRoles(role_id=555432362498850817, perm_lvl=1, role_name="Trainee Modder")
+        PermissionRoles(role_id=829455392621985873, perm_lvl=2, role_name="Regular")
+        PermissionRoles(role_id=829446002209194074, perm_lvl=3, role_name="Helpful")
+        PermissionRoles(role_id=849612375858741259, perm_lvl=3, role_name="Documentation Contributor")
+        PermissionRoles(role_id=851186120301084682, perm_lvl=3, role_name="Tool Developer")
+        PermissionRoles(role_id=555432397395722260, perm_lvl=3, role_name="Legacy Engineer")
+        PermissionRoles(role_id=858084420815421490, perm_lvl=3, role_name="Master Modder")
+        PermissionRoles(role_id=855582239277187082, perm_lvl=4, role_name="Certified Engineer")
+        PermissionRoles(role_id=571819240609284096, perm_lvl=5, role_name="Infrastructure Engineer")
+        PermissionRoles(role_id=740318257164058654, perm_lvl=5, role_name="Critical Engineer")
+        PermissionRoles(role_id=555431049300017162, perm_lvl=6, role_name="Moderator")
+        PermissionRoles(role_id=555426814177181701, perm_lvl=7, role_name="Server Admin")
+        PermissionRoles(role_id=590597379569352714, perm_lvl=7, role_name="Admin")
 
 
 def convert_old_config():
-    reservedcommands = ["management commands", "special commands", "miscellaneous commands"]
+    reserved_commands = ["management commands", "special commands", "miscellaneous commands"]
 
     Misc(key="welcome_message", value="")
     Misc(key="latest_info", value="")
@@ -338,7 +360,7 @@ def convert_old_config():
             elif k == "known crashes":
                 for i in v:
                     Crashes(name=i["name"], crash=i["crash"], response=i["response"])
-            elif k in reservedcommands:
+            elif k in reserved_commands:
                 for i in v:
                     ReservedCommands(name=i["command"])
             else:
