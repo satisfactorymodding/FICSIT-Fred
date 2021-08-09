@@ -36,7 +36,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.13.1"
+        self.version = "2.14.0"
 
         self.loop = asyncio.get_event_loop()
 
@@ -46,8 +46,6 @@ class Bot(discord.ext.commands.Bot):
 
     async def on_ready(self):
         await self.change_presence(activity=discord.Game("v" + self.version))
-        self.mod_channel = self.get_channel(config.Misc.fetch("mod_channel"))
-        assert self.mod_channel, "I couldn't fetch the mod channel, please check the config!"
         print(f'We have logged in as {self.user}')
 
     @staticmethod
@@ -71,7 +69,7 @@ class Bot(discord.ext.commands.Bot):
             try:
                 con = psycopg2.connect(dbname="postgres", user=user, password=password, host=host, port=port)
             except psycopg2.OperationalError:
-                raise EnvironmentError("Run the DB, dummy!")
+                raise EnvironmentError("The DB isn't running.")
 
             autocommit = psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT
             con.set_isolation_level(autocommit)
