@@ -97,12 +97,9 @@ class Crashes(commands.Cog):
     @staticmethod
     def filter_enabled(mod_list):
         enabled = []
-        print("Checking which mods are enabled")
         for item in mod_list:
-            print("\tChecking mod", item["id"])
             if item["enabled"]:
                 enabled += [item["id"]]
-                print('\t\t', item["id"], "is enabled")
 
         return enabled
 
@@ -114,7 +111,6 @@ class Crashes(commands.Cog):
         else:
             query_mods, count = str(enabled_mods).replace("'", '"'), str(len(enabled_mods))
 
-        print(enabled_mods, '\n')
         # Replace argument smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
         query = """
         {
@@ -135,20 +131,15 @@ class Crashes(commands.Cog):
         }"""
         response = requests.post("https://api.ficsit.app/v2/query", json={"query": query})
         result = json.loads(response.text)
-        print(result, '\n')
         mods_with_dates = result["data"]["getMods"]["mods"]
-        print(mods_with_dates, '\n')
         latest_compatible_loader = strptime(result["data"]["getSMLVersion"]["date"], "%Y-%m-%dT%H:%M:%SZ")
         names_with_dates = {mod["name"]: mod["last_version_date"] for mod in mods_with_dates}
-        print(names_with_dates)
 
         incompatible_mods = []
-        print("Checking mods against SML date")
+        # Checking mods against SML date
         for mod in names_with_dates:
-            print("\tChecking mod", mod)
             if latest_compatible_loader > strptime(names_with_dates[mod], "%Y-%m-%dT%H:%M:%S.%fZ"):
                 incompatible_mods += [mod]
-                print('\t\t', mod, "is incompatible!")
 
         return incompatible_mods
 
