@@ -57,7 +57,7 @@ class Crashes(commands.Cog):
             version_info += f"Launcher ID: {launcher_id}\n"
         if commandline:
             version_info += f"Command Line: {commandline}\n"
-        
+
         return version_info
 
     @staticmethod
@@ -129,7 +129,7 @@ class Crashes(commands.Cog):
                     last_version_date
                 }
             }
-            getSMLVersion(smlVersionID: "9DgqKh9KVL2cuu") { 
+            getSMLVersion(smlVersionID: "9DgqKh9KVL2cuu") {
                 date
             }
         }"""
@@ -157,7 +157,7 @@ class Crashes(commands.Cog):
             return []
         elif extension == "zip":
             messages = []
-                
+
             smm_version = ""
             sml_version = ""
             game_version = 0
@@ -180,10 +180,10 @@ class Crashes(commands.Cog):
                 if 'metadata.json' in zip_f.namelist():
                     with zip_f.open("metadata.json") as metadataFile:
                         metadata = json.load(metadataFile)
-                        if "selectedInstall" in metadata:
+                        if metadata["selectedInstall"]:
                             game_version = int(metadata["selectedInstall"]["version"])
                             path = metadata["selectedInstall"]["installLocation"]
-                        if "selectedProfile" in metadata:
+                        if metadata["selectedProfile"]:
                             if metadata["selectedProfile"]["name"] != "development":
                                 outdated_mods = await self.check_for_outdated_mods(metadata["selectedProfile"]["items"])
 
@@ -197,7 +197,7 @@ class Crashes(commands.Cog):
                         fg_log_content = fg_log.read().decode("utf-8")
                         sml_version, game_version, path, launcher_id, commandline = \
                             self.extract_game_info_from_text(fg_log_content[:200000])
-            
+
             sml_outdated = self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
                 messages.append(sml_outdated)
@@ -209,14 +209,14 @@ class Crashes(commands.Cog):
                                                           path, launcher_id, commandline)
             if version_info:
                 messages.append(version_info)
-            
+
             return messages
         elif extension == "log" or extension == "txt":
             text = file.read().decode("utf-8", errors="ignore")
             messages = self.process_text(text)
 
             sml_version, game_version, path, launcher_id, commandline = self.extract_game_info_from_text(text)
-            
+
             sml_outdated = self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
                 messages.append(sml_outdated)
@@ -225,7 +225,7 @@ class Crashes(commands.Cog):
                                                           path, launcher_id, commandline)
             if version_info:
                 messages.append(version_info)
-            
+
             return messages
         else:
             try:
@@ -294,7 +294,7 @@ class Crashes(commands.Cog):
                 responses = self.process_text(text)
                 sml_version, game_version, path, launcher_id, commandline = \
                     self.extract_game_info_from_text(message.content)
-            
+
                 sml_outdated = self.make_sml_version_message(game_version, sml_version)
                 if sml_outdated:
                     responses.append(sml_outdated)
@@ -309,7 +309,7 @@ class Crashes(commands.Cog):
             responses = self.process_text(message.content)
             sml_version, game_version, path, launcher_id, commandline = \
                 self.extract_game_info_from_text(message.content)
-            
+
             sml_outdated = self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
                 responses.append(sml_outdated)

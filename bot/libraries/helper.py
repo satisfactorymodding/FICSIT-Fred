@@ -6,7 +6,11 @@ import config
 
 
 async def t3_only(ctx):
-    return ctx.author.id == 227473074616795137 or permission_check(ctx, 2)
+    return ctx.author.id == 227473074616795137 or permission_check(ctx, 4)
+
+
+async def mod_only(ctx):
+    return ctx.author.id == 227473074616795137 or permission_check(ctx, 6)
 
 
 def permission_check(ctx, level: int):
@@ -24,10 +28,6 @@ def permission_check(ctx, level: int):
         else:
             break
     return False
-
-
-async def mod_only(ctx):
-    return ctx.author.id == 227473074616795137 or permission_check(ctx, 3)
 
 
 async def waitResponse(client, message, question):
