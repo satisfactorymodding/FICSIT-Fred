@@ -10,6 +10,7 @@ import json
 import config
 from concurrent.futures import ThreadPoolExecutor
 from time import strptime
+import libraries.createembed as CreateEmbed
 
 
 class Crashes(commands.Cog):
@@ -143,7 +144,7 @@ class Crashes(commands.Cog):
 
         return incompatible_mods
 
-    async def process_file(self, file, extension):
+    async def process_file(self, file, extension) -> list[tuple[str, str]]():
         if extension == "":
             return []
         elif extension == "zip":
@@ -165,8 +166,7 @@ class Crashes(commands.Cog):
                         except zipfile.BadZipFile:
                             return ["This zipfile is invalid! Its contents may have been changed after zipping."]
 
-                        for message in self.process_text(zip_file_content):
-                            messages.append(message)
+                        messages += self.process_text(zip_file_content)
 
                 if 'metadata.json' in zip_f.namelist():
                     with zip_f.open("metadata.json") as metadataFile:
@@ -191,15 +191,15 @@ class Crashes(commands.Cog):
 
             sml_outdated = self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
-                messages.append(sml_outdated)
+                messages += [("Outdated SML!", sml_outdated)]
 
             if outdated_mods:
-                messages += [self.make_outdated_mods_message(outdated_mods)]
+                messages += [("Outdated Mods!", self.make_outdated_mods_message(outdated_mods))]
 
             version_info = self.make_version_info_message(smm_version, game_version, sml_version,
                                                           path, launcher_id, commandline)
             if version_info:
-                messages.append(version_info)
+                messages += [("Version Info (ignore this)", version_info)]
 
             return messages
         elif extension == "log" or extension == "txt":
@@ -210,12 +210,12 @@ class Crashes(commands.Cog):
 
             sml_outdated = self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
-                messages.append(sml_outdated)
+                messages += [("Outdated SML!", sml_outdated)]
 
             version_info = self.make_version_info_message(None, game_version, sml_version,
                                                           path, launcher_id, commandline)
             if version_info:
-                messages.append(version_info)
+                messages += [("Version Info (ignore this)", version_info)]
 
             return messages
         else:
@@ -239,16 +239,16 @@ class Crashes(commands.Cog):
                 self.bot.logger.error(f"OCR error:\n{e}")
                 return []
 
-    def process_text(self, text):
+    def process_text(self, text) -> list[tuple[str, str]]():
         messages = []
         for crash in config.Crashes.fetch_all():
             if match := re.search(crash["crash"], text, flags=re.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
-                        messages.append(command["content"])
+                        messages += [(command["name"], command["content"])]
                 else:
-                    response = re.sub("{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
-                    messages.append(response)
+                    response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
+                    messages += [(crash["name"], response)]
         return messages
 
     async def process_message(self, message):
@@ -288,12 +288,12 @@ class Crashes(commands.Cog):
 
                 sml_outdated = self.make_sml_version_message(game_version, sml_version)
                 if sml_outdated:
-                    responses.append(sml_outdated)
+                    responses += [("Outdated SML!", sml_outdated)]
 
                 version_info = self.make_version_info_message(None, game_version, sml_version,
                                                               path, launcher_id, commandline)
                 if version_info:
-                    responses.append(version_info)
+                    responses += [("Version Info (ignore this)", version_info)]
             except:
                 pass
         else:
@@ -303,14 +303,17 @@ class Crashes(commands.Cog):
 
             sml_outdated = self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
-                responses.append(sml_outdated)
+                responses += [("Outdated SML!", sml_outdated)]
 
             version_info = self.make_version_info_message(None, game_version, sml_version,
                                                           path, launcher_id, commandline)
             if version_info:
-                responses.append(version_info)
+                responses += [("Version Info (ignore this)", version_info)]
 
-        for response in responses:
-            await self.bot.reply_to_msg(message, response, propagate_reply=False)
+        if len(responses) > 2:
+            await self.bot.reply_to_msg(message, embed=CreateEmbed.crashes(responses))
+        else:
+            for response in responses:
+                await self.bot.reply_to_msg(message, response, propagate_reply=False)
 
         return len(responses) > 0
