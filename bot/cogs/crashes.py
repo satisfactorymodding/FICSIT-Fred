@@ -314,6 +314,6 @@ class Crashes(commands.Cog):
             await self.bot.reply_to_msg(message, embed=CreateEmbed.crashes(responses))
         else:
             for response in responses:
-                await self.bot.reply_to_msg(message, response, propagate_reply=False)
+                await self.bot.reply_to_msg(message, response[1], propagate_reply=False)
 
         return len(responses) > 0
