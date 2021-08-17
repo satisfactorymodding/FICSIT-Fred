@@ -16,10 +16,9 @@ from discord.ext.commands.view import StringView
 
 
 def convert_to_bool(s: str):
-    s = s.strip().lower()
-    if s in ["1", "true", "yes", "y", "on", "oui"]:
+    if s.lower() in ["1", "true", "yes", "y", "on"]:
         return True
-    if s in ["0", "false", "no", "n", "off", "non"]:
+    if s.lower() in ["0", "false", "no", "n", "off"]:
         return False
     raise ValueError(f"Could not convert {s} to bool")
 

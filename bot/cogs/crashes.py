@@ -10,7 +10,6 @@ import json
 import config
 from concurrent.futures import ThreadPoolExecutor
 from time import strptime
-import libraries.createembed as CreateEmbed
 
 
 class Crashes(commands.Cog):
@@ -98,9 +97,12 @@ class Crashes(commands.Cog):
     @staticmethod
     def filter_enabled(mod_list):
         enabled = []
+        print("Checking which mods are enabled")
         for item in mod_list:
+            print("\tChecking mod", item["id"])
             if item["enabled"]:
                 enabled += [item["id"]]
+                print('\t\t', item["id"], "is enabled")
 
         return enabled
 
@@ -112,6 +114,7 @@ class Crashes(commands.Cog):
         else:
             query_mods, count = str(enabled_mods).replace("'", '"'), str(len(enabled_mods))
 
+        print(enabled_mods, '\n')
         # Replace argument smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
         query = """
         {
@@ -132,19 +135,24 @@ class Crashes(commands.Cog):
         }"""
         response = requests.post("https://api.ficsit.app/v2/query", json={"query": query})
         result = json.loads(response.text)
+        print(result, '\n')
         mods_with_dates = result["data"]["getMods"]["mods"]
+        print(mods_with_dates, '\n')
         latest_compatible_loader = strptime(result["data"]["getSMLVersion"]["date"], "%Y-%m-%dT%H:%M:%SZ")
         names_with_dates = {mod["name"]: mod["last_version_date"] for mod in mods_with_dates}
+        print(names_with_dates)
 
         incompatible_mods = []
-        # Checking mods against SML date
+        print("Checking mods against SML date")
         for mod in names_with_dates:
+            print("\tChecking mod", mod)
             if latest_compatible_loader > strptime(names_with_dates[mod], "%Y-%m-%dT%H:%M:%S.%fZ"):
                 incompatible_mods += [mod]
+                print('\t\t', mod, "is incompatible!")
 
         return incompatible_mods
 
-    async def process_file(self, file, extension) -> list[tuple[str, str]]():
+    async def process_file(self, file, extension):
         if extension == "":
             return []
         elif extension == "zip":
@@ -166,7 +174,8 @@ class Crashes(commands.Cog):
                         except zipfile.BadZipFile:
                             return ["This zipfile is invalid! Its contents may have been changed after zipping."]
 
-                        messages += self.process_text(zip_file_content)
+                        for message in self.process_text(zip_file_content):
+                            messages.append(message)
 
                 if 'metadata.json' in zip_f.namelist():
                     with zip_f.open("metadata.json") as metadataFile:
@@ -191,15 +200,15 @@ class Crashes(commands.Cog):
 
             sml_outdated = self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
-                messages += [("Outdated SML!", sml_outdated)]
+                messages.append(sml_outdated)
 
             if outdated_mods:
-                messages += [("Outdated Mods!", self.make_outdated_mods_message(outdated_mods))]
+                messages += [self.make_outdated_mods_message(outdated_mods)]
 
             version_info = self.make_version_info_message(smm_version, game_version, sml_version,
                                                           path, launcher_id, commandline)
             if version_info:
-                messages += [("Version Info (ignore this)", version_info)]
+                messages.append(version_info)
 
             return messages
         elif extension == "log" or extension == "txt":
@@ -210,12 +219,12 @@ class Crashes(commands.Cog):
 
             sml_outdated = self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
-                messages += [("Outdated SML!", sml_outdated)]
+                messages.append(sml_outdated)
 
             version_info = self.make_version_info_message(None, game_version, sml_version,
                                                           path, launcher_id, commandline)
             if version_info:
-                messages += [("Version Info (ignore this)", version_info)]
+                messages.append(version_info)
 
             return messages
         else:
@@ -239,16 +248,16 @@ class Crashes(commands.Cog):
                 self.bot.logger.error(f"OCR error:\n{e}")
                 return []
 
-    def process_text(self, text) -> list[tuple[str, str]]():
+    def process_text(self, text):
         messages = []
         for crash in config.Crashes.fetch_all():
             if match := re.search(crash["crash"], text, flags=re.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
-                        messages += [(command["name"], command["content"])]
+                        messages.append(command["content"])
                 else:
-                    response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
-                    messages += [(crash["name"], response)]
+                    response = re.sub("{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
+                    messages.append(response)
         return messages
 
     async def process_message(self, message):
@@ -288,12 +297,12 @@ class Crashes(commands.Cog):
 
                 sml_outdated = self.make_sml_version_message(game_version, sml_version)
                 if sml_outdated:
-                    responses += [("Outdated SML!", sml_outdated)]
+                    responses.append(sml_outdated)
 
                 version_info = self.make_version_info_message(None, game_version, sml_version,
                                                               path, launcher_id, commandline)
                 if version_info:
-                    responses += [("Version Info (ignore this)", version_info)]
+                    responses.append(version_info)
             except:
                 pass
         else:
@@ -303,17 +312,14 @@ class Crashes(commands.Cog):
 
             sml_outdated = self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
-                responses += [("Outdated SML!", sml_outdated)]
+                responses.append(sml_outdated)
 
             version_info = self.make_version_info_message(None, game_version, sml_version,
                                                           path, launcher_id, commandline)
             if version_info:
-                responses += [("Version Info (ignore this)", version_info)]
+                responses.append(version_info)
 
-        if len(responses) > 2:
-            await self.bot.reply_to_msg(message, embed=CreateEmbed.crashes(responses))
-        else:
-            for response in responses:
-                await self.bot.reply_to_msg(message, response[1], propagate_reply=False)
+        for response in responses:
+            await self.bot.reply_to_msg(message, response, propagate_reply=False)
 
         return len(responses) > 0
