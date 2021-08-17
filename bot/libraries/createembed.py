@@ -421,3 +421,13 @@ def command_list(client, full=False, here=False):
         misc = False
 
     return [specialities, crashes, commands[0], commands[1], management, misc]
+
+
+def crashes(responses: list[tuple[str, str]]) -> discord.Embed:
+    embed = discord.Embed(
+        title=f"{len(responses)} automated responses found: ",
+        colour=config.ActionColours.fetch("Purple")
+    )
+    for title, response in responses:
+        embed.add_field(name=title, value=response)
+    return embed
