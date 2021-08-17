@@ -1,4 +1,4 @@
-FROM python:3.8.3
+FROM python:3.9.5
 
 RUN apt-get update -y
 RUN apt-get install -y tesseract-ocr
