@@ -5,12 +5,16 @@ from discord.ext import commands
 import config
 
 
+def is_bot_author(id: int):
+    return id == 227473074616795137
+
+
 async def t3_only(ctx):
-    return ctx.author.id == 227473074616795137 or permission_check(ctx, 4)
+    return is_bot_author(ctx.author.id) or permission_check(ctx, 4)
 
 
 async def mod_only(ctx):
-    return ctx.author.id == 227473074616795137 or permission_check(ctx, 6)
+    return is_bot_author(ctx.author.id) or permission_check(ctx, 6)
 
 
 def permission_check(ctx, level: int):

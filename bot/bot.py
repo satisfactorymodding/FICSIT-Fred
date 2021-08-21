@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 import traceback
-from cogs import commands, crashes, dialogflow, mediaonly, noshorturl, webhooklistener, welcome, levelling
+from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
 import discord
 import discord.ext.commands
 import sqlobject as sql
@@ -36,9 +36,11 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.15.0"
+        self.version = "2.16.0"
+
 
         self.loop = asyncio.get_event_loop()
+
 
     @staticmethod
     def is_running():
@@ -103,13 +105,11 @@ class Bot(discord.ext.commands.Bot):
         self.add_cog(webhooklistener.Githook(self))
         self.add_cog(mediaonly.MediaOnly(self))
         self.add_cog(crashes.Crashes(self))
-        self.add_cog(noshorturl.NoShortUrl(self))
         self.add_cog(dialogflow.DialogFlow(self))
         self.add_cog(welcome.Welcome(self))
         self.add_cog(levelling.Levelling(self))
         self.MediaOnly = self.get_cog("MediaOnly")
         self.Crashes = self.get_cog("Crashes")
-        self.NoShortUrl = self.get_cog("NoShortUrl")
         self.DialogFlow = self.get_cog("DialogFlow")
 
     async def on_error(self, event, *args, **kwargs):
@@ -168,14 +168,14 @@ class Bot(discord.ext.commands.Bot):
         if isinstance(message.channel, discord.DMChannel):
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
-                await self.reply_to_msg(message, "You will now receive rank changes notifications !")
+                await self.reply_to_msg(message, "You will now receive level changes notifications !")
                 return
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
-                await self.reply_to_msg(message, "You will no longer receive rank changes notifications !")
+                await self.reply_to_msg(message, "You will no longer receive level changes notifications !")
                 return
 
-        removed = await self.MediaOnly.process_message(message) or await self.NoShortUrl.process_message(message)
+        removed = await self.MediaOnly.process_message(message)
         if not removed:
             if message.content.startswith(self.command_prefix):
                 await self.process_commands(message)
