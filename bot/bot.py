@@ -38,6 +38,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_cogs()
         self.version = "2.16.1"
 
+
         self.loop = asyncio.get_event_loop()
 
 
