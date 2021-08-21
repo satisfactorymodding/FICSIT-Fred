@@ -156,7 +156,7 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, embed=embed)
 
     @commands.command()
-    async def rank(self, ctx, target_user: commands.UserConverter = None):
+    async def level(self, ctx, target_user: commands.UserConverter = None):
         if target_user:
             user_id = target_user.id
             user = self.bot.get_user(user_id)
@@ -166,7 +166,7 @@ class Commands(commands.Cog):
         else:
             user = ctx.author
         DB_user = config.Users.create_if_missing(user)
-        await self.bot.reply_to_msg(ctx.message, f"{user.name} is rank {DB_user.rank} with {DB_user.xp_count} xp")
+        await self.bot.reply_to_msg(ctx.message, f"{user.name} is level {DB_user.rank} with {DB_user.xp_count} xp")
 
     @commands.group()
     @commands.check(Helper.t3_only)
