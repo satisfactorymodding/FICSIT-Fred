@@ -167,11 +167,11 @@ class Bot(discord.ext.commands.Bot):
         if isinstance(message.channel, discord.DMChannel):
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
-                await self.reply_to_msg(message, "You will now receive rank changes notifications !")
+                await self.reply_to_msg(message, "You will now receive level changes notifications !")
                 return
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
-                await self.reply_to_msg(message, "You will no longer receive rank changes notifications !")
+                await self.reply_to_msg(message, "You will no longer receive level changes notifications !")
                 return
 
         removed = await self.MediaOnly.process_message(message)

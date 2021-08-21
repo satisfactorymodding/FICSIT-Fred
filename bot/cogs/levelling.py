@@ -38,27 +38,27 @@ class UserProfile:
                         await self.member.remove_roles(member_role)
                 await self.member.add_roles(role)
 
-    async def validate_rank(self):
-        expected_rank = math.log(self.xp_count / config.Misc.fetch("base_rank_value")) / math.log(
-            config.Misc.fetch("rank_value_multiplier"))
-        if expected_rank < 0:
-            expected_rank = 0
+    async def validate_level(self):
+        expected_level = math.log(self.xp_count / config.Misc.fetch("base_level_value")) / math.log(
+            config.Misc.fetch("level_value_multiplier"))
+        if expected_level < 0:
+            expected_level = 0
         else:
-            expected_rank += 1
-        expected_rank = int(expected_rank)
-        if expected_rank != self.rank:
-            self.bot.logger.info(f"Correcting a mismatched rank from {self.rank} to {expected_rank}")
-            self.DB_user.rank = expected_rank
+            expected_level += 1
+        expected_level = int(expected_level)
+        if expected_level != self.rank:
+            self.bot.logger.info(f"Correcting a mismatched level from {self.rank} to {expected_level}")
+            self.DB_user.rank = expected_level
             if self.DB_user.accepts_dms:
-                if expected_rank > self.rank:
+                if expected_level > self.rank:
                     await self.bot.send_DM(self.member,
-                                           f"You went up from rank {self.rank} to rank {expected_rank}! "
+                                           f"You went up from level {self.rank} to level {expected_level}! "
                                            f"Congratulations!")
                 else:
                     await self.bot.send_DM(self.member,
-                                           f"You went down from rank {self.rank} to rank {expected_rank}... "
+                                           f"You went down from level {self.rank} to level {expected_level}... "
                                            f"Sorry about that")
-            self.rank = expected_rank
+            self.rank = expected_level
         await self.validate_role()
 
     async def increment_xp(self):
@@ -71,17 +71,17 @@ class UserProfile:
             return
         self.DB_user.xp_count += xp
         self.xp_count += xp
-        await self.validate_rank()
+        await self.validate_level()
 
     async def take_xp(self, xp):
         self.DB_user.xp_count -= xp
         self.xp_count -= xp
-        await self.validate_rank()
+        await self.validate_level()
 
     async def set_xp(self, xp):
         self.DB_user.xp_count = xp
         self.xp_count = xp
-        await self.validate_rank()
+        await self.validate_level()
 
 
 class Levelling(commands.Cog):
@@ -90,10 +90,10 @@ class Levelling(commands.Cog):
         self.bot.xp_timers = {}
 
     # TODO make xp roles
-    @commands.Cog.listener()
-    async def on_member_update(self, before, after):
-        if before.roles != after.roles:
-            config.XpRoles
+    # @commands.Cog.listener()
+    # async def on_member_update(self, before, after):
+    #     if before.roles != after.roles:
+    #         config.XpRoles
 
     @commands.Cog.listener()
     async def on_message(self, message):

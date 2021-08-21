@@ -312,8 +312,8 @@ def convert_old_config():
 
     Misc(key="welcome_message", value="")
     Misc(key="latest_info", value="")
-    Misc(key="base_rank_value", value=300)
-    Misc(key="rank_value_multiplier", value=1.2)
+    Misc(key="base_level_value", value=300)
+    Misc(key="level_value_multiplier", value=1.2)
     Misc(key="xp_gain_value", value=1)
     Misc(key="xp_gain_delay", value=2)
     Misc(key="main_guild_id", value=319164249333039114)
