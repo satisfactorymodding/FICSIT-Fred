@@ -52,7 +52,7 @@ def leaderboard(data: list):
 
     for user in data:
         embed.add_field(name=user["name"],
-                        value=f'XP: {user["count_and_rank"]["count"]} | Rank: {user["count_and_rank"]["rank"]}')
+                        value=f'XP: {user["count_and_rank"]["count"]} | Level: {user["count_and_rank"]["rank"]}')
 
     return embed
 
@@ -301,7 +301,7 @@ def command_list(client, full=False, here=False):
 
     desc = desc + """**__Special Commands__**
     *These are special commands doing something else than just replying with a predetermined answer.*
-    
+
     """
 
     for command in client.config["special commands"]:
@@ -324,7 +324,7 @@ def command_list(client, full=False, here=False):
 
     desc = """**__Known Crashes__**
     *The bot respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*
-    
+
     """
 
     for command in client.config["known crashes"]:
