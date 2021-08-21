@@ -325,10 +325,6 @@ def convert_old_config():
             if k == "action colours":
                 for n, c in v.items():
                     ActionColours(name=n, colour=c)
-            elif k == "filter channel":
-                Misc(key="filter_channel", value=v)
-            elif k == "mod channel":
-                Misc(key="mod_channel", value=v)
             elif k == "githook channel":
                 Misc(key="githook_channel", value=v)
             elif k == "prefix":
