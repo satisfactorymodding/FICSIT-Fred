@@ -105,7 +105,7 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, "Sorry, this command is temporarily unavailable")
 
     @commands.command()
-    async def mod(self, ctx, mod_name):
+    async def mod(self, ctx, *, mod_name):
         result, desc = CreateEmbed.mod(mod_name)
         if result is None:
             await self.bot.reply_to_msg(ctx.message, "No mods found!")
