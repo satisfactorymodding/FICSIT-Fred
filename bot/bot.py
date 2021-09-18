@@ -25,19 +25,22 @@ class Bot(discord.ext.commands.Bot):
 
     async def isAlive(self):
         try:
-            user = await self.fetch_user(227473074616795137)
+            await self.fetch_user(227473074616795137)
+            cursor = self.dbcon.cursor()
+            cursor.execute("SELECT 1")
+            cursor.close()
         except:
             return False
-        return user
+        return True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.isReady = False
         self.setup_logger()
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.16.2"
-
+        self.version = "2.16.3"
 
         self.loop = asyncio.get_event_loop()
 
@@ -48,6 +51,7 @@ class Bot(discord.ext.commands.Bot):
 
     async def on_ready(self):
         await self.change_presence(activity=discord.Game("v" + self.version))
+        self.isReady = True
         print(f'We have logged in as {self.user}')
 
     @staticmethod
@@ -78,7 +82,7 @@ class Bot(discord.ext.commands.Bot):
             cursor = con.cursor()
             cursor.execute("CREATE DATABASE " + dbname)
             cursor.close()
-            con.close()
+            self.dbcon = con
 
             connection = sql.connectionForURI(uri)
             sql.sqlhub.processConnection = connection

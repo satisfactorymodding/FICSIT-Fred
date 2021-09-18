@@ -45,13 +45,10 @@ def MakeGithookHandler(bot):
     class MyGithookHandler(BaseHTTPRequestHandler):
 
         def do_GET(self):
-            if self.path == "/readiness":
-                self.send_response(200)
-            elif self.path == "/liveness":
-                if bot.isAlive():
-                    self.send_response(200)
-                else:
-                    self.send_response(503)
+            if self.path == "/ready":
+                self.send_response(200 if bot.isReady else 503)
+            elif self.path == "/healthy":
+                self.send_response(200 if bot.isAlive() else 503)
             else:
                 self.send_response(200)
 
