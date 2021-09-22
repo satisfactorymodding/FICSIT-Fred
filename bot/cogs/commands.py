@@ -224,7 +224,7 @@ class Commands(commands.Cog):
                                     f"Media Only channel {self.bot.get_channel(channel.id).mention} removed!")
 
     @add.command(name="command")
-    async def add_command(self, ctx, command_name: str.lower, *, response: str):
+    async def add_command(self, ctx, command_name: str.lower, *, response: str = None):
         if config.Commands.fetch(command_name):
             await self.bot.reply_to_msg(ctx.message, "This command already exists!")
             return
@@ -232,7 +232,11 @@ class Commands(commands.Cog):
             await self.bot.reply_to_msg(ctx.message, "This command name is reserved")
             return
 
-        attachment = ctx.message.attachments.url if ctx.message.attachments else None
+        attachment = ctx.message.attachments[0].url if ctx.message.attachments else None
+        
+        if not response and not attachment:
+            response, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What should the response be?")
 
         config.Commands(name=command_name, content=response, attachment=attachment)
 
@@ -275,26 +279,36 @@ class Commands(commands.Cog):
             return
 
         attachment = ctx.message.attachments.url if ctx.message.attachments else None
-        if response:
-            results[0].content = response
+        
+        if not response and not attachment:
+            response, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What should the response be?")
+
+        results[0].content = response
         results[0].attachment = attachment
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' modified!")
 
     @add.command(name="crash")
-    async def add_crash(self, ctx, crash_name: str.lower, match: str, *, response: str):
-        print(crash_name, match, response)
+    async def add_crash(self, ctx, crash_name: str.lower, match: str = None, *, response: str = None):
         if config.Crashes.fetch(crash_name):
             await self.bot.reply_to_msg(ctx.message, "A crash with this name already exists")
             return
 
+        if not match:
+            match, _ = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What should the logs match (regex)?")
         try:
             re.search(match, "test")
         except:
             await self.bot.reply_to_msg(ctx.message,
                                         "The regex isn't valid. Please refer to "
-                                        "https://docs.python.org/3/library/re.html for docs on Python's regex library ")
+                                        "https://docs.python.org/3/library/re.html for docs on Python's regex library")
             return
+        
+        if not response:
+            response, _ = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What should the response be?")
 
         config.Crashes(name=crash_name, crash=match, response=response)
         await self.bot.reply_to_msg(ctx.message, "Known crash '" + crash_name + "' added!")
