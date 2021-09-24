@@ -283,7 +283,6 @@ class Commands(commands.Cog):
 
     @add.command(name="crash")
     async def add_crash(self, ctx, crash_name: str.lower, match: str, *, response: str):
-        print(crash_name, match, response)
         if config.Crashes.fetch(crash_name):
             await self.bot.reply_to_msg(ctx.message, "A crash with this name already exists")
             return
@@ -348,9 +347,9 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, f"Crash '{crash_name}' modified!")
 
     @add.command(name="dialogflow")
-    async def add_dialogflow(self, ctx, id: str, response: typing.Union[bool, str], has_followup: bool, *args):
+    async def add_dialogflow(self, ctx, intent_id: str, response: typing.Union[bool, str], has_followup: bool, *args):
         if len(args) == 0:
-            data = False
+            data = None
         else:
             data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
 
@@ -358,8 +357,10 @@ class Commands(commands.Cog):
             await self.bot.reply_to_msg(ctx.message,
                                         "Response should be a string or False (use the response from dialogflow)")
             return
+        elif response is False:
+            response = None
 
-        if config.Dialogflow.fetch(id, data):
+        if config.Dialogflow.fetch(intent_id, data):
             delete, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                            "Dialogflow response with this parameters already exists. "
                                                            "Do you want to replace it? (Yes/No)")
@@ -368,27 +369,27 @@ class Commands(commands.Cog):
             except ValueError:
                 delete = False
             if delete:
-                await self.remove_dialogflow(ctx, id, *args)
+                await self.remove_dialogflow(ctx, intent_id, *args)
             else:
                 return
 
-        config.Dialogflow(intent_id=id, data=data, response=response, has_followup=has_followup)
+        config.Dialogflow(intent_id=intent_id, data=data, response=response, has_followup=has_followup)
         await self.bot.reply_to_msg(
             ctx.message,
-            f"Dialogflow response for '{id}' ({(json.dumps(data) if data else 'any data')}) added!")
+            f"Dialogflow response for '{intent_id}' ({(json.dumps(data) if data else 'any data')}) added!")
 
     @remove.command(name="dialogflow")
-    async def remove_dialogflow(self, ctx, channel: str, *args):
+    async def remove_dialogflow(self, ctx, intent_id: str, *args):
         if len(args) == 0:
-            data = False
+            data = None
         else:
             data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
 
-        if not config.Dialogflow.fetch(channel, data):
+        if not config.Dialogflow.fetch(intent_id, data):
             await self.bot.reply_to_msg(ctx.message, "Couldn't find the dialogflow reply")
             return
 
-        config.Dialogflow.deleteBy(intent_id=channel, data=data)
+        config.Dialogflow.deleteBy(intent_id=intent_id, data=data)
         await self.bot.reply_to_msg(ctx.message, "Dialogflow reply deleted")
 
     @add.command(name="dialogflowChannel")
