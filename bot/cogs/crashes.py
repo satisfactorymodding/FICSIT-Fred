@@ -89,10 +89,17 @@ class Crashes(commands.Cog):
 
     @staticmethod
     def make_outdated_mods_message(mods):
-        header = f"You are attempting to use {len(mods)} mod{'s' if len(mods) > 1 else ''} that no longer work! \n```"
-        mod_list = "\n".join(mods)
-        footer = "```Please attempt to remove/disable these mods, " \
-                 "so that they no longer force the old SML to be used (this is why your mods don't load)"
+        singular = len(mods) == 1
+        if singular:
+            header = f"You are attempting to use a mod that no longer works! \n```"
+            mod_list = "\n".join(mods)
+            footer = "```Please attempt to remove/disable that mod, " \
+                     "so that it no longer forces the old SML to be used (this is why your mods don't load)"
+        else:
+            header = f"You are attempting to use {len(mods)} mods that no longer work! \n```"
+            mod_list = "\n".join(mods)
+            footer = "```Please attempt to remove/disable these mods, " \
+                     "so that they no longer force the old SML to be used (this is why your mods don't load)"
         return header + mod_list + footer
 
     @staticmethod
