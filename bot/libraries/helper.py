@@ -1,6 +1,7 @@
 import re
 import asyncio
 from html.parser import HTMLParser
+import aiohttp
 from discord.ext import commands
 import config
 
@@ -93,3 +94,8 @@ def formatDesc(desc):
 
     desc = re.sub('#+ ', "", desc)
     return desc
+
+
+async def repository_query(query: str, session: aiohttp.ClientSession):
+    async with session.post("https://api.ficsit.app/v2/query", json={"query": query}) as response:
+        return await response.json()
