@@ -224,7 +224,7 @@ class Commands(commands.Cog):
                                     f"Media Only channel {self.bot.get_channel(channel.id).mention} removed!")
 
     @add.command(name="command")
-    async def add_command(self, ctx, command_name: str.lower, *, response: str):
+    async def add_command(self, ctx, command_name: str.lower, *, response: str = None):
         if config.Commands.fetch(command_name):
             await self.bot.reply_to_msg(ctx.message, "This command already exists!")
             return
@@ -232,7 +232,11 @@ class Commands(commands.Cog):
             await self.bot.reply_to_msg(ctx.message, "This command name is reserved")
             return
 
-        attachment = ctx.message.attachments.url if ctx.message.attachments else None
+        attachment = ctx.message.attachments[0].url if ctx.message.attachments else None
+        
+        if not response and not attachment:
+            response, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What should the response be?")
 
         config.Commands(name=command_name, content=response, attachment=attachment)
 
@@ -275,26 +279,36 @@ class Commands(commands.Cog):
             return
 
         attachment = ctx.message.attachments.url if ctx.message.attachments else None
-        if response:
-            results[0].content = response
+        
+        if not response and not attachment:
+            response, attachment = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What should the response be?")
+
+        results[0].content = response
         results[0].attachment = attachment
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' modified!")
 
     @add.command(name="crash")
-    async def add_crash(self, ctx, crash_name: str.lower, match: str, *, response: str):
-        print(crash_name, match, response)
+    async def add_crash(self, ctx, crash_name: str.lower, match: str = None, *, response: str = None):
         if config.Crashes.fetch(crash_name):
             await self.bot.reply_to_msg(ctx.message, "A crash with this name already exists")
             return
 
+        if not match:
+            match, _ = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What should the logs match (regex)?")
         try:
             re.search(match, "test")
         except:
             await self.bot.reply_to_msg(ctx.message,
                                         "The regex isn't valid. Please refer to "
-                                        "https://docs.python.org/3/library/re.html for docs on Python's regex library ")
+                                        "https://docs.python.org/3/library/re.html for docs on Python's regex library")
             return
+        
+        if not response:
+            response, _ = await Helper.waitResponse(self.bot, ctx.message,
+                                                                   "What should the response be?")
 
         config.Crashes(name=crash_name, crash=match, response=response)
         await self.bot.reply_to_msg(ctx.message, "Known crash '" + crash_name + "' added!")
@@ -348,9 +362,9 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, f"Crash '{crash_name}' modified!")
 
     @add.command(name="dialogflow")
-    async def add_dialogflow(self, ctx, id: str, response: typing.Union[bool, str], has_followup: bool, *args):
+    async def add_dialogflow(self, ctx, intent_id: str, response: typing.Union[bool, str], has_followup: bool, *args):
         if len(args) == 0:
-            data = False
+            data = None
         else:
             data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
 
@@ -358,8 +372,10 @@ class Commands(commands.Cog):
             await self.bot.reply_to_msg(ctx.message,
                                         "Response should be a string or False (use the response from dialogflow)")
             return
+        elif response is False:
+            response = None
 
-        if config.Dialogflow.fetch(id, data):
+        if config.Dialogflow.fetch(intent_id, data):
             delete, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                            "Dialogflow response with this parameters already exists. "
                                                            "Do you want to replace it? (Yes/No)")
@@ -368,27 +384,27 @@ class Commands(commands.Cog):
             except ValueError:
                 delete = False
             if delete:
-                await self.remove_dialogflow(ctx, id, *args)
+                await self.remove_dialogflow(ctx, intent_id, *args)
             else:
                 return
 
-        config.Dialogflow(intent_id=id, data=data, response=response, has_followup=has_followup)
+        config.Dialogflow(intent_id=intent_id, data=data, response=response, has_followup=has_followup)
         await self.bot.reply_to_msg(
             ctx.message,
-            f"Dialogflow response for '{id}' ({(json.dumps(data) if data else 'any data')}) added!")
+            f"Dialogflow response for '{intent_id}' ({(json.dumps(data) if data else 'any data')}) added!")
 
     @remove.command(name="dialogflow")
-    async def remove_dialogflow(self, ctx, channel: str, *args):
+    async def remove_dialogflow(self, ctx, intent_id: str, *args):
         if len(args) == 0:
-            data = False
+            data = None
         else:
             data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
 
-        if not config.Dialogflow.fetch(channel, data):
+        if not config.Dialogflow.fetch(intent_id, data):
             await self.bot.reply_to_msg(ctx.message, "Couldn't find the dialogflow reply")
             return
 
-        config.Dialogflow.deleteBy(intent_id=channel, data=data)
+        config.Dialogflow.deleteBy(intent_id=intent_id, data=data)
         await self.bot.reply_to_msg(ctx.message, "Dialogflow reply deleted")
 
     @add.command(name="dialogflowChannel")

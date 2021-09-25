@@ -113,7 +113,7 @@ class ActionColours(SQLObject):
         query = ActionColours.selectBy(name=name.lower())
         results = list(query)
         if results:
-            return query[0].colour
+            return results[0].colour
         else:
             return None
 
@@ -129,7 +129,7 @@ class MediaOnlyChannels(SQLObject):
         query = MediaOnlyChannels.selectBy(channel_id=channel_id)
         results = list(query)
         if results:
-            return query[0].channel_id
+            return results[0].channel_id
         else:
             return None
 
@@ -145,7 +145,7 @@ class DialogflowChannels(SQLObject):
         query = DialogflowChannels.selectBy(channel_id=channel_id)
         results = list(query)
         if results:
-            return query[0].channel_id
+            return results[0].channel_id
         else:
             return None
 
@@ -161,7 +161,7 @@ class DialogflowExceptionRoles(SQLObject):
         query = DialogflowExceptionRoles.selectBy(role_id=role_id)
         results = list(query)
         if results:
-            return query[0].role_id
+            return results[0].role_id
         else:
             return None
 
@@ -179,15 +179,15 @@ class Dialogflow(SQLObject):
     has_followup = BoolCol()
 
     def as_dict(self):
-        return dict(intent_id=self.intent_id, data=json.loads(str(self.data)), response=self.response,
+        return dict(intent_id=self.intent_id, data=json.loads(str(self.data)) if self.data else None, response=self.response,
                     has_followup=self.has_followup)
 
     @staticmethod
     def fetch(intent_id, data):
-        query = DialogflowExceptionRoles.selectBy(intent_id=intent_id, data=data)
+        query = Dialogflow.selectBy(intent_id=intent_id, data=data)
         results = list(query)
         if results:
-            return query[0].as_dict()
+            return results[0].as_dict()
         else:
             return None
 

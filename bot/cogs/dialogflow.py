@@ -77,7 +77,7 @@ class DialogFlow(commands.Cog):
             if dialogflow_reply["response"].startswith(self.bot.command_prefix):
                 command_name = dialogflow_reply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]
                 if command := config.Commands.fetch(command_name):
-                    await self.bot.reply_to_msg(message, command.response)
+                    await self.bot.reply_to_msg(message, command["content"], file=command["attachment"])
 
             else:
                 await self.bot.reply_to_msg(message, dialogflow_reply["response"])
