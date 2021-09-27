@@ -44,6 +44,14 @@ EVENT_TYPE = 'x-github-event'
 def MakeGithookHandler(bot):
     class MyGithookHandler(BaseHTTPRequestHandler):
 
+        def do_HEAD(self):
+            if self.path == "/ready":
+                self.send_response(200 if bot.isReady else 503)
+            elif self.path == "/healthy":
+                self.send_response(200 if bot.isAlive() else 503)
+            else:
+                self.send_response(200)
+
         def do_GET(self):
             if self.path == "/ready":
                 self.send_response(200 if bot.isReady else 503)
