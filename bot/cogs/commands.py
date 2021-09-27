@@ -84,14 +84,16 @@ class Commands(commands.Cog):
                 while not view.eof:
                     view.skip_ws()
                     args.append(view.get_quoted_word())
-
-                text = re.sub(
-                    r'{(\d+)}',
-                    lambda match: args[int(match.group(1))]
-                    if int(match.group(1)) < len(args)
-                    else '(missing argument)',
-                    command["content"]
-                ).replace('{...}', ' '.join(args))
+                if command["content"] is not None:
+                    text = re.sub(
+                        r'{(\d+)}',
+                        lambda match: args[int(match.group(1))]
+                        if int(match.group(1)) < len(args)
+                        else '(missing argument)',
+                        command["content"]
+                    ).replace('{...}', ' '.join(args))
+                else:
+                    text = None
 
                 await self.bot.reply_to_msg(message, text, file=attachment)
                 return
@@ -233,7 +235,7 @@ class Commands(commands.Cog):
             return
 
         attachment = ctx.message.attachments[0].url if ctx.message.attachments else None
-        
+
         if not response and not attachment:
             response, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                                    "What should the response be?")
@@ -279,7 +281,7 @@ class Commands(commands.Cog):
             return
 
         attachment = ctx.message.attachments.url if ctx.message.attachments else None
-        
+
         if not response and not attachment:
             response, attachment = await Helper.waitResponse(self.bot, ctx.message,
                                                                    "What should the response be?")
@@ -305,7 +307,7 @@ class Commands(commands.Cog):
                                         "The regex isn't valid. Please refer to "
                                         "https://docs.python.org/3/library/re.html for docs on Python's regex library")
             return
-        
+
         if not response:
             response, _ = await Helper.waitResponse(self.bot, ctx.message,
                                                                    "What should the response be?")
