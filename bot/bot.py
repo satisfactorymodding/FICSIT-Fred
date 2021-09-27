@@ -3,7 +3,6 @@ import logging
 import os
 import sys
 import traceback
-import aiohttp
 from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
 import discord
 import discord.ext.commands
@@ -40,14 +39,10 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.16.7"
+        self.version = "2.16.8"
 
         self.loop = asyncio.get_event_loop()
 
-    async def start(self, *args, **kwargs):
-        async with aiohttp.ClientSession() as session:
-            self.web_session = session
-            return await super().start(*args, **kwargs)
 
     @staticmethod
     def is_running():
