@@ -75,7 +75,7 @@ class Crashes(commands.Cog):
                 }
             }
             }"""
-            result = await Helper.repository_query(query, self.bot.web_session)
+            result = await Helper.repository_query(query, self.bot)
             sml_versions = result["data"]["getSMLVersions"]["sml_versions"]
             for i in range(0, len(sml_versions) - 1):
                 if sml_versions[i]["satisfactory_version"] > game_version:
@@ -140,7 +140,7 @@ class Crashes(commands.Cog):
                     date
                 }
             }"""
-            result = await Helper.repository_query(query, self.bot.web_session)
+            result = await Helper.repository_query(query, self.bot)
             results.update(result)
 
         mods_with_dates = results["data"]["getMods"]["mods"]

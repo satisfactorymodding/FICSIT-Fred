@@ -107,7 +107,7 @@ class Bot(discord.ext.commands.Bot):
             self.logger.addHandler(logging.StreamHandler())
         else:
             self.logger = logging.Logger("logger")
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
 
     def setup_cogs(self):
         self.add_cog(commands.Commands(self))
@@ -142,7 +142,7 @@ class Bot(discord.ext.commands.Bot):
     async def githook_send(self, data):
         embed = await CreateEmbed.run(data, self)
         if embed == "Debug":
-            print("Non-supported Payload received")
+            self.logger.info("Non-supported Payload received")
         else:
             channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
