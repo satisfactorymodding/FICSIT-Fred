@@ -15,15 +15,6 @@ from discord.ext import commands
 from discord.ext.commands.view import StringView
 
 
-def convert_to_bool(s: str):
-    s = s.strip().lower()
-    if s in ["1", "true", "yes", "y", "on", "oui"]:
-        return True
-    if s in ["0", "false", "no", "n", "off", "non"]:
-        return False
-    raise ValueError(f"Could not convert {s} to bool")
-
-
 def extract_target_type_from_converter_param(missing_argument: commands.MissingRequiredArgument):
     s = str(missing_argument)
 
@@ -267,9 +258,13 @@ class Commands(commands.Cog):
                                                                        "Command could not be found! "
                                                                        "Do you want to create it?")
             try:
-                create_command = convert_to_bool(create_command)
+                question = "Command could not be found! Do you want to create it?"
+                if await self.bot.reply_yes_or_no(ctx.message, question):
+                    await self.add_command(ctx, command_name, command_response)
+                else:
+                    await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
+                return
             except ValueError:
-                await self.bot.reply_to_msg(ctx.message, "Invalid bool string. Aborting")
                 return
 
             if not create_command:
@@ -331,20 +326,10 @@ class Commands(commands.Cog):
             await ctx.send(f"Could not find a crash with name '{crash_name}'. Aborting")
             return
 
-        change_crash, _ = await self.bot.reply_question(ctx.message, "Do you want to change the crash to match?")
         try:
-            change_crash = convert_to_bool(change_crash)
-        except ValueError:
-            await self.bot.reply_to_msg(ctx.message, "Invalid bool string. Aborting")
-            return
-
-        if change_crash:
-            match, _ = await self.bot.reply_question(ctx.message,
-                                                     "What is the regular expression to match in the logs?")
-
-        change_response, _ = await self.bot.reply_question(ctx.message, "Do you want to change the response?")
-        try:
-            change_response = convert_to_bool(change_response)
+            if change_crash := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the crash to match?"):
+                match, _ = await self.bot.reply_question(ctx.message,
+                                                         "What is the regular expression to match in the logs?")
         except ValueError:
             await self.bot.reply_to_msg(ctx.message, "Invalid bool string. Aborting")
             return
@@ -375,16 +360,13 @@ class Commands(commands.Cog):
             response = None
 
         if config.Dialogflow.fetch(intent_id, data):
-            delete, _ = await self.bot.reply_question(ctx.message,
-                                                      "Dialogflow response with this parameters already exists. "
-                                                      "Do you want to replace it? (Yes/No)")
             try:
-                delete = convert_to_bool(delete)
+                question = "Dialogflow response with this parameters already exists. Do you want to replace it?"
+                if await self.bot.reply_yes_or_no(ctx.message, question):
+                    await self.remove_dialogflow(ctx, intent_id, *args)
+                else:
+                    return
             except ValueError:
-                delete = False
-            if delete:
-                await self.remove_dialogflow(ctx, intent_id, *args)
-            else:
                 return
 
         config.Dialogflow(intent_id=intent_id, data=data, response=response, has_followup=has_followup)
