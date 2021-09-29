@@ -234,10 +234,10 @@ class Commands(commands.Cog):
             return
 
         attachment = ctx.message.attachments[0].url if ctx.message.attachments else None
-        
+
         if not response and not attachment:
-            response, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                                   "What should the response be?")
+            response, attachment = await self.bot.reply_question(ctx.message,
+                                                                 "What should the response be?")
 
         config.Commands(name=command_name, content=response, attachment=attachment)
 
@@ -263,9 +263,9 @@ class Commands(commands.Cog):
         results = list(query)
 
         if not results:
-            create_command, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                                   "Command could not be found! "
-                                                                   "Do you want to create it?")
+            create_command, attachment = await self.bot.reply_question(ctx.message,
+                                                                       "Command could not be found! "
+                                                                       "Do you want to create it?")
             try:
                 create_command = convert_to_bool(create_command)
             except ValueError:
@@ -280,10 +280,10 @@ class Commands(commands.Cog):
             return
 
         attachment = ctx.message.attachments.url if ctx.message.attachments else None
-        
+
         if not response and not attachment:
-            response, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                                   "What should the response be?")
+            response, attachment = await self.bot.reply_question(ctx.message,
+                                                                 "What should the response be?")
 
         results[0].content = response
         results[0].attachment = attachment
@@ -297,8 +297,7 @@ class Commands(commands.Cog):
             return
 
         if not match:
-            match, _ = await Helper.waitResponse(self.bot, ctx.message,
-                                                                   "What should the logs match (regex)?")
+            match, _ = await self.bot.reply_question(ctx.message, "What should the logs match (regex)?")
         try:
             re.search(match, "test")
         except:
@@ -306,10 +305,9 @@ class Commands(commands.Cog):
                                         "The regex isn't valid. Please refer to "
                                         "https://docs.python.org/3/library/re.html for docs on Python's regex library")
             return
-        
+
         if not response:
-            response, _ = await Helper.waitResponse(self.bot, ctx.message,
-                                                                   "What should the response be?")
+            response, _ = await self.bot.reply_question(ctx.message, "What should the response be?")
 
         config.Crashes(name=crash_name, crash=match, response=response)
         await self.bot.reply_to_msg(ctx.message, "Known crash '" + crash_name + "' added!")
@@ -333,7 +331,7 @@ class Commands(commands.Cog):
             await ctx.send(f"Could not find a crash with name '{crash_name}'. Aborting")
             return
 
-        change_crash, _ = await Helper.waitResponse(self.bot, ctx.message, "Do you want to change the crash to match?")
+        change_crash, _ = await self.bot.reply_question(ctx.message, "Do you want to change the crash to match?")
         try:
             change_crash = convert_to_bool(change_crash)
         except ValueError:
@@ -341,10 +339,10 @@ class Commands(commands.Cog):
             return
 
         if change_crash:
-            match, _ = await Helper.waitResponse(self.bot, ctx.message,
-                                                 "What is the regular expression to match in the logs?")
+            match, _ = await self.bot.reply_question(ctx.message,
+                                                     "What is the regular expression to match in the logs?")
 
-        change_response, _ = await Helper.waitResponse(self.bot, ctx.message, "Do you want to change the response?")
+        change_response, _ = await self.bot.reply_question(ctx.message, "Do you want to change the response?")
         try:
             change_response = convert_to_bool(change_response)
         except ValueError:
@@ -352,9 +350,9 @@ class Commands(commands.Cog):
             return
 
         if change_response:
-            response, _ = await Helper.waitResponse(self.bot, ctx.message,
-                                                    "What response do you want it to provide? "
-                                                    "Responding with a command will make the response that command")
+            response, _ = await self.bot.reply_question(ctx.message,
+                                                        "What response do you want it to provide? "
+                                                        "Responding with a command will make the response that command")
 
         if change_crash:
             results[0].crash = match
@@ -377,9 +375,9 @@ class Commands(commands.Cog):
             response = None
 
         if config.Dialogflow.fetch(intent_id, data):
-            delete, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                           "Dialogflow response with this parameters already exists. "
-                                                           "Do you want to replace it? (Yes/No)")
+            delete, _ = await self.bot.reply_question(ctx.message,
+                                                      "Dialogflow response with this parameters already exists. "
+                                                      "Do you want to replace it? (Yes/No)")
             try:
                 delete = convert_to_bool(delete)
             except ValueError:
@@ -390,9 +388,9 @@ class Commands(commands.Cog):
                 return
 
         config.Dialogflow(intent_id=intent_id, data=data, response=response, has_followup=has_followup)
-        await self.bot.reply_to_msg(
-            ctx.message,
-            f"Dialogflow response for '{intent_id}' ({(json.dumps(data) if data else 'any data')}) added!")
+        await self.bot.reply_to_msg(ctx.message,
+                                    f"Dialogflow response for '{intent_id}' "
+                                    f"({json.dumps(data) if data else 'any data'}) added!")
 
     @remove.command(name="dialogflow")
     async def remove_dialogflow(self, ctx, intent_id: str, *args):

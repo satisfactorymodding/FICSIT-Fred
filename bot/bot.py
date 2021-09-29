@@ -171,6 +171,20 @@ class Bot(discord.ext.commands.Bot):
             reference.fail_if_not_exists = False
         return await message.channel.send(content, reference=reference, **kwargs)
 
+    async def reply_question(self, message, question):
+        await self.reply_to_msg(message, question)
+
+        def check(message2):
+            return message2.author == message.author
+
+        try:
+            response = await self.wait_for('message', timeout=60.0, check=check)
+        except asyncio.TimeoutError:
+            await self.reply_to_msg(message, "Timed out and aborted after 60 seconds.")
+            raise asyncio.TimeoutError
+
+        return response.content, response.attachments[0] if response.attachments else None
+
     async def on_message(self, message):
         if message.author.bot or not self.is_running():
             return
