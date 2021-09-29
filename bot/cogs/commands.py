@@ -546,16 +546,30 @@ class Commands(commands.Cog):
     @xp.command(name="give")
     async def xp_give(self, ctx, target: commands.UserConverter, amount: float):
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
-        await profile.give_xp(amount)
-        await self.bot.reply_to_msg(ctx.message, f"Gave {amount} xp to {target.name}. "
-                                                 f"They are now rank {profile.rank} ({profile.xp_count} xp)")
+        if not await profile.give_xp(amount):
+            await self.bot.reply_to_msg(ctx.message,
+                                        f"<:thonk:836648850377801769> attempt to give a negative\n"
+                                        f"Did you mean `{self.bot.command_prefix}xp take`?")
+        else:
+            await self.bot.reply_to_msg(ctx.message,
+                                        f"Gave {amount} xp to {target.name}. "
+                                        f"They are now rank {profile.rank} ({profile.xp_count} xp)")
 
     @xp.command(name="take")
     async def xp_take(self, ctx, target: commands.UserConverter, amount: float):
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
-        await profile.take_xp(amount)
-        await self.bot.reply_to_msg(ctx.message, f"Took {amount} xp from {target.name}. "
-                                                 f"They are now rank {profile.rank} ({profile.xp_count} xp)")
+        if amount < 0:
+            await self.bot.reply_to_msg(ctx.message,
+                                        f"<:thonk:836648850377801769> attempt to take away a negative\n"
+                                        f"Did you mean `{self.bot.command_prefix}xp give`?")
+            return
+
+        if not await profile.take_xp(amount):
+            await self.bot.reply_to_msg(ctx.message, "Cannot take more xp that this user has!")
+        else:
+            await self.bot.reply_to_msg(ctx.message,
+                                        f"Took {amount} xp from {target.name}. "
+                                        f"They are now rank {profile.rank} ({profile.xp_count} xp)")
 
     @xp.command(name="multiplier")
     async def xp_multiplier(self, ctx, target: commands.UserConverter, multiplier: float):
@@ -571,10 +585,9 @@ class Commands(commands.Cog):
     @xp.command(name="set")
     async def xp_set(self, ctx, target: commands.UserConverter, amount: float):
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
-        success = await profile.set_xp(amount)
 
-        if not success:
-            await self.bot.reply_to_msg(ctx.message, 'n0\nnegative numbers for xp are not allowed!')
+        if not await profile.set_xp(amount):
+            await self.bot.reply_to_msg(ctx.message, 'Negative numbers for xp are not allowed!')
         else:
             await self.bot.reply_to_msg(ctx.message,
                                         f"Set {target.name}'s xp count to {amount}. "
