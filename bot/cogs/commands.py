@@ -195,13 +195,6 @@ class Commands(commands.Cog):
             return
 
     @commands.group()
-    @commands.check(Helper.t3_only)
-    async def alias(self, ctx):
-        if ctx.invoked_subcommand is None:
-            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
-            return
-
-    @commands.group()
     @commands.check(Helper.mod_only)
     async def xp(self, ctx):
         if ctx.invoked_subcommand is None:
@@ -249,10 +242,16 @@ class Commands(commands.Cog):
 
     @remove.command(name="command")
     async def remove_command(self, ctx, command_name: str.lower):
-        if not config.Commands.fetch(command_name):
+        if not (cmd := config.Commands.fetch(command_name)):
             await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
             return
-
+		elif
+cmd['content'][0] == self.bot.command_prefix:
+			delete = await self.bot.reply_yes_or_no(ctx.message, 
+													f"This command is an alias of `{cmd['content'][1:]}` "
+													f"Delete?")
+			if not delete:
+				return
         config.Commands.deleteBy(name=command_name)
 
         await self.bot.reply_to_msg(ctx.message, "Command removed!")
@@ -301,7 +300,7 @@ class Commands(commands.Cog):
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' modified!")
 
-    @alias.command(name="command")
+    @add.command(name="alias")
     async def add_alias(self, ctx, cmd_to_alias: str.lower, *aliases: str):
 
         if not (cmd := config.Commands.fetch(cmd_to_alias)):
@@ -361,6 +360,19 @@ class Commands(commands.Cog):
             user_info = "No aliases were added."
         self.bot.logger.info(user_info)
         await self.bot.reply_to_msg(ctx.message, user_info)
+
+    @remove.command(name="alias")
+    async def remove_alias(self, ctx, command_name: str.lower):
+        if not (cmd := config.Commands.fetch(command_name)):
+            await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
+            return
+		elif cmd['content'][0] != self.bot.command_prefix:
+			await self.bot.reply_to_msg(ctx.message, "This command is not an alias!")
+			return
+				else	
+        config.Commands.deleteBy(name=command_name)
+
+        await self.bot.reply_to_msg(ctx.message, "Command removed!")
 
     @add.command(name="crash")
     async def add_crash(self, ctx, crash_name: str.lower, match: str = None, *, response: str = None):
@@ -476,7 +488,7 @@ class Commands(commands.Cog):
             await self.bot.reply_to_msg(ctx.message,
                                         f"Dialogflow channel {self.bot.get_channel(channel.id).mention} added!")
 
-    @remove.command(name="dialogflowChannel")
+    @remove.command(name="dia logflowChannel")
     async def remove_dialogflow_channel(self, ctx, channel: commands.TextChannelConverter):
         if config.DialogflowChannels.fetch(channel.id):
             config.DialogflowChannels.deleteBy(channel_id=channel.id)
