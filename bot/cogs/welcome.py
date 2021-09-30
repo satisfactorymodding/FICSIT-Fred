@@ -2,7 +2,7 @@ import logging
 
 import discord.ext.commands as commands
 import config
-from bot.libraries import helper
+from libraries import helper
 
 
 class Welcome(commands.Cog):

@@ -4,7 +4,7 @@ import os
 import sys
 import traceback
 
-from bot.libraries import helper
+from libraries import helper
 from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
 import discord
 import discord.ext.commands

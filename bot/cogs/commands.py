@@ -3,9 +3,9 @@ import discord
 import asyncio
 import config
 from cogs import levelling
-import libraries.createembed as CreateEmbed
+import bot.libraries.createembed as CreateEmbed
 import json
-import libraries.helper as Helper
+import bot.libraries.helper as Helper
 from algoliasearch.search_client import SearchClient
 import io
 import typing

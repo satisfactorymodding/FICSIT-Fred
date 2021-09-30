@@ -2,7 +2,6 @@ import logging
 import re
 import asyncio
 from html.parser import HTMLParser
-from discord.ext import commands
 import config
 
 

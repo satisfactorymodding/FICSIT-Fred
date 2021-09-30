@@ -4,7 +4,7 @@ import discord.ext.commands as commands
 import config
 from libraries.helper import t3_only
 
-from bot.libraries import helper
+from libraries import helper
 
 
 class MediaOnly(commands.Cog):
