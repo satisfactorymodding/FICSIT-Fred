@@ -245,13 +245,13 @@ class Commands(commands.Cog):
         if not (cmd := config.Commands.fetch(command_name)):
             await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
             return
-		elif
-cmd['content'][0] == self.bot.command_prefix:
-			delete = await self.bot.reply_yes_or_no(ctx.message, 
-													f"This command is an alias of `{cmd['content'][1:]}` "
-													f"Delete?")
-			if not delete:
-				return
+
+        elif cmd['content'][0] == self.bot.command_prefix:
+            delete = await self.bot.reply_yes_or_no(ctx.message,
+                                                    f"This command is an alias of `{cmd['content'][1:]}` "
+                                                    f"Delete?")
+            if not delete:
+                return
         config.Commands.deleteBy(name=command_name)
 
         await self.bot.reply_to_msg(ctx.message, "Command removed!")
@@ -263,7 +263,6 @@ cmd['content'][0] == self.bot.command_prefix:
             return
 
         results = list(config.Commands.selectBy(name=command_name))
-        print(results)
         if not results:  # this command hasn't been created yet
             try:
                 question = "Command could not be found! Do you want to create it?"
@@ -280,12 +279,9 @@ cmd['content'][0] == self.bot.command_prefix:
                 question = f"`{command_name}` is an alias of `{linked_command[1:]}`. Modify original?"
                 if (choice := await self.bot.reply_yes_or_no(ctx.message, question)):
                     command_name = linked_command[1:]
-                    print("eeeee", choice)
                 else:
                     await self.bot.reply_to_msg(ctx.message, f"Modifying {command_name}")
-                    print("ooooo", choice)
             except ValueError:
-                print("bingus")
                 return
 
         if not command_response:
@@ -366,11 +362,11 @@ cmd['content'][0] == self.bot.command_prefix:
         if not (cmd := config.Commands.fetch(command_name)):
             await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
             return
-		elif cmd['content'][0] != self.bot.command_prefix:
-			await self.bot.reply_to_msg(ctx.message, "This command is not an alias!")
-			return
-				else	
-        config.Commands.deleteBy(name=command_name)
+        elif cmd['content'][0] != self.bot.command_prefix:
+            await self.bot.reply_to_msg(ctx.message, "This command is not an alias!")
+            return
+        else:
+            config.Commands.deleteBy(name=command_name)
 
         await self.bot.reply_to_msg(ctx.message, "Command removed!")
 
