@@ -1,9 +1,13 @@
+import logging
+
 import discord.ext.commands as commands
 from discord import DMChannel
 
 import config
 from datetime import *
 import math
+
+from bot.libraries import helper
 
 
 class UserProfile:
@@ -23,11 +27,14 @@ class UserProfile:
 
     async def validate_role(self):
         if not self.member:
-            self.bot.logger.warning("I was unable to validate a role because I could not get the member")
+            logging.info("Could not validate someone's level role because they aren't in the main guild", extra={'user_id': self.user_id})
+            return
+        logpayload = helper.userdict(self.member)
         if role_id := config.RankRoles.fetch_by_rank(self.rank):
             role = self.guild.get_role(role_id)
             if not role:
-                self.bot.logger.warning("I was unable to validate a role because I could not get a role")
+                logpayload['role_id'] = role_id
+                logging.warning("Could not validate someone's level role because the role isn't in the main guild", extra=logpayload)
                 return
             self.DB_user.rank_role_id = role_id
             # self.rank_role_id = role_id
@@ -35,10 +42,18 @@ class UserProfile:
                 for member_role in self.member.roles:
                     rank = config.RankRoles.fetch_by_role(member_role.id)
                     if rank:
+                        logpayload['role_id'] = member_role.id
+                        logging.info("Removing a mismatched level role from someone", extra=logpayload)
                         await self.member.remove_roles(member_role)
+                logpayload['role_id'] = role.id
+                logging.info("Removing a mismatched level role from someone", logpayload)
                 await self.member.add_roles(role)
 
     async def validate_level(self):
+        if not self.member:
+            logging.info("Could not validate someone's level because they aren't in the main guild", extra={'user_id': self.user_id})
+            return
+        logpayload = helper.userdict(self.member)
         expected_level = math.log(self.xp_count / config.Misc.fetch("base_level_value")) / math.log(
             config.Misc.fetch("level_value_multiplier"))
         if expected_level < 0:
@@ -46,9 +61,12 @@ class UserProfile:
         else:
             expected_level += 1
         expected_level = int(expected_level)
+        logpayload['expected_level'] = expected_level
+        logpayload['current_level'] = self.rank
         if expected_level != self.rank:
-            self.bot.logger.info(f"Correcting a mismatched level from {self.rank} to {expected_level}")
+            logging.info(f"Correcting a mismatched level", extra=logpayload)
             self.DB_user.rank = expected_level
+            self.rank = expected_level
             if self.DB_user.accepts_dms:
                 if expected_level > self.rank:
                     await self.bot.send_DM(self.member,
@@ -58,27 +76,37 @@ class UserProfile:
                     await self.bot.send_DM(self.member,
                                            f"You went down from level {self.rank} to level {expected_level}... "
                                            f"Sorry about that")
-            self.rank = expected_level
         await self.validate_role()
 
     async def increment_xp(self):
-        await self.give_xp(
-            config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier * self.DB_user.role_xp_multiplier
-        )
+        xp_gain = config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier * self.DB_user.role_xp_multiplier
+        logpayload = helper.userdict(self.member)
+        logpayload['xp_increment'] = xp_gain
+        logging.info("Incrementing someone's xp", logpayload)
+        await self.give_xp(xp_gain)
 
     async def give_xp(self, xp):
         if xp <= 0:
             return
+        logpayload = helper.userdict(self.member)
+        logpayload['xp_gain'] = xp
+        logging.info("Giving someone xp", logpayload)
         self.DB_user.xp_count += xp
         self.xp_count += xp
         await self.validate_level()
 
     async def take_xp(self, xp):
+        logpayload = helper.userdict(self.member)
+        logpayload['xp_loss'] = xp
+        logging.info("Taking xp from someone", logpayload)
         self.DB_user.xp_count -= xp
         self.xp_count -= xp
         await self.validate_level()
 
     async def set_xp(self, xp):
+        logpayload = helper.userdict(self.member)
+        logpayload['new_xp'] = xp
+        logging.info("Setting someone's xp", logpayload)
         self.DB_user.xp_count = xp
         self.xp_count = xp
         await self.validate_level()
@@ -97,6 +125,7 @@ class Levelling(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        logging.info("Levelling: Processing message", extra=helper.messagedict(message))
         if message.author.bot or isinstance(message.channel, DMChannel) or \
                 message.guild.id != config.Misc.fetch("main_guild_id") or not config.Misc.fetch("levelling_state"):
             return
@@ -105,4 +134,6 @@ class Levelling(commands.Cog):
         if profile.user_id in self.bot.xp_timers:
             if datetime.now() >= self.bot.xp_timers[profile.user_id]:
                 await profile.increment_xp()
+            else:
+                logging.info("Levelling: Someone sent a message too fast and will not be awarded xp", extra=helper.messagedict(message))
         self.bot.xp_timers[profile.user_id] = datetime.now() + timedelta(seconds=config.Misc.fetch("xp_gain_delay"))
