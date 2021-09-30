@@ -136,8 +136,7 @@ class Bot(discord.ext.commands.Bot):
         for string in traceback.format_tb(tb):
             tbs = tbs + string
         tbs = tbs + "```"
-        print(tbs.replace("```", ""))
-        logging.error(tbs)
+        logging.error(tbs.replace("```", ""))
         await self.get_channel(748229790825185311).send(tbs)
 
     async def githook_send(self, data):

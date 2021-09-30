@@ -5,6 +5,7 @@ import json
 import libraries.helper as Helper
 import os
 import shutil
+import logging
 
 line_return = '\n'  # needed later for f-strings because finicky interpreter
 
@@ -28,7 +29,7 @@ async def run(data, client):
     try:
         data_type = data["type"]
     except KeyError:
-        print("data didn't have a type field")
+        logging.error("data didn't have a type field")
         return
     if data_type == "push":
         embed = push(data)
@@ -41,7 +42,7 @@ async def run(data, client):
     elif data_type == "issue":
         embed = issue(data)
     else:
-        print(data)
+        logging.warning("Unsupported GitHub payload", extra={'data': data})
     return embed
 
 
