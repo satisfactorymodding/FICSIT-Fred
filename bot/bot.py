@@ -186,15 +186,11 @@ class Bot(discord.ext.commands.Bot):
         return response.content, response.attachments[0] if response.attachments else None
 
     async def reply_yes_or_no(self, message, question):
-        print('oe')
         response, _ = await self.reply_question(message, question)
-        print("yeet")
         s = response.strip().lower()
         if s in ("1", "true", "yes", "y", "on", "oui"):
-            print('found yes')
             return True
         elif s in ("0", "false", "no", "n", "off", "non"):
-            print('found no')
             return False
         else:
             await self.reply_to_msg(message, "Invalid bool string. Aborting")
