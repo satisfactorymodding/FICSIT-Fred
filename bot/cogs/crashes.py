@@ -37,10 +37,11 @@ def timeout(seconds=2, error_message=os.strerror(errno.ETIME)):
 
     return decorator
 
-@timeout()
+
+@timeout(5)
 def timedregexsearch(*args, **kwargs):
     try:
-        re.search(*args, **kwargs)
+        return re.search(*args, **kwargs)
     except TimeoutError:
         raise TimeoutError(f"The following regexp timed out: '{args[0]}'")
 
