@@ -484,7 +484,7 @@ class Commands(commands.Cog):
             await self.bot.reply_to_msg(ctx.message,
                                         f"Dialogflow channel {self.bot.get_channel(channel.id).mention} added!")
 
-    @remove.command(name="dia logflowChannel")
+    @remove.command(name="dialogflowChannel")
     async def remove_dialogflow_channel(self, ctx, channel: commands.TextChannelConverter):
         if config.DialogflowChannels.fetch(channel.id):
             config.DialogflowChannels.deleteBy(channel_id=channel.id)
