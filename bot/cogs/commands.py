@@ -237,6 +237,12 @@ class Commands(commands.Cog):
             response, attachment = await self.bot.reply_question(ctx.message,
                                                                  "What should the response be?")
 
+        alias_check = response.partition(self.bot.command_prefix)
+        if alias_check[1]:
+            msg = f"This will attempt create an alias of `{alias_check[2]}`! Are you sure you want to proceed?"
+            if not await self.bot.reply_yes_or_no(ctx.message, msg):
+                return
+
         config.Commands(name=command_name, content=response, attachment=attachment)
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' added!")
