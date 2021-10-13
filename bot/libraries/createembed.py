@@ -222,7 +222,8 @@ def issue(data):
 
 
 # SMR Lookup Embed Formats
-async def mod(name, session):
+async def mod(name, bot):
+    bot.logger.debug(f'searching for mod {name}')
     # GraphQL Queries
     query = str('''{
           getMods(filter: { search: "''' + name + '''", order_by: search, order:desc, limit:100}) {
@@ -241,7 +242,8 @@ async def mod(name, session):
             }
           }
         }''')
-    result = await Helper.repository_query(query, session)
+    result = await Helper.repository_query(query, bot)
+    bot.logger.debug('SMR successfully queried')
     data = result["data"]["getMods"]["mods"]
 
     for mod in data:

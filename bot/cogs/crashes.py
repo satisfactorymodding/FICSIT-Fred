@@ -106,7 +106,7 @@ class Crashes(commands.Cog):
                 }
             }
             }"""
-            result = await Helper.repository_query(query, self.bot.web_session)
+            result = await Helper.repository_query(query, self.bot)
             sml_versions = result["data"]["getSMLVersions"]["sml_versions"]
             for i in range(0, len(sml_versions) - 1):
                 if sml_versions[i]["satisfactory_version"] > game_version:
@@ -171,7 +171,7 @@ class Crashes(commands.Cog):
                     date
                 }
             }"""
-            result = await Helper.repository_query(query, self.bot.web_session)
+            result = await Helper.repository_query(query, self.bot)
             results.update(result)
 
         mods_with_dates = results["data"]["getMods"]["mods"]
@@ -287,6 +287,8 @@ class Crashes(commands.Cog):
             if match := timedregexsearch(crash["crash"], text, flags=re.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
+						if command['content'].startswith(self.bot.command_prefix):  # is alias
+							command = config.Commands.fetch(command['content'][len(self.bot.command_prefix):])
                         messages += [(command["name"], command["content"])]
                 else:
                     response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
