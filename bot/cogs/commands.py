@@ -64,11 +64,10 @@ class Commands(commands.Cog):
         if message.content.startswith(self.bot.command_prefix):
             name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if command := config.Commands.fetch(name):
-                if command['content'][0] == self.bot.command_prefix:  # for linked aliases of commands like rp<-ff
-                    if not (lnk_cmd := config.Commands.fetch(command['content'][1:])):
-                        raise commands.CommandNotFound(f"BROKEN ALIAS {command['name']}->{command['content'][1:]}")
-                    else:
-                        command = lnk_cmd
+                if content := command['content']:
+                    if content.startswith(self.bot.command_prefix):  # for linked aliases of commands like rp<-ff
+                        if (lnk_cmd := config.Commands.fetch(command['content'][1:])):
+                            command = lnk_cmd
 
                 attachment = None
                 if command["attachment"]:
