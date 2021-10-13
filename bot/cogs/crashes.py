@@ -1,4 +1,9 @@
+import errno
+import os
 import re
+import signal
+from functools import wraps
+
 import discord.ext.commands as commands
 import requests
 from PIL import Image, ImageEnhance
@@ -15,6 +20,32 @@ import libraries.helper as Helper
 import libraries.createembed as CreateEmbed
 
 
+def timeout(seconds=2, error_message=os.strerror(errno.ETIME)):
+    def decorator(func):
+        def _handle_timeout(signum, frame):
+            raise TimeoutError(error_message)
+
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.setitimer(signal.ITIMER_REAL, seconds)  # used timer instead of alarm
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+            return result
+
+        return wraps(func)(wrapper)
+
+    return decorator
+
+@timeout()
+def timedregexsearch(*args, **kwargs):
+    try:
+        re.search(*args, **kwargs)
+    except TimeoutError:
+        raise TimeoutError(f"The following regexp timed out: '{args[0]}'")
+
+
 class Crashes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -22,7 +53,7 @@ class Crashes(commands.Cog):
     @staticmethod
     def extract_game_info_from_text(text):
         try:
-            r = re.search(r"Satisfactory Mod Loader v\.(\d+\.\d+\.\d+)", text)
+            r = timedregexsearch(r"Satisfactory Mod Loader v\.(\d+\.\d+\.\d+)", text)
             sml_version = r[1]
         except TypeError:
             sml_version = None
@@ -243,17 +274,17 @@ class Crashes(commands.Cog):
                 image = enhancer_sharpness.enhance(10)
                 with ThreadPoolExecutor() as pool:
                     image_text = await self.bot.loop.run_in_executor(pool, image_to_string, image)
-                    self.bot.logger.info("OCR returned the following data:\n" + image_text)
+                    logging.info("OCR returned the following data:\n" + image_text)
                     return self.process_text(image_text)
 
             except Exception as e:
-                self.bot.logger.error(f"OCR error:\n{e}")
+                logging.error(f"OCR error:\n{e}")
                 return []
 
     def process_text(self, text) -> list[tuple[str, str]]():
         messages = []
         for crash in config.Crashes.fetch_all():
-            if match := re.search(crash["crash"], text, flags=re.IGNORECASE):
+            if match := timedregexsearch(crash["crash"], text, flags=re.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
 						if command['content'].startswith(self.bot.command_prefix):  # is alias

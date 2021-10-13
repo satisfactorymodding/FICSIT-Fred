@@ -26,7 +26,6 @@ class Bot(discord.ext.commands.Bot):
 
     async def isAlive(self):
         try:
-            await self.fetch_user(227473074616795137)
             cursor = self.dbcon.cursor()
             cursor.execute("SELECT 1")
             cursor.close()
@@ -41,7 +40,7 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.16.3"
+        self.version = "2.17.0"
 
         self.loop = asyncio.get_event_loop()
 

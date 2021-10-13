@@ -82,14 +82,16 @@ class Commands(commands.Cog):
                 while not view.eof:
                     view.skip_ws()
                     args.append(view.get_quoted_word())
-
-                text = re.sub(
-                    r'{(\d+)}',
-                    lambda match: args[int(match.group(1))]
-                    if int(match.group(1)) < len(args)
-                    else '(missing argument)',
-                    command["content"]
-                ).replace('{...}', ' '.join(args))
+                if command["content"] is not None:
+                    text = re.sub(
+                        r'{(\d+)}',
+                        lambda match: args[int(match.group(1))]
+                        if int(match.group(1)) < len(args)
+                        else '(missing argument)',
+                        command["content"]
+                    ).replace('{...}', ' '.join(args))
+                else:
+                    text = None
 
                 await self.bot.reply_to_msg(message, text, file=attachment)
                 return
