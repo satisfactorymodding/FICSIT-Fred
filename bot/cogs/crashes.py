@@ -289,8 +289,8 @@ class Crashes(commands.Cog):
             if match := timedregexsearch(crash["crash"], text, flags=re.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
-						if command['content'].startswith(self.bot.command_prefix):  # is alias
-							command = config.Commands.fetch(command['content'][len(self.bot.command_prefix):])
+                        if command['content'].startswith(self.bot.command_prefix):  # is alias
+                            command = config.Commands.fetch(command['content'][len(self.bot.command_prefix):])
                         messages += [(command["name"], command["content"])]
                 else:
                     response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
