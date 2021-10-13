@@ -108,7 +108,7 @@ class Commands(commands.Cog):
 
     @commands.command()
     async def mod(self, ctx, *, mod_name):
-        result, desc = CreateEmbed.mod(mod_name)
+        result, desc = await CreateEmbed.mod(mod_name, self.bot.web_session)
         if result is None:
             await self.bot.reply_to_msg(ctx.message, "No mods found!")
         elif isinstance(result, str):
