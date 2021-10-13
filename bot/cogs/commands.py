@@ -617,11 +617,12 @@ class Commands(commands.Cog):
     @xp.command(name="give")
     async def xp_give(self, ctx, target: commands.UserConverter, amount: float):
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
-        if not await profile.give_xp(amount):
+        if amount < 0:
             await self.bot.reply_to_msg(ctx.message,
                                         f"<:thonk:836648850377801769> attempt to give a negative\n"
                                         f"Did you mean `{self.bot.command_prefix}xp take`?")
         else:
+            await profile.give_xp(amount)
             await self.bot.reply_to_msg(ctx.message,
                                         f"Gave {amount} xp to {target.name}. "
                                         f"They are now rank {profile.rank} ({profile.xp_count} xp)")
@@ -657,9 +658,10 @@ class Commands(commands.Cog):
     async def xp_set(self, ctx, target: commands.UserConverter, amount: float):
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
 
-        if not await profile.set_xp(amount):
+        if amount < 0:
             await self.bot.reply_to_msg(ctx.message, 'Negative numbers for xp are not allowed!')
         else:
+            await profile.set_xp(amount)
             await self.bot.reply_to_msg(ctx.message,
                                         f"Set {target.name}'s xp count to {amount}. "
                                         f"They are now rank {profile.rank} ({profile.xp_count} xp)")
