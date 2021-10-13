@@ -526,8 +526,8 @@ class Commands(commands.Cog):
         config.RankRoles(role_id=role_id, rank=rank)
         await self.bot.reply_to_msg(ctx.message, "level role " + ctx.message.guild.get_role(role_id).name + " added!")
 
-    @remove.command(name="rank_role")
-    async def remove_rank_role(self, ctx, role: commands.RoleConverter):
+    @remove.command(name="level_role")
+    async def remove_level_role(self, ctx, role: commands.RoleConverter):
         role_id = role.id
 
         if config.RankRoles.fetch_by_role(role_id):
