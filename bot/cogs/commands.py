@@ -307,8 +307,8 @@ class Commands(commands.Cog):
         elif (link := cmd['content'])[0] == self.bot.command_prefix:
             try:
                 confirm = await self.bot.reply_question(ctx.message,
-                                                        f"`{cmd_to_alias}` is an alias for `{link[1:]}. "
-                                                        f"Add aliases to `{link[1:]}?")
+                                                        f"`{cmd_to_alias}` is an alias for `{link[1:]}`. "
+                                                        f"Add aliases to `{link[1:]}`?")
                 if not confirm:
                     await self.bot.reply_to_msg(ctx.message, f"Aborting")
                     return
@@ -361,7 +361,7 @@ class Commands(commands.Cog):
     @remove.command(name="alias")
     async def remove_alias(self, ctx, command_name: str.lower):
         if not (cmd := config.Commands.fetch(command_name)):
-            await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
+            await self.bot.reply_to_msg(ctx.message, "Alias could not be found!")
             return
         elif cmd['content'][0] != self.bot.command_prefix:
             await self.bot.reply_to_msg(ctx.message, "This command is not an alias!")
@@ -369,7 +369,7 @@ class Commands(commands.Cog):
         else:
             config.Commands.deleteBy(name=command_name)
 
-        await self.bot.reply_to_msg(ctx.message, "Command removed!")
+        await self.bot.reply_to_msg(ctx.message, "Alias removed!")
 
     @add.command(name="crash")
     async def add_crash(self, ctx, crash_name: str.lower, match: str = None, *, response: str = None):
