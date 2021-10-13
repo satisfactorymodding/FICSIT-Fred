@@ -1,6 +1,7 @@
 import re
 import asyncio
 from html.parser import HTMLParser
+import aiohttp
 from discord.ext import commands
 import config
 
@@ -32,21 +33,6 @@ def permission_check(ctx, level: int):
         else:
             break
     return False
-
-
-async def waitResponse(client, message, question):
-    await client.reply_to_msg(message, question)
-
-    def check(message2):
-        return message2.author == message.author
-
-    try:
-        response = await client.wait_for('message', timeout=60.0, check=check)
-    except asyncio.TimeoutError:
-        await client.reply_to_msg(message, "Timed out and aborted after 60 seconds.")
-        raise asyncio.TimeoutError
-
-    return response.content, response.attachments[0] if response.attachments else None
 
 
 class aTagParser(HTMLParser):
@@ -93,3 +79,13 @@ def formatDesc(desc):
 
     desc = re.sub('#+ ', "", desc)
     return desc
+
+
+async def repository_query(query: str, bot):
+    bot.logger.info(f"SMR query of length {len(query)} requested")
+
+    async with await bot.web_session.post("https://api.ficsit.app/v2/query", json={"query": query}) as response:
+        bot.logger.info(f"SMR query returned with response {response.status}")
+        value = await response.json()
+        bot.logger.info("SMR response decoded")
+        return value

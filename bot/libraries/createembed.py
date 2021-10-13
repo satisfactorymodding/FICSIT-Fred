@@ -222,7 +222,8 @@ def issue(data):
 
 
 # SMR Lookup Embed Formats
-def mod(name):
+async def mod(name, bot):
+    bot.logger.debug(f'searching for mod {name}')
     # GraphQL Queries
     query = str('''{
           getMods(filter: { search: "''' + name + '''", order_by: search, order:desc, limit:100}) {
@@ -241,9 +242,9 @@ def mod(name):
             }
           }
         }''')
-    data = requests.post("https://api.ficsit.app/v2/query", json={'query': query})
-    data = json.loads(data.text)
-    data = data["data"]["getMods"]["mods"]
+    result = await Helper.repository_query(query, bot)
+    bot.logger.debug('SMR successfully queried')
+    data = result["data"]["getMods"]["mods"]
 
     for mod in data:
         if mod["name"].lower() == name.lower():

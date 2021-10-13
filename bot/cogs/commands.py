@@ -15,15 +15,6 @@ from discord.ext import commands
 from discord.ext.commands.view import StringView
 
 
-def convert_to_bool(s: str):
-    s = s.strip().lower()
-    if s in ["1", "true", "yes", "y", "on", "oui"]:
-        return True
-    if s in ["0", "false", "no", "n", "off", "non"]:
-        return False
-    raise ValueError(f"Could not convert {s} to bool")
-
-
 def extract_target_type_from_converter_param(missing_argument: commands.MissingRequiredArgument):
     s = str(missing_argument)
 
@@ -67,11 +58,18 @@ class Commands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        self.bot.logger.debug("Parsing command")
         if message.author.bot or not self.bot.is_running():
             return
         if message.content.startswith(self.bot.command_prefix):
             name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if command := config.Commands.fetch(name):
+                if command['content'][0] == self.bot.command_prefix:  # for linked aliases of commands like rp<-ff
+                    if not (lnk_cmd := config.Commands.fetch(command['content'][1:])):
+                        raise commands.CommandNotFound(f"BROKEN ALIAS {command['name']}->{command['content'][1:]}")
+                    else:
+                        command = lnk_cmd
+
                 attachment = None
                 if command["attachment"]:
                     async with aiohttp.ClientSession() as session:
@@ -108,7 +106,7 @@ class Commands(commands.Cog):
 
     @commands.command()
     async def mod(self, ctx, *, mod_name):
-        result, desc = CreateEmbed.mod(mod_name)
+        result, desc = await CreateEmbed.mod(mod_name, self.bot)
         if result is None:
             await self.bot.reply_to_msg(ctx.message, "No mods found!")
         elif isinstance(result, str):
@@ -237,8 +235,8 @@ class Commands(commands.Cog):
         attachment = ctx.message.attachments[0].url if ctx.message.attachments else None
 
         if not response and not attachment:
-            response, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                                   "What should the response be?")
+            response, attachment = await self.bot.reply_question(ctx.message,
+                                                                 "What should the response be?")
 
         config.Commands(name=command_name, content=response, attachment=attachment)
 
@@ -246,50 +244,133 @@ class Commands(commands.Cog):
 
     @remove.command(name="command")
     async def remove_command(self, ctx, command_name: str.lower):
-        if not config.Commands.fetch(command_name):
+        if not (cmd := config.Commands.fetch(command_name)):
             await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
             return
 
+        elif cmd['content'][0] == self.bot.command_prefix:
+            delete = await self.bot.reply_yes_or_no(ctx.message,
+                                                    f"This command is an alias of `{cmd['content'][1:]}` "
+                                                    f"Delete?")
+            if not delete:
+                return
         config.Commands.deleteBy(name=command_name)
 
         await self.bot.reply_to_msg(ctx.message, "Command removed!")
 
     @modify.command(name="command")
-    async def modify_command(self, ctx, command_name: str.lower, *, response: str = None):
+    async def modify_command(self, ctx, command_name: str.lower, *, command_response: str = None):
         if config.ReservedCommands.fetch(command_name):
             await self.bot.reply_to_msg(ctx.message, "This command is special and cannot be modified")
             return
 
-        query = config.Commands.selectBy(name=command_name)
-        results = list(query)
-
-        if not results:
-            create_command, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                                   "Command could not be found! "
-                                                                   "Do you want to create it?")
+        results = list(config.Commands.selectBy(name=command_name))
+        if not results:  # this command hasn't been created yet
             try:
-                create_command = convert_to_bool(create_command)
+                question = "Command could not be found! Do you want to create it?"
+                if await self.bot.reply_yes_or_no(ctx.message, question):
+                    await self.add_command(ctx, command_name, command_response)
+                else:
+                    await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
+                return
             except ValueError:
-                await self.bot.reply_to_msg(ctx.message, "Invalid bool string. Aborting")
                 return
 
-            if not create_command:
-                await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
+        elif (linked_command := results[0].content)[0] == self.bot.command_prefix:
+            try:
+                question = f"`{command_name}` is an alias of `{linked_command[1:]}`. Modify original?"
+                if (choice := await self.bot.reply_yes_or_no(ctx.message, question)):
+                    command_name = linked_command[1:]
+                else:
+                    await self.bot.reply_to_msg(ctx.message, f"Modifying {command_name}")
+            except ValueError:
                 return
 
-            await self.add_command(ctx, command_name, response)
-            return
+        if not command_response:
+            command_response, attachment = await self.bot.reply_question(ctx.message,
+                                                                         "What should the response be?")
+        else:
+            attachment = ctx.message.attachments.url if ctx.message.attachments else None
 
-        attachment = ctx.message.attachments.url if ctx.message.attachments else None
-
-        if not response and not attachment:
-            response, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                                   "What should the response be?")
-
-        results[0].content = response
+        # this just works, don't touch it. trying to use config.Commands.fetch makes a duplicate command.
+        results[0].content = command_response
         results[0].attachment = attachment
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' modified!")
+
+    @add.command(name="alias")
+    async def add_alias(self, ctx, cmd_to_alias: str.lower, *aliases: str):
+
+        if not (cmd := config.Commands.fetch(cmd_to_alias)):
+            await self.bot.reply_to_msg(ctx.message, f"`{cmd_to_alias}` doesn't exist!")
+            return
+
+        elif (link := cmd['content'])[0] == self.bot.command_prefix:
+            try:
+                confirm = await self.bot.reply_question(ctx.message,
+                                                        f"`{cmd_to_alias}` is an alias for `{link[1:]}. "
+                                                        f"Add aliases to `{link[1:]}?")
+                if not confirm:
+                    await self.bot.reply_to_msg(ctx.message, f"Aborting")
+                    return
+
+                else:
+                    cmd_to_alias = link[1:]
+            except ValueError:
+                return
+
+        if not aliases:
+            response, _ = await self.bot.reply_question(ctx.message, "Please input aliases, separated by spaces.")
+            aliases = response.split(' ')
+
+        link = self.bot.command_prefix + cmd_to_alias
+        skipped = set()  # this keeps track of all the aliases that couldn't be added
+        for alias in aliases:
+            if config.ReservedCommands.fetch(alias):
+                await self.bot.reply_to_msg(ctx.message, f"`{alias}` is reserved. This alias will not be made.")
+                skipped.add(alias)
+                continue
+
+            if cmd := config.Commands.fetch(name=alias):
+                if cmd['content'] == link:
+                    await self.bot.reply_to_msg(ctx.message, f"`{alias}` was already an alias for `{link}`")
+                    skipped.add(alias)
+                    continue
+                else:
+                    try:
+                        if await self.bot.reply_yes_or_no(ctx.message, f"`{alias}` is another command! Replace?"):
+                            config.Commands.deleteBy(name=alias)
+                        else:
+                            skipped.add(alias)
+                            continue
+                    except ValueError:
+                        return
+
+            config.Commands(name=alias, content=link, attachment=None)
+
+        aliases_added = list(set(aliases) - skipped)  # aliases_added is aliases without all the skipped aliases
+        if aliases_added:
+            if (num_aliases := len(aliases_added)) > 1:
+                user_info = f"{num_aliases} aliases added for {cmd_to_alias}: {', '.join(aliases_added)}"
+            else:
+                user_info = f"Alias added for {cmd_to_alias}: {aliases_added[0]}"
+        else:
+            user_info = "No aliases were added."
+        self.bot.logger.info(user_info)
+        await self.bot.reply_to_msg(ctx.message, user_info)
+
+    @remove.command(name="alias")
+    async def remove_alias(self, ctx, command_name: str.lower):
+        if not (cmd := config.Commands.fetch(command_name)):
+            await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
+            return
+        elif cmd['content'][0] != self.bot.command_prefix:
+            await self.bot.reply_to_msg(ctx.message, "This command is not an alias!")
+            return
+        else:
+            config.Commands.deleteBy(name=command_name)
+
+        await self.bot.reply_to_msg(ctx.message, "Command removed!")
 
     @add.command(name="crash")
     async def add_crash(self, ctx, crash_name: str.lower, match: str = None, *, response: str = None):
@@ -298,8 +379,7 @@ class Commands(commands.Cog):
             return
 
         if not match:
-            match, _ = await Helper.waitResponse(self.bot, ctx.message,
-                                                                   "What should the logs match (regex)?")
+            match, _ = await self.bot.reply_question(ctx.message, "What should the logs match (regex)?")
         try:
             re.search(match, "test")
         except:
@@ -309,8 +389,7 @@ class Commands(commands.Cog):
             return
 
         if not response:
-            response, _ = await Helper.waitResponse(self.bot, ctx.message,
-                                                                   "What should the response be?")
+            response, _ = await self.bot.reply_question(ctx.message, "What should the response be?")
 
         config.Crashes(name=crash_name, crash=match, response=response)
         await self.bot.reply_to_msg(ctx.message, "Known crash '" + crash_name + "' added!")
@@ -334,28 +413,20 @@ class Commands(commands.Cog):
             await ctx.send(f"Could not find a crash with name '{crash_name}'. Aborting")
             return
 
-        change_crash, _ = await Helper.waitResponse(self.bot, ctx.message, "Do you want to change the crash to match?")
         try:
-            change_crash = convert_to_bool(change_crash)
+            if change_crash := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the crash to match?"):
+                match, _ = await self.bot.reply_question(ctx.message,
+                                                         "What is the regular expression to match in the logs?")
         except ValueError:
-            await self.bot.reply_to_msg(ctx.message, "Invalid bool string. Aborting")
             return
 
-        if change_crash:
-            match, _ = await Helper.waitResponse(self.bot, ctx.message,
-                                                 "What is the regular expression to match in the logs?")
-
-        change_response, _ = await Helper.waitResponse(self.bot, ctx.message, "Do you want to change the response?")
         try:
-            change_response = convert_to_bool(change_response)
+            if change_response := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the response?"):
+                response, _ = await self.bot.reply_question(ctx.message,
+                                                            "What response do you want it to provide? Responding with "
+                                                            "a command will make the response that command")
         except ValueError:
-            await self.bot.reply_to_msg(ctx.message, "Invalid bool string. Aborting")
             return
-
-        if change_response:
-            response, _ = await Helper.waitResponse(self.bot, ctx.message,
-                                                    "What response do you want it to provide? "
-                                                    "Responding with a command will make the response that command")
 
         if change_crash:
             results[0].crash = match
@@ -378,22 +449,19 @@ class Commands(commands.Cog):
             response = None
 
         if config.Dialogflow.fetch(intent_id, data):
-            delete, attachment = await Helper.waitResponse(self.bot, ctx.message,
-                                                           "Dialogflow response with this parameters already exists. "
-                                                           "Do you want to replace it? (Yes/No)")
             try:
-                delete = convert_to_bool(delete)
+                question = "Dialogflow response with this parameters already exists. Do you want to replace it?"
+                if await self.bot.reply_yes_or_no(ctx.message, question):
+                    await self.remove_dialogflow(ctx, intent_id, *args)
+                else:
+                    return
             except ValueError:
-                delete = False
-            if delete:
-                await self.remove_dialogflow(ctx, intent_id, *args)
-            else:
                 return
 
         config.Dialogflow(intent_id=intent_id, data=data, response=response, has_followup=has_followup)
-        await self.bot.reply_to_msg(
-            ctx.message,
-            f"Dialogflow response for '{intent_id}' ({(json.dumps(data) if data else 'any data')}) added!")
+        await self.bot.reply_to_msg(ctx.message,
+                                    f"Dialogflow response for '{intent_id}' "
+                                    f"({json.dumps(data) if data else 'any data'}) added!")
 
     @remove.command(name="dialogflow")
     async def remove_dialogflow(self, ctx, intent_id: str, *args):
@@ -549,16 +617,31 @@ class Commands(commands.Cog):
     @xp.command(name="give")
     async def xp_give(self, ctx, target: commands.UserConverter, amount: float):
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
-        await profile.give_xp(amount)
-        await self.bot.reply_to_msg(ctx.message, f"Gave {amount} xp to {target.name}. "
-                                                 f"They are now rank {profile.rank} ({profile.xp_count} xp)")
+        if amount < 0:
+            await self.bot.reply_to_msg(ctx.message,
+                                        f"<:thonk:836648850377801769> attempt to give a negative\n"
+                                        f"Did you mean `{self.bot.command_prefix}xp take`?")
+        else:
+            await profile.give_xp(amount)
+            await self.bot.reply_to_msg(ctx.message,
+                                        f"Gave {amount} xp to {target.name}. "
+                                        f"They are now rank {profile.rank} ({profile.xp_count} xp)")
 
     @xp.command(name="take")
     async def xp_take(self, ctx, target: commands.UserConverter, amount: float):
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
-        await profile.take_xp(amount)
-        await self.bot.reply_to_msg(ctx.message, f"Took {amount} xp from {target.name}. "
-                                                 f"They are now rank {profile.rank} ({profile.xp_count} xp)")
+        if amount < 0:
+            await self.bot.reply_to_msg(ctx.message,
+                                        f"<:thonk:836648850377801769> attempt to take away a negative\n"
+                                        f"Did you mean `{self.bot.command_prefix}xp give`?")
+            return
+
+        if not await profile.take_xp(amount):
+            await self.bot.reply_to_msg(ctx.message, "Cannot take more xp that this user has!")
+        else:
+            await self.bot.reply_to_msg(ctx.message,
+                                        f"Took {amount} xp from {target.name}. "
+                                        f"They are now rank {profile.rank} ({profile.xp_count} xp)")
 
     @xp.command(name="multiplier")
     async def xp_multiplier(self, ctx, target: commands.UserConverter, multiplier: float):
@@ -574,11 +657,11 @@ class Commands(commands.Cog):
     @xp.command(name="set")
     async def xp_set(self, ctx, target: commands.UserConverter, amount: float):
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
-        success = await profile.set_xp(amount)
 
-        if not success:
-            await self.bot.reply_to_msg(ctx.message, 'n0\nnegative numbers for xp are not allowed!')
+        if amount < 0:
+            await self.bot.reply_to_msg(ctx.message, 'Negative numbers for xp are not allowed!')
         else:
+            await profile.set_xp(amount)
             await self.bot.reply_to_msg(ctx.message,
                                         f"Set {target.name}'s xp count to {amount}. "
                                         f"They are now rank {profile.rank} ({profile.xp_count} xp)")

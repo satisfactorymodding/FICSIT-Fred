@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import traceback
+import aiohttp
 from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
 import discord
 import discord.ext.commands
@@ -39,10 +40,14 @@ class Bot(discord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.16.10"
+        self.version = "2.17.0"
 
         self.loop = asyncio.get_event_loop()
 
+    async def start(self, *args, **kwargs):
+        async with aiohttp.ClientSession() as session:
+            self.web_session = session
+            return await super().start(*args, **kwargs)
 
     @staticmethod
     def is_running():
@@ -101,7 +106,7 @@ class Bot(discord.ext.commands.Bot):
             self.logger.addHandler(logging.StreamHandler())
         else:
             self.logger = logging.Logger("logger")
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
 
     def setup_cogs(self):
         self.add_cog(commands.Commands(self))
@@ -136,7 +141,7 @@ class Bot(discord.ext.commands.Bot):
     async def githook_send(self, data):
         embed = await CreateEmbed.run(data, self)
         if embed == "Debug":
-            print("Non-supported Payload received")
+            self.logger.info("Non-supported Payload received")
         else:
             channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
@@ -164,6 +169,31 @@ class Bot(discord.ext.commands.Bot):
         if isinstance(reference, discord.MessageReference):
             reference.fail_if_not_exists = False
         return await message.channel.send(content, reference=reference, **kwargs)
+
+    async def reply_question(self, message, question):
+        await self.reply_to_msg(message, question)
+
+        def check(message2):
+            return message2.author == message.author
+
+        try:
+            response = await self.wait_for('message', timeout=60.0, check=check)
+        except asyncio.TimeoutError:
+            await self.reply_to_msg(message, "Timed out and aborted after 60 seconds.")
+            raise asyncio.TimeoutError
+
+        return response.content, response.attachments[0] if response.attachments else None
+
+    async def reply_yes_or_no(self, message, question):
+        response, _ = await self.reply_question(message, question)
+        s = response.strip().lower()
+        if s in ("1", "true", "yes", "y", "on", "oui"):
+            return True
+        elif s in ("0", "false", "no", "n", "off", "non"):
+            return False
+        else:
+            await self.reply_to_msg(message, "Invalid bool string. Aborting")
+            raise ValueError(f"Could not convert {s} to bool")
 
     async def on_message(self, message):
         if message.author.bot or not self.is_running():

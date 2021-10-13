@@ -16,6 +16,8 @@ import json
 import config
 from concurrent.futures import ThreadPoolExecutor
 from time import strptime
+
+import libraries.helper as Helper
 import libraries.createembed as CreateEmbed
 
 
@@ -94,8 +96,7 @@ class Crashes(commands.Cog):
 
         return version_info
 
-    @staticmethod
-    def make_sml_version_message(game_version, sml_version):
+    async def make_sml_version_message(self, game_version, sml_version):
         if game_version and sml_version:
             # Check the right SML for that CL
             query = """{
@@ -107,9 +108,8 @@ class Crashes(commands.Cog):
                 }
             }
             }"""
-            r = requests.post("https://api.ficsit.app/v2/query", json={"query": query})
-            r_data = json.loads(r.text)
-            sml_versions = r_data["data"]["getSMLVersions"]["sml_versions"]
+            result = await Helper.repository_query(query, self.bot)
+            sml_versions = result["data"]["getSMLVersions"]["sml_versions"]
             for i in range(0, len(sml_versions) - 1):
                 if sml_versions[i]["satisfactory_version"] > game_version:
                     continue
@@ -122,10 +122,17 @@ class Crashes(commands.Cog):
 
     @staticmethod
     def make_outdated_mods_message(mods):
-        header = f"You are attempting to use {len(mods)} mod{'s' if len(mods) > 1 else ''} that no longer work! \n```"
-        mod_list = "\n".join(mods)
-        footer = "```Please attempt to remove/disable these mods, " \
-                 "so that they no longer force the old SML to be used (this is why your mods don't load)"
+        singular = len(mods) == 1
+        if singular:
+            header = f"You are attempting to use a mod that no longer works! \n```"
+            mod_list = "\n".join(mods)
+            footer = "```Please attempt to remove/disable that mod, " \
+                     "so that it no longer forces the old SML to be used (this is why your mods don't load)"
+        else:
+            header = f"You are attempting to use {len(mods)} mods that no longer work! \n```"
+            mod_list = "\n".join(mods)
+            footer = "```Please attempt to remove/disable these mods, " \
+                     "so that they no longer force the old SML to be used (this is why your mods don't load)"
         return header + mod_list + footer
 
     @staticmethod
@@ -142,31 +149,35 @@ class Crashes(commands.Cog):
         enabled_mods: list = self.filter_enabled(mod_list)
         if not enabled_mods:
             return enabled_mods
-        else:
-            query_mods, count = str(enabled_mods).replace("'", '"'), str(len(enabled_mods))
 
-        # Replace argument smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
-        query = """
-        {
-            getMods(
-                filter: {
-                    references: """ + query_mods + """
-                    limit: """ + count + """
+        # This block separates the mods into blocks of 100 because that's
+        results = dict()
+        for slice in [enabled_mods[i:i + 100] for i in range(0, len(enabled_mods), 100)]:
+            query_mods, length = str(slice).replace("'", '"'), str(len(slice))
+
+            # Replace argument smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
+            query = """
+            {
+                getMods(
+                    filter: {
+                        references: """ + query_mods + """
+                        limit: """ + length + """
+                    }
+                ) {
+                    mods {
+                        name
+                        last_version_date
+                    }
                 }
-            ) {
-                mods {
-                    name
-                    last_version_date
+                getSMLVersion(smlVersionID: "9DgqKh9KVL2cuu") {
+                    date
                 }
-            }
-            getSMLVersion(smlVersionID: "9DgqKh9KVL2cuu") {
-                date
-            }
-        }"""
-        response = requests.post("https://api.ficsit.app/v2/query", json={"query": query})
-        result = json.loads(response.text)
-        mods_with_dates = result["data"]["getMods"]["mods"]
-        latest_compatible_loader = strptime(result["data"]["getSMLVersion"]["date"], "%Y-%m-%dT%H:%M:%SZ")
+            }"""
+            result = await Helper.repository_query(query, self.bot)
+            results.update(result)
+
+        mods_with_dates = results["data"]["getMods"]["mods"]
+        latest_compatible_loader = strptime(results["data"]["getSMLVersion"]["date"], "%Y-%m-%dT%H:%M:%SZ")
         names_with_dates = {mod["name"]: mod["last_version_date"] for mod in mods_with_dates}
 
         incompatible_mods = []
@@ -222,7 +233,7 @@ class Crashes(commands.Cog):
                         sml_version, game_version, path, launcher_id, commandline = \
                             self.extract_game_info_from_text(fg_log_content[:200000])
 
-            sml_outdated = self.make_sml_version_message(game_version, sml_version)
+            sml_outdated = await self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
                 messages += [("Outdated SML!", sml_outdated)]
 
@@ -241,7 +252,7 @@ class Crashes(commands.Cog):
 
             sml_version, game_version, path, launcher_id, commandline = self.extract_game_info_from_text(text)
 
-            sml_outdated = self.make_sml_version_message(game_version, sml_version)
+            sml_outdated = await self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
                 messages += [("Outdated SML!", sml_outdated)]
 
@@ -278,6 +289,8 @@ class Crashes(commands.Cog):
             if match := timedregexsearch(crash["crash"], text, flags=re.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"][len(self.bot.command_prefix):]):
+						if command['content'].startswith(self.bot.command_prefix):  # is alias
+							command = config.Commands.fetch(command['content'][len(self.bot.command_prefix):])
                         messages += [(command["name"], command["content"])]
                 else:
                     response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
@@ -319,7 +332,7 @@ class Crashes(commands.Cog):
                 sml_version, game_version, path, launcher_id, commandline = \
                     self.extract_game_info_from_text(message.content)
 
-                sml_outdated = self.make_sml_version_message(game_version, sml_version)
+                sml_outdated = await self.make_sml_version_message(game_version, sml_version)
                 if sml_outdated:
                     responses += [("Outdated SML!", sml_outdated)]
 
@@ -334,7 +347,7 @@ class Crashes(commands.Cog):
             sml_version, game_version, path, launcher_id, commandline = \
                 self.extract_game_info_from_text(message.content)
 
-            sml_outdated = self.make_sml_version_message(game_version, sml_version)
+            sml_outdated = await self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
                 responses += [("Outdated SML!", sml_outdated)]
 
