@@ -67,17 +67,14 @@ class UserProfile:
         )
 
     async def give_xp(self, xp):
-        if xp <= 0:
-            return False
-        else:
-            self.DB_user.xp_count += xp
-            self.xp_count += xp
-            await self.validate_level()
-            return True
+        self.DB_user.xp_count += xp
+        self.xp_count += xp
+        await self.validate_level()
+        return True
 
     async def take_xp(self, xp):
         if xp > self.DB_user.xp_count:
-            return False
+            return False  # can't take more than a user has
         else:
             self.DB_user.xp_count -= xp
             self.xp_count -= xp
@@ -85,13 +82,10 @@ class UserProfile:
             return True
 
     async def set_xp(self, xp):
-        if xp < 0:
-            return False
-        else:
-            self.DB_user.xp_count = xp
-            self.xp_count = xp
-            await self.validate_level()
-            return True
+        self.DB_user.xp_count = xp
+        self.xp_count = xp
+        await self.validate_level()
+        return True
 
 
 class Levelling(commands.Cog):
