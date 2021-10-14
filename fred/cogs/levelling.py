@@ -1,9 +1,10 @@
+import math
+from datetime import *
+
 import discord.ext.commands as commands
 from discord import DMChannel
 
-import config
-from datetime import *
-import math
+import fred.config as config
 
 
 class UserProfile:
@@ -51,11 +52,11 @@ class UserProfile:
             self.DB_user.rank = expected_level
             if self.DB_user.accepts_dms:
                 if expected_level > self.rank:
-                    await self.bot.send_DM(self.member,
+                    await self.bot.send_dm(self.member,
                                            f"You went up from level {self.rank} to level {expected_level}! "
                                            f"Congratulations!")
                 else:
-                    await self.bot.send_DM(self.member,
+                    await self.bot.send_dm(self.member,
                                            f"You went down from level {self.rank} to level {expected_level}... "
                                            f"Sorry about that")
             self.rank = expected_level

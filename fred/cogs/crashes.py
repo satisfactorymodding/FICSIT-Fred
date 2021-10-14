@@ -1,29 +1,29 @@
 import errno
+import io
+import json
 import logging
 import os
 import re
 import signal
+import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
+from time import strptime
+from urllib.request import urlopen
 
 import discord.ext.commands as commands
 import requests
 from PIL import Image, ImageEnhance
 from pytesseract import image_to_string
-import zipfile
-from urllib.request import urlopen
-import io
-import json
-import config
-from concurrent.futures import ThreadPoolExecutor
-from time import strptime
 
-import libraries.helper as Helper
-import libraries.createembed as CreateEmbed
+import fred.config as config
+import fred.libraries.createembed as create_embed
+import fred.libraries.helper as helper
 
 
 def timeout(seconds=2, error_message=os.strerror(errno.ETIME)):
     def decorator(func):
-        def _handle_timeout(signum, frame):
+        def _handle_timeout(*_):
             raise TimeoutError(error_message)
 
         def wrapper(*args, **kwargs):
@@ -108,15 +108,16 @@ class Crashes(commands.Cog):
                 }
             }
             }"""
-            result = await Helper.repository_query(query, self.bot)
+            result = await helper.repository_query(query, self.bot)
             sml_versions = result["data"]["getSMLVersions"]["sml_versions"]
+            latest = None
             for i in range(0, len(sml_versions) - 1):
                 if sml_versions[i]["satisfactory_version"] > game_version:
                     continue
                 else:
                     latest = sml_versions[i]
                     break
-            if latest["version"] != sml_version:
+            if latest and latest["version"] != sml_version:
                 return f"Your SML version is old. You should update to {latest['version']}."
         return None
 
@@ -152,8 +153,8 @@ class Crashes(commands.Cog):
 
         # This block separates the mods into blocks of 100 because that's
         results = dict()
-        for slice in [enabled_mods[i:i + 100] for i in range(0, len(enabled_mods), 100)]:
-            query_mods, length = str(slice).replace("'", '"'), str(len(slice))
+        for _slice in [enabled_mods[i:i + 100] for i in range(0, len(enabled_mods), 100)]:
+            query_mods, length = str(_slice).replace("'", '"'), str(len(_slice))
 
             # Replace argument smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
             query = """
@@ -173,7 +174,7 @@ class Crashes(commands.Cog):
                     date
                 }
             }"""
-            result = await Helper.repository_query(query, self.bot)
+            result = await helper.repository_query(query, self.bot)
             results.update(result)
 
         mods_with_dates = results["data"]["getMods"]["mods"]
@@ -357,7 +358,7 @@ class Crashes(commands.Cog):
                 responses += [("Version Info (ignore this)", version_info)]
 
         if len(responses) > 2:
-            await self.bot.reply_to_msg(message, embed=CreateEmbed.crashes(responses))
+            await self.bot.reply_to_msg(message, embed=create_embed.crashes(responses))
         else:
             for response in responses:
                 await self.bot.reply_to_msg(message, response[1], propagate_reply=False)

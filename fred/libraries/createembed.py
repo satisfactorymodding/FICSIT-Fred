@@ -1,12 +1,15 @@
-import discord
-import config
-import requests
 import json
-import libraries.helper as Helper
 import os
 import shutil
 
+import discord
+
+import fred.config as config
+import fred.libraries.helper as helper
+
 line_return = '\n'  # needed later for f-strings because finicky interpreter
+repo_name = None
+repo_full_name = None
 
 if not os.path.exists("../config/config.json"):
     shutil.copyfile("../config/config_example.json", "../config/config.json")
@@ -16,30 +19,38 @@ with open("../config/config.json", "r") as file:
 
 # Github Update Embed Formats
 async def run(data, client):
+    global repo_name
+    global repo_full_name
+
     embed = "Debug"
     try:
-        global repo_name
         repo_name = data["repository"]["full_name"]
-        global repo_full_name
         repo_full_name = f'{data["repository"]["name"]}/{data["ref"].split("/")[2]}'
-    except:
+    except KeyError:
         repo_name = "None"
         repo_full_name = "None"
+
     try:
         data_type = data["type"]
     except KeyError:
         print("data didn't have a type field")
         return
+
     if data_type == "push":
         embed = push(data)
+
     elif data_type == "pull_request":
         embed = pull_request(data)
+
     elif data_type == "member" and data["action"] == "added":
         embed = contributer_added(data)
+
     elif data_type == "release" and not data["release"]["draft"] and data["action"] in ["released", "prereleased"]:
         embed = release(data)
+
     elif data_type == "issue":
         embed = issue(data)
+
     else:
         print(data)
     return embed
@@ -57,7 +68,7 @@ def leaderboard(data: list):
     return embed
 
 
-def DM(text):
+def dm(text):
     embed = discord.Embed(colour=config.ActionColours.fetch("purple"), description=text)
 
     embed.set_footer(text="To stop getting DM messages from me, type 'stop'. "
@@ -88,17 +99,17 @@ def push(data):
                f'{commit["message"].split(line_return)[0]} - {commit["committer"]["name"]}\n' \
                f'✅ {len(commit["added"])} ❌ {len(commit["removed"])} 📝 {len(commit["modified"])}\n'
 
-    commitLength = len(commits)
+    commit_length = len(commits)
     while len(desc) > 2030:
-        commitLength -= 1
+        commit_length -= 1
         desc = ""
-        for commit in commits[:commitLength]:
+        for commit in commits[:commit_length]:
             desc = f'{desc}[`{commit["id"][:7]}`]({commit["url"]}) ' \
                    f'{commit["message"].split(line_return)[0]} - {commit["committer"]["name"]}\n' \
                    f'✅ {len(commit["added"])} ❌ {len(commit["removed"])} 📝 {len(commit["modified"])}\n'
 
-    if commitLength != len(commits):
-        desc = f'{desc}\n And {len(commits) - commitLength} more...'
+    if commit_length != len(commits):
+        desc = f'{desc}\n And {len(commits) - commit_length} more...'
 
     embed = discord.Embed(title=f'{forced} Pushed {len(data["commits"])} commit(s) to {repo_full_name}',
                           colour=colour,
@@ -148,7 +159,7 @@ def pull_request(data):
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
     stats = f'\n📋 {data["pull_request"]["commits"]}' \
-            f'\n✅ {data["pull_request"]["additions"]}' \
+            f'\n\u2705 {data["pull_request"]["additions"]}' \
             f'\n❌ {data["pull_request"]["deletions"]}' \
             f'\n📝 {data["pull_request"]["changed_files"]}'
 
@@ -242,7 +253,7 @@ async def mod(name, bot):
             }
           }
         }''')
-    result = await Helper.repository_query(query, bot)
+    result = await helper.repository_query(query, bot)
     bot.logger.debug('SMR successfully queried')
     data = result["data"]["getMods"]["mods"]
 
@@ -287,7 +298,7 @@ async def mod(name, bot):
 
 
 def desc(full_desc):
-    full_desc = Helper.formatDesc(full_desc[:1900])
+    full_desc = helper.format_desc(full_desc[:1900])
     embed = discord.Embed(title="Description",
                           colour=config.ActionColours.fetch("Light Blue"),
                           description=full_desc)
@@ -324,7 +335,7 @@ def command_list(client, full=False, here=False):
                                      "navigation in here could be a little weird")
 
     desc = """**__Known Crashes__**
-    *The bot respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*
+    *The fred respond to a post when a string is present in a message, pastebin, .txt/.log file or image.*
 
     """
 
@@ -378,7 +389,7 @@ def command_list(client, full=False, here=False):
                                     "navigation in here could be a little weird")
 
     if full:
-        desc = "**__Management Commands__**\n*These are commands to manage the bot and its automations.*\n\n"
+        desc = "**__Management Commands__**\n*These are commands to manage the fred and its automations.*\n\n"
 
         for command in client.config["management commands"]:
             desc = f'{desc}**{client.config["prefix"]}{command["command"]}**\n```{command["response"]}```\n'
@@ -402,7 +413,7 @@ def command_list(client, full=False, here=False):
         desc = desc + "**__Additional information__**\n" \
                       "This info is relevant if you are an engineer or above, " \
                       "which you should be if you are seeing this page.\n\n" \
-                      "```*You can react to any of the bot's message with ❌ to remove it\n" \
+                      "```*You can react to any of the fred's message with ❌ to remove it\n" \
                       " *You can add 'here' after the help command " \
                       "to send the embed in the channel you typed the command in. " \
                       "This will make the embed not be full by default, " \

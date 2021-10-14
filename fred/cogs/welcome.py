@@ -1,5 +1,6 @@
 import discord.ext.commands as commands
-import config
+
+import fred.config as config
 
 
 class Welcome(commands.Cog):
@@ -11,7 +12,7 @@ class Welcome(commands.Cog):
         welcome = config.Misc.fetch("welcome_message")
         info = config.Misc.fetch("latest_info")
         if welcome:
-            await self.bot.send_DM(member, welcome)
+            await self.bot.send_dm(member, welcome)
         if info:
             info = f"Here's the latest information :\n\n{info}"
-            await self.bot.send_DM(member, info)
+            await self.bot.send_dm(member, info)

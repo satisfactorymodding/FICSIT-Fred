@@ -1,13 +1,11 @@
 import re
-import asyncio
 from html.parser import HTMLParser
-import aiohttp
-from discord.ext import commands
-import config
+
+import fred.config as config
 
 
-def is_bot_author(id: int):
-    return id == 227473074616795137
+def is_bot_author(user_id: int):
+    return user_id == 227473074616795137
 
 
 async def t3_only(ctx):
@@ -24,7 +22,7 @@ def permission_check(ctx, level: int):
     if (main_guild_member := main_guild.get_member(ctx.author.id)) is None:
         return False
 
-    has_roles = [role.id for role in (main_guild_member.roles)]
+    has_roles = [role.id for role in main_guild_member.roles]
 
     for role in perms:
         if role.perm_lvl >= level:
@@ -35,13 +33,15 @@ def permission_check(ctx, level: int):
     return False
 
 
-class aTagParser(HTMLParser):
-    link = ''
-    view_text = ''
+class ATagParser(HTMLParser):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.link = None
+        self.view_text = None
 
     def clear_output(self):
-        self.link = ''
-        self.view_text = ''
+        self.link = None
+        self.view_text = None
 
     def handle_starttag(self, tag, attrs):
         if tag == 'a':
@@ -55,8 +55,11 @@ class aTagParser(HTMLParser):
     def handle_data(self, data):
         self.view_text = f'[{data}]'
 
+    def error(self, message):
+        print(f'Error: {message}')
 
-def formatDesc(desc):
+
+def format_desc(desc):
     revisions = {
         "<b>": "**",
         "</b>": "**",
@@ -71,7 +74,7 @@ def formatDesc(desc):
     items.extend([i.groups() for i in re.finditer('(<a.+>.+</a>)', desc)])  # Finds all unhandled links
     for i in items:
         i = i[0]  # regex returns a one-element tuple :/
-        parser = aTagParser()
+        parser = ATagParser()
         parser.feed(i)
         embeds.update({i: parser.view_text + parser.link})
     for old, new in embeds.items():

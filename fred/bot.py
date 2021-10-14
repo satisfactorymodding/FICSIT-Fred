@@ -3,16 +3,18 @@ import logging
 import os
 import sys
 import traceback
+
 import aiohttp
-from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
 import discord
 import discord.ext.commands
-import sqlobject as sql
 import psycopg2
 import psycopg2.extensions
-import config
-import libraries.createembed as CreateEmbed
+import sqlobject as sql
 from logstash_async.handler import AsynchronousLogstashHandler
+
+import fred.config as config
+import fred.libraries.createembed as create_embed
+from fred.cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
 
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
@@ -24,12 +26,12 @@ for var in ENVVARS:
 
 class Bot(discord.ext.commands.Bot):
 
-    async def isAlive(self):
+    async def is_alive(self):
         try:
             cursor = self.dbcon.cursor()
             cursor.execute("SELECT 1")
             cursor.close()
-        except:
+        except psycopg2.DatabaseError:
             return False
         return True
 
@@ -37,10 +39,18 @@ class Bot(discord.ext.commands.Bot):
         super().__init__(*args, **kwargs)
         self.isReady = False
         self.setup_logger()
-        self.setup_DB()
+        self.setup_db()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
         self.version = "2.17.1"
+
+        # Set variables assigned later
+        self.web_session = None
+        self.dbcon = None
+        self.media_only = None
+        self.crashes = None
+        self.dialog_flow = None
+        self.logger = None
 
         self.loop = asyncio.get_event_loop()
 
@@ -63,7 +73,7 @@ class Bot(discord.ext.commands.Bot):
         if not user.bot and reaction.message.author.bot and reaction.emoji == "❌":
             await reaction.message.delete()
 
-    def setup_DB(self):
+    def setup_db(self):
         self.logger.info("Connecting to the database")
         user = os.environ.get("FRED_SQL_USER")
         password = os.environ.get("FRED_SQL_PASSWORD")
@@ -92,9 +102,7 @@ class Bot(discord.ext.commands.Bot):
             sql.sqlhub.processConnection = connection
             config.create_missing_tables()
 
-        try:
-            config.Commands.get(1)
-        except:
+        if not config.Commands.select().count():
             self.logger.warning("There is no registered command. Populating the database with the old config file.")
             config.convert_old_config()
 
@@ -116,12 +124,12 @@ class Bot(discord.ext.commands.Bot):
         self.add_cog(dialogflow.DialogFlow(self))
         self.add_cog(welcome.Welcome(self))
         self.add_cog(levelling.Levelling(self))
-        self.MediaOnly = self.get_cog("MediaOnly")
-        self.Crashes = self.get_cog("Crashes")
-        self.DialogFlow = self.get_cog("DialogFlow")
+        self.media_only = self.get_cog("MediaOnly")
+        self.crashes = self.get_cog("Crashes")
+        self.dialog_flow = self.get_cog("DialogFlow")
 
     async def on_error(self, event, *args, **kwargs):
-        type, value, tb = sys.exc_info()
+        ex_type, value, tb = sys.exc_info()
         if event == "on_message":
             channel = args[0].channel
             if isinstance(channel, discord.DMChannel):
@@ -130,7 +138,7 @@ class Bot(discord.ext.commands.Bot):
                 channelstr = f" in #{args[0].channel.name}"
         else:
             channelstr = ""
-        tbs = f"```Fred v{self.version}\n\n{type.__name__} exception handled in {event}{channelstr}: {value}\n\n"
+        tbs = f"```Fred v{self.version}\n\n{ex_type.__name__} exception handled in {event}{channelstr}: {value}\n\n"
         for string in traceback.format_tb(tb):
             tbs = tbs + string
         tbs = tbs + "```"
@@ -139,7 +147,7 @@ class Bot(discord.ext.commands.Bot):
         await self.get_channel(748229790825185311).send(tbs)
 
     async def githook_send(self, data):
-        embed = await CreateEmbed.run(data, self)
+        embed = await create_embed.run(data, self)
         if embed == "Debug":
             self.logger.info("Non-supported Payload received")
         else:
@@ -147,16 +155,16 @@ class Bot(discord.ext.commands.Bot):
             await channel.send(content=None, embed=embed)
 
     @staticmethod
-    async def send_DM(user, content, embed=None, file=None):
-        DB_user = config.Users.create_if_missing(user)
-        if not DB_user.accepts_dms:
+    async def send_dm(user, content, embed=None, file=None):
+        db_user = config.Users.create_if_missing(user)
+        if not db_user.accepts_dms:
             return None
 
         if not user.dm_channel:
             await user.create_dm()
         try:
             if not embed:
-                embed = CreateEmbed.DM(content)
+                embed = create_embed.dm(content)
                 content = None
             return await user.dm_channel.send(content=content, embed=embed, file=file)
         except Exception as e:
@@ -208,14 +216,14 @@ class Bot(discord.ext.commands.Bot):
                 await self.reply_to_msg(message, "You will no longer receive level changes notifications !")
                 return
 
-        removed = await self.MediaOnly.process_message(message)
+        removed = await self.media_only.process_message(message)
         if not removed:
             if message.content.startswith(self.command_prefix):
                 await self.process_commands(message)
             else:
-                reacted = await self.Crashes.process_message(message)
+                reacted = await self.crashes.process_message(message)
                 if not reacted:
-                    await self.DialogFlow.process_message(message)
+                    await self.dialog_flow.process_message(message)
 
 
 intents = discord.Intents.default()

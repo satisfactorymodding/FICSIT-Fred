@@ -1,6 +1,7 @@
 import discord.ext.commands as commands
-import config
-from libraries.helper import t3_only
+
+import fred.config as config
+from fred.libraries.helper import t3_only
 
 
 class MediaOnly(commands.Cog):
@@ -15,7 +16,7 @@ class MediaOnly(commands.Cog):
         if await t3_only(ctx):
             return False
         if config.MediaOnlyChannels.fetch(message.channel.id):
-            await self.bot.send_DM(message.author,
+            await self.bot.send_dm(message.author,
                                    f"Hi {message.author.name}, the channel you just tried to message in, "
                                    f"{self.bot.get_channel(message.channel.id).name} is a 'Media Only' channel. "
                                    f"This means you must attach a file in order to post there. "

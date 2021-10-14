@@ -1,12 +1,14 @@
-import discord.ext.commands as commands
-from google.oauth2 import service_account
-from google.cloud import dialogflow
-import os
-import uuid
 import asyncio
 import json
-import config
+import os
+import uuid
+
 import discord
+import discord.ext.commands as commands
+from google.cloud import dialogflow
+from google.oauth2 import service_account
+
+import fred.config as config
 
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(

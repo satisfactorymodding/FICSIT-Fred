@@ -1,5 +1,18 @@
+from typing import List, Union, Optional, Tuple
+
 from sqlobject import *
-import json
+
+
+class DictSQLObject(SQLObject):
+    _dict_exclusions = []
+
+    def as_dict(self) -> dict:
+        output = {}
+        cols = [column.name for column in self.sqlmeta.columnList if column.name not in self._dict_exclusions]
+        for c in cols:
+            output[c] = self.getattr(c)
+
+        return output
 
 
 class PermissionRoles(SQLObject):
@@ -11,13 +24,13 @@ class PermissionRoles(SQLObject):
     role_name = StringCol()
 
     @staticmethod
-    def fetch_by_lvl(perm_lvl):
+    def fetch_by_lvl(perm_lvl: int) -> List["PermissionRoles"]:
         query = PermissionRoles.select(PermissionRoles.q.perm_lvl >= perm_lvl).orderBy("-perm_lvl")
         results = list(query)
         return results
 
     @staticmethod
-    def fetch_by_role(role_id):
+    def fetch_by_role(role_id: int) -> List["PermissionRoles"]:
         query = PermissionRoles.selectBy(role_id=role_id)
         results = list(query)
         return results
@@ -31,7 +44,7 @@ class RankRoles(SQLObject):
     role_id = BigIntCol()
 
     @staticmethod
-    def fetch_by_rank(rank):
+    def fetch_by_rank(rank: int) -> Optional[int]:
         query = RankRoles.select(RankRoles.q.rank <= rank).orderBy("-rank")
         results = list(query)
         if results:
@@ -40,7 +53,7 @@ class RankRoles(SQLObject):
             return None
 
     @staticmethod
-    def fetch_by_role(role_id):
+    def fetch_by_role(role_id: int) -> Optional[int]:
         query = RankRoles.selectBy(role_id=role_id)
         results = list(query)
         if results:
@@ -57,7 +70,7 @@ class XpRoles(SQLObject):
     role_id = BigIntCol()
 
     @staticmethod
-    def fetch(role_id):
+    def fetch(role_id: int) -> Optional["XpRoles"]:
         query = XpRoles.selectBy(role_id=role_id)
         results = list(query)
         if results:
@@ -66,7 +79,9 @@ class XpRoles(SQLObject):
             return None
 
 
-class Users(SQLObject):
+class Users(DictSQLObject):
+    _dict_exclusions = ['xp_multiplier', 'role_xp_multiplier']
+
     user_id = BigIntCol()
     full_name = StringCol()
     message_count = IntCol(default=0)
@@ -77,13 +92,8 @@ class Users(SQLObject):
     rank_role_id = BigIntCol(default=None)
     accepts_dms = BoolCol(default=True)
 
-    def as_dict(self):
-        return dict(user_id=self.user_id, message_count=self.message_count, xp_count=self.xp_count,
-                    rank_role_id=self.rank_role_id, rank=self.rank, full_name=self.full_name,
-                    accepts_dms=self.accepts_dms)
-
     @staticmethod
-    def fetch(user_id):
+    def fetch(user_id: int) -> Optional["Users"]:
         query = Users.selectBy(user_id=user_id)
         results = list(query)
         if results:
@@ -92,7 +102,7 @@ class Users(SQLObject):
             return None
 
     @staticmethod
-    def create_if_missing(user):
+    def create_if_missing(user: "Users") -> "Users":
         query = Users.selectBy(user_id=user.id)
         results = list(query)
         if results:
@@ -109,7 +119,7 @@ class ActionColours(SQLObject):
     colour = IntCol()
 
     @staticmethod
-    def fetch(name):
+    def fetch(name: str) -> Optional[int]:
         query = ActionColours.selectBy(name=name.lower())
         results = list(query)
         if results:
@@ -125,7 +135,7 @@ class MediaOnlyChannels(SQLObject):
     channel_id = BigIntCol()
 
     @staticmethod
-    def fetch(channel_id):
+    def fetch(channel_id: int) -> Optional[int]:
         query = MediaOnlyChannels.selectBy(channel_id=channel_id)
         results = list(query)
         if results:
@@ -141,7 +151,7 @@ class DialogflowChannels(SQLObject):
     channel_id = BigIntCol()
 
     @staticmethod
-    def fetch(channel_id):
+    def fetch(channel_id: int) -> Optional[int]:
         query = DialogflowChannels.selectBy(channel_id=channel_id)
         results = list(query)
         if results:
@@ -157,7 +167,7 @@ class DialogflowExceptionRoles(SQLObject):
     role_id = BigIntCol()
 
     @staticmethod
-    def fetch(role_id):
+    def fetch(role_id: int) -> Optional[int]:
         query = DialogflowExceptionRoles.selectBy(role_id=role_id)
         results = list(query)
         if results:
@@ -166,24 +176,20 @@ class DialogflowExceptionRoles(SQLObject):
             return None
 
     @staticmethod
-    def fetch_all():
+    def fetch_all() -> List[int]:
         query = DialogflowExceptionRoles.select()
         results = list(query)
         return [role.role_id for role in results]
 
 
-class Dialogflow(SQLObject):
+class Dialogflow(DictSQLObject):
     intent_id = StringCol()
     data = StringCol()
     response = StringCol()
     has_followup = BoolCol()
 
-    def as_dict(self):
-        return dict(intent_id=self.intent_id, data=json.loads(str(self.data)) if self.data else None, response=self.response,
-                    has_followup=self.has_followup)
-
     @staticmethod
-    def fetch(intent_id, data):
+    def fetch(intent_id: int, data: str) -> Optional[dict]:
         query = Dialogflow.selectBy(intent_id=intent_id, data=data)
         results = list(query)
         if results:
@@ -192,16 +198,13 @@ class Dialogflow(SQLObject):
             return None
 
 
-class Commands(SQLObject):
+class Commands(DictSQLObject):
     name = StringCol()
     content = StringCol()
     attachment = StringCol(default=None)
 
-    def as_dict(self):
-        return dict(name=self.name, content=self.content, attachment=self.attachment)
-
     @staticmethod
-    def fetch(name):
+    def fetch(name: str) -> Optional[dict]:
         query = Commands.selectBy(name=name.lower())
         results = list(query)
         if results:
@@ -210,16 +213,13 @@ class Commands(SQLObject):
             return None
 
 
-class Crashes(SQLObject):
+class Crashes(DictSQLObject):
     name = StringCol()
     crash = StringCol()
     response = StringCol()
 
-    def as_dict(self):
-        return dict(name=self.name, response=self.response, crash=self.crash)
-
     @staticmethod
-    def fetch(name):
+    def fetch(name: str) -> Optional[dict]:
         query = Crashes.selectBy(name=name.lower())
         results = list(query)
         if results:
@@ -228,10 +228,10 @@ class Crashes(SQLObject):
             return None
 
     @staticmethod
-    def fetch_all():
+    def fetch_all() -> List[dict]:
         query = Crashes.select()
         results = list(query)
-        return (crash.as_dict() for crash in results)
+        return [crash.as_dict() for crash in results]
 
 
 class ReservedCommands(SQLObject):
@@ -241,7 +241,7 @@ class ReservedCommands(SQLObject):
     name = StringCol()
 
     @staticmethod
-    def fetch(name):
+    def fetch(name: str) -> bool:
         query = ReservedCommands.selectBy(name=name.lower())
         results = list(query)
         if results:

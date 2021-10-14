@@ -1,18 +1,19 @@
-import re
-import discord
 import asyncio
-import config
-from cogs import levelling
-import libraries.createembed as CreateEmbed
-import json
-import libraries.helper as Helper
-from algoliasearch.search_client import SearchClient
 import io
+import json
+import re
 import typing
-import aiohttp
 
+import aiohttp
+import discord
+from algoliasearch.search_client import SearchClient
 from discord.ext import commands
 from discord.ext.commands.view import StringView
+
+import fred.config as config
+import fred.libraries.createembed as create_embed
+import fred.libraries.helper as helper
+from fred.cogs import levelling
 
 
 def extract_target_type_from_converter_param(missing_argument: commands.MissingRequiredArgument):
@@ -106,7 +107,7 @@ class Commands(commands.Cog):
 
     @commands.command()
     async def mod(self, ctx, *, mod_name):
-        result, desc = await CreateEmbed.mod(mod_name, self.bot)
+        result, desc = await create_embed.mod(mod_name, self.bot)
         if result is None:
             await self.bot.reply_to_msg(ctx.message, "No mods found!")
         elif isinstance(result, str):
@@ -125,7 +126,7 @@ class Commands(commands.Cog):
                     try:
                         r = await self.bot.wait_for('reaction_add', timeout=240.0, check=check)
                         member = r[1]
-                        sent = await self.bot.send_DM(member, content=None, embed=CreateEmbed.desc(desc))
+                        sent = await self.bot.send_dm(member, content=None, embed=create_embed.desc(desc))
                         if sent:
                             await new_message.add_reaction("✅")
                         else:
@@ -152,7 +153,7 @@ class Commands(commands.Cog):
             self.bot.reply_to_msg(ctx.message, "The database was empty. This should NEVER happen")
             return
         data = [dict(name=user.full_name, count_and_rank=dict(count=user.xp_count, rank=user.rank)) for user in results]
-        embed = CreateEmbed.leaderboard(data)
+        embed = create_embed.leaderboard(data)
         await self.bot.reply_to_msg(ctx.message, embed=embed)
 
     @commands.command()
@@ -169,35 +170,35 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, f"{user.name} is level {DB_user.rank} with {DB_user.xp_count} xp")
 
     @commands.group()
-    @commands.check(Helper.t3_only)
+    @commands.check(helper.t3_only)
     async def add(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(Helper.t3_only)
+    @commands.check(helper.t3_only)
     async def remove(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(Helper.t3_only)
+    @commands.check(helper.t3_only)
     async def set(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(Helper.t3_only)
+    @commands.check(helper.t3_only)
     async def modify(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(Helper.mod_only)
+    @commands.check(helper.mod_only)
     async def xp(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
@@ -573,25 +574,25 @@ class Commands(commands.Cog):
             config.Misc.change("latest_info", latest_info)
             await self.bot.reply_to_msg(ctx.message, "The latest info message has been changed!")
 
-    @commands.check(Helper.mod_only)
+    @commands.check(helper.mod_only)
     @set.command(name="base_level_value")
     async def set_base_rank_value(self, ctx, base_level_value: int):
         config.Misc.change("base_level_value", base_level_value)
         await self.bot.reply_to_msg(ctx.message, "The base level value has been changed!")
 
-    @commands.check(Helper.mod_only)
+    @commands.check(helper.mod_only)
     @set.command(name="level_value_multiplier")
     async def set_rank_value_multiplier(self, ctx, level_value_multiplier: float):
         config.Misc.change("level_value_multiplier", level_value_multiplier)
         await self.bot.reply_to_msg(ctx.message, "The level value multiplier has been changed!")
 
-    @commands.check(Helper.mod_only)
+    @commands.check(helper.mod_only)
     @set.command(name="xp_gain_value")
     async def set_xp_gain_value(self, ctx, xp_gain_value: int):
         config.Misc.change("xp_gain_value", xp_gain_value)
         await self.bot.reply_to_msg(ctx.message, "The xp gain value has been changed!")
 
-    @commands.check(Helper.mod_only)
+    @commands.check(helper.mod_only)
     @set.command(name="xp_gain_delay")
     async def set_xp_gain_delay(self, ctx, xp_gain_delay: int):
         config.Misc.change("xp_gain_delay", xp_gain_delay)
@@ -606,7 +607,7 @@ class Commands(commands.Cog):
             config.Misc.change("levelling_state", True)
             await self.bot.reply_to_msg(ctx.message, "The levelling system is now active!")
 
-    @commands.check(Helper.mod_only)
+    @commands.check(helper.mod_only)
     @set.command(name="main_guild")
     async def set_main_guild(self, ctx, guild_id: int = None):
         if not guild_id:
@@ -667,7 +668,7 @@ class Commands(commands.Cog):
                                         f"They are now rank {profile.rank} ({profile.xp_count} xp)")
 
     @commands.command()
-    @commands.check(Helper.mod_only)
+    @commands.check(helper.mod_only)
     async def set_git_hook_channel(self, ctx, channel: commands.TextChannelConverter):
         config.Misc.change("githook_channel", channel.id)
         await self.bot.reply_to_msg(ctx.message,
@@ -675,7 +676,7 @@ class Commands(commands.Cog):
                                     f"{self.bot.get_channel(channel.id).mention}!")
 
     @commands.command()
-    @commands.check(Helper.mod_only)
+    @commands.check(helper.mod_only)
     async def prefix(self, ctx, *, prefix: str):
         config.Misc.change("prefix", prefix)
         self.bot.command_prefix = prefix
