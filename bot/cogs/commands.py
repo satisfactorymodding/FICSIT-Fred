@@ -64,11 +64,10 @@ class Commands(commands.Cog):
         if message.content.startswith(self.bot.command_prefix):
             name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if command := config.Commands.fetch(name):
-                if command['content'][0] == self.bot.command_prefix:  # for linked aliases of commands like rp<-ff
-                    if not (lnk_cmd := config.Commands.fetch(command['content'][1:])):
-                        raise commands.CommandNotFound(f"BROKEN ALIAS {command['name']}->{command['content'][1:]}")
-                    else:
-                        command = lnk_cmd
+                if content := command['content']:
+                    if content.startswith(self.bot.command_prefix):  # for linked aliases of commands like rp<-ff
+                        if (lnk_cmd := config.Commands.fetch(command['content'][1:])):
+                            command = lnk_cmd
 
                 attachment = None
                 if command["attachment"]:
@@ -238,6 +237,12 @@ class Commands(commands.Cog):
             response, attachment = await self.bot.reply_question(ctx.message,
                                                                  "What should the response be?")
 
+        alias_check = response.partition(self.bot.command_prefix)
+        if alias_check[1]:
+            msg = f"This will attempt create an alias of `{alias_check[2]}`! Are you sure you want to proceed?"
+            if not await self.bot.reply_yes_or_no(ctx.message, msg):
+                return
+
         config.Commands(name=command_name, content=response, attachment=attachment)
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' added!")
@@ -308,8 +313,8 @@ class Commands(commands.Cog):
         elif (link := cmd['content'])[0] == self.bot.command_prefix:
             try:
                 confirm = await self.bot.reply_question(ctx.message,
-                                                        f"`{cmd_to_alias}` is an alias for `{link[1:]}. "
-                                                        f"Add aliases to `{link[1:]}?")
+                                                        f"`{cmd_to_alias}` is an alias for `{link[1:]}`. "
+                                                        f"Add aliases to `{link[1:]}`?")
                 if not confirm:
                     await self.bot.reply_to_msg(ctx.message, f"Aborting")
                     return
@@ -362,7 +367,7 @@ class Commands(commands.Cog):
     @remove.command(name="alias")
     async def remove_alias(self, ctx, command_name: str.lower):
         if not (cmd := config.Commands.fetch(command_name)):
-            await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
+            await self.bot.reply_to_msg(ctx.message, "Alias could not be found!")
             return
         elif cmd['content'][0] != self.bot.command_prefix:
             await self.bot.reply_to_msg(ctx.message, "This command is not an alias!")
@@ -370,7 +375,7 @@ class Commands(commands.Cog):
         else:
             config.Commands.deleteBy(name=command_name)
 
-        await self.bot.reply_to_msg(ctx.message, "Command removed!")
+        await self.bot.reply_to_msg(ctx.message, "Alias removed!")
 
     @add.command(name="crash")
     async def add_crash(self, ctx, crash_name: str.lower, match: str = None, *, response: str = None):
@@ -527,8 +532,8 @@ class Commands(commands.Cog):
         config.RankRoles(role_id=role_id, rank=rank)
         await self.bot.reply_to_msg(ctx.message, "level role " + ctx.message.guild.get_role(role_id).name + " added!")
 
-    @remove.command(name="rank_role")
-    async def remove_rank_role(self, ctx, role: commands.RoleConverter):
+    @remove.command(name="level_role")
+    async def remove_level_role(self, ctx, role: commands.RoleConverter):
         role_id = role.id
 
         if config.RankRoles.fetch_by_role(role_id):
