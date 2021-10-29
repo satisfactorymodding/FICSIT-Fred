@@ -8,7 +8,7 @@ import json
 import config
 import discord
 
-from bot.libraries import helper
+from libraries import helper
 
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(
