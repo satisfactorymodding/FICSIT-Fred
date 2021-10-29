@@ -106,11 +106,11 @@ class Bot(discord.ext.commands.Bot):
                 AsynchronousLogstashHandler(os.environ.get("FRED_LOG_HOST"), int(os.environ.get("FRED_LOG_PORT")), ""))
             logging.root.addHandler(logging.StreamHandler())
         else:
-            self.logger = logging.Logger("logger")
-        self.logger.setLevel(logging.DEBUG)
+            logging.root = logging.Logger("logger")
+        logging.root.setLevel(logging.DEBUG)
 
-        logging.root.setLevel(logging.INFO)
         self.logger = logging.root
+
         logging.info("Successfully set up the logger")
 
     def setup_cogs(self):
