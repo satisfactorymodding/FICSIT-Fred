@@ -56,7 +56,7 @@ class Bot(discord.ext.commands.Bot):
     async def on_ready(self):
         await self.change_presence(activity=discord.Game("v" + self.version))
         self.isReady = True
-        print(f'We have logged in as {self.user}')
+        logging.info(f'We have logged in as {self.user}')
 
     @staticmethod
     async def on_reaction_add(reaction, user):
@@ -64,7 +64,7 @@ class Bot(discord.ext.commands.Bot):
             await reaction.message.delete()
 
     def setup_DB(self):
-        self.logger.info("Connecting to the database")
+        logging.info("Connecting to the database")
         user = os.environ.get("FRED_SQL_USER")
         password = os.environ.get("FRED_SQL_PASSWORD")
         host = os.environ.get("FRED_SQL_HOST")
@@ -76,11 +76,12 @@ class Bot(discord.ext.commands.Bot):
             sql.sqlhub.processConnection = connection
             config.create_missing_tables()
         except sql.dberrors.OperationalError:
+            logging.warning("DB is either empty of not running")
             try:
                 con = psycopg2.connect(dbname="postgres", user=user, password=password, host=host, port=port)
             except psycopg2.OperationalError:
-                raise EnvironmentError("The DB isn't running.")
-
+                logging.error("The DB isn't running")
+                raise EnvironmentError("The DB isn't running")
             autocommit = psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT
             con.set_isolation_level(autocommit)
             cursor = con.cursor()
@@ -95,20 +96,25 @@ class Bot(discord.ext.commands.Bot):
         try:
             config.Commands.get(1)
         except:
-            self.logger.warning("There is no registered command. Populating the database with the old config file.")
+            logging.warning("There is no registered command. Populating the database with the old config file")
             config.convert_old_config()
 
     def setup_logger(self):
         if os.environ.get("FRED_LOG_HOST") and os.environ.get("FRED_LOG_PORT"):
-            self.logger = logging.getLogger("python-logstash-logger")
-            self.logger.addHandler(
+            logging.root = logging.getLogger("python-logstash-logger")
+            logging.root.addHandler(
                 AsynchronousLogstashHandler(os.environ.get("FRED_LOG_HOST"), int(os.environ.get("FRED_LOG_PORT")), ""))
-            self.logger.addHandler(logging.StreamHandler())
+            logging.root.addHandler(logging.StreamHandler())
         else:
             self.logger = logging.Logger("logger")
         self.logger.setLevel(logging.DEBUG)
 
+        logging.root.setLevel(logging.INFO)
+        self.logger = logging.root
+        logging.info("Successfully set up the logger")
+
     def setup_cogs(self):
+        logging.info("Setting up cogs")
         self.add_cog(commands.Commands(self))
         self.add_cog(webhooklistener.Githook(self))
         self.add_cog(mediaonly.MediaOnly(self))
@@ -119,6 +125,7 @@ class Bot(discord.ext.commands.Bot):
         self.MediaOnly = self.get_cog("MediaOnly")
         self.Crashes = self.get_cog("Crashes")
         self.DialogFlow = self.get_cog("DialogFlow")
+        logging.info("Successfully set up cogs")
 
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
@@ -134,25 +141,29 @@ class Bot(discord.ext.commands.Bot):
         for string in traceback.format_tb(tb):
             tbs = tbs + string
         tbs = tbs + "```"
-        print(tbs.replace("```", ""))
-
+        logging.error(tbs.replace("```", ""))
         await self.get_channel(748229790825185311).send(tbs)
 
     async def githook_send(self, data):
+        logging.info("Handling GitHub payload", extra={'data': data})
         embed = await CreateEmbed.run(data, self)
         if embed == "Debug":
             self.logger.info("Non-supported Payload received")
         else:
+            logging.info("GitHub payload was supported, sending an embed")
             channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
 
     @staticmethod
     async def send_DM(user, content, embed=None, file=None):
+        logging.info("Sending a DM", extra=helper.userdict(user))
         DB_user = config.Users.create_if_missing(user)
         if not DB_user.accepts_dms:
+            logging.info("The user refuses to have DMs sent to them")
             return None
 
         if not user.dm_channel:
+            logging.info(f"We did not have a DM channel with someone, creating one", extra=helper.userdict(user))
             await user.create_dm()
         try:
             if not embed:
@@ -168,6 +179,9 @@ class Bot(discord.ext.commands.Bot):
         reference = (message.reference if propagate_reply else None) or message
         if isinstance(reference, discord.MessageReference):
             reference.fail_if_not_exists = False
+        logpayload = helper.messagedict(message)
+        logpayload['reference'] = reference.message_id if 'message_id' in reference else reference.id
+        logging.info(f"Replying to a message", extra=logpayload)
         return await message.channel.send(content, reference=reference, **kwargs)
 
     async def reply_question(self, message, question):
@@ -198,13 +212,17 @@ class Bot(discord.ext.commands.Bot):
     async def on_message(self, message):
         if message.author.bot or not self.is_running():
             return
+        logging.info("Processing a message", extra=helper.messagedict(message))
         if isinstance(message.channel, discord.DMChannel):
+            logging.info("Processing a DM", extra=helper.messagedict(message))
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
+                logging.info("A user now accepts to receive DMs", extra=helper.messagedict(message))
                 await self.reply_to_msg(message, "You will now receive level changes notifications !")
                 return
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
+                logging.info("A user now refuses to receive DMs", extra=helper.messagedict(message))
                 await self.reply_to_msg(message, "You will no longer receive level changes notifications !")
                 return
 
@@ -216,6 +234,7 @@ class Bot(discord.ext.commands.Bot):
                 reacted = await self.Crashes.process_message(message)
                 if not reacted:
                     await self.DialogFlow.process_message(message)
+        logging.info("Finished processing a message", extra=helper.messagedict(message))
 
 
 intents = discord.Intents.default()
