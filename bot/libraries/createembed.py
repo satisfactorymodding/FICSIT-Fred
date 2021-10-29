@@ -85,7 +85,7 @@ def push(data):
     desc = ""
     for commit in commits:
         desc = f'{desc}[`{commit["id"][:7]}`]({commit["url"]}) ' \
-               f'{commit["message"].split(line_return)[0]} - {commit["committer"]["name"]}\n' \
+               f'{commit["message"].split(line_return)[0]} - {commit["author"]["name"]}\n' \
                f'✅ {len(commit["added"])} ❌ {len(commit["removed"])} 📝 {len(commit["modified"])}\n'
 
     commitLength = len(commits)
@@ -94,7 +94,7 @@ def push(data):
         desc = ""
         for commit in commits[:commitLength]:
             desc = f'{desc}[`{commit["id"][:7]}`]({commit["url"]}) ' \
-                   f'{commit["message"].split(line_return)[0]} - {commit["committer"]["name"]}\n' \
+                   f'{commit["message"].split(line_return)[0]} - {commit["author"]["name"]}\n' \
                    f'✅ {len(commit["added"])} ❌ {len(commit["removed"])} 📝 {len(commit["modified"])}\n'
 
     if commitLength != len(commits):

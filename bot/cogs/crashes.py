@@ -226,12 +226,24 @@ class Crashes(commands.Cog):
                             sml_version = metadata["smlVersion"]
                         smm_version = metadata["smmVersion"]
 
-                elif 'FactoryGame.log' in zip_f.namelist():
+                if 'FactoryGame.log' in zip_f.namelist():
                     # Try to find CL and SML versions in FactoryGame.log
                     with zip_f.open("FactoryGame.log") as fg_log:
                         fg_log_content = fg_log.read().decode("utf-8")
-                        sml_version, game_version, path, launcher_id, commandline = \
+                        fg_sml_version, fg_game_version, fg_path, fg_launcher_id, fg_commandline = \
                             self.extract_game_info_from_text(fg_log_content[:200000])
+                        
+                        # If a property was not found before, use the one from the log
+                        if not sml_version and fg_sml_version:
+                            sml_version = fg_sml_version
+                        if not game_version and fg_game_version:
+                            game_version = fg_game_version
+                        if not path and fg_path:
+                            path = fg_path
+                        if not launcher_id and fg_launcher_id:
+                            launcher_id = fg_launcher_id
+                        if not commandline and fg_commandline:
+                            commandline = fg_commandline
 
             sml_outdated = await self.make_sml_version_message(game_version, sml_version)
             if sml_outdated:
