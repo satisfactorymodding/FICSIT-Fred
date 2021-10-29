@@ -17,8 +17,8 @@ import config
 from concurrent.futures import ThreadPoolExecutor
 from time import strptime
 
-import libraries.helper as Helper
-import libraries.createembed as CreateEmbed
+from libraries import helper
+from libraries import createembed
 
 
 def timeout(seconds=2, error_message=os.strerror(errno.ETIME)):
@@ -108,7 +108,7 @@ class Crashes(commands.Cog):
                 }
             }
             }"""
-            result = await Helper.repository_query(query, self.bot)
+            result = await helper.repository_query(query, self.bot)
             sml_versions = result["data"]["getSMLVersions"]["sml_versions"]
             for i in range(0, len(sml_versions) - 1):
                 if sml_versions[i]["satisfactory_version"] > game_version:
@@ -173,7 +173,7 @@ class Crashes(commands.Cog):
                     date
                 }
             }"""
-            result = await Helper.repository_query(query, self.bot)
+            result = await helper.repository_query(query, self.bot)
             results.update(result)
 
         mods_with_dates = results["data"]["getMods"]["mods"]
@@ -232,7 +232,7 @@ class Crashes(commands.Cog):
                         fg_log_content = fg_log.read().decode("utf-8")
                         fg_sml_version, fg_game_version, fg_path, fg_launcher_id, fg_commandline = \
                             self.extract_game_info_from_text(fg_log_content[:200000])
-                        
+
                         # If a property was not found before, use the one from the log
                         if not sml_version and fg_sml_version:
                             sml_version = fg_sml_version
@@ -369,7 +369,7 @@ class Crashes(commands.Cog):
                 responses += [("Version Info (ignore this)", version_info)]
 
         if len(responses) > 2:
-            await self.bot.reply_to_msg(message, embed=CreateEmbed.crashes(responses))
+            await self.bot.reply_to_msg(message, embed=createembed.crashes(responses))
         else:
             for response in responses:
                 await self.bot.reply_to_msg(message, response[1], propagate_reply=False)

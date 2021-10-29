@@ -9,9 +9,10 @@ from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welc
 import discord
 import discord.ext.commands
 import sqlobject as sql
-import config
-import libraries.createembed as CreateEmbed
+from libraries import createembed, helper
 from logstash_async.handler import AsynchronousLogstashHandler
+import config
+
 
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
@@ -131,7 +132,7 @@ class Bot(discord.ext.commands.Bot):
 
     async def githook_send(self, data):
         logging.info("Handling GitHub payload", extra={'data': data})
-        embed = await CreateEmbed.run(data, self)
+        embed = await createembed.run(data, self)
         if embed == "Debug":
             self.logger.info("Non-supported Payload received")
         else:
@@ -152,7 +153,7 @@ class Bot(discord.ext.commands.Bot):
             await user.create_dm()
         try:
             if not embed:
-                embed = CreateEmbed.DM(content)
+                embed = createembed.DM(content)
                 content = None
             return await user.dm_channel.send(content=content, embed=embed, file=file)
         except Exception as e:
@@ -164,9 +165,7 @@ class Bot(discord.ext.commands.Bot):
         reference = (message.reference if propagate_reply else None) or message
         if isinstance(reference, discord.MessageReference):
             reference.fail_if_not_exists = False
-        logpayload = helper.messagedict(message)
-        logpayload['reference'] = reference.message_id if 'message_id' in reference else reference.id
-        logging.info(f"Replying to a message", extra=logpayload)
+        logging.info(f"Replying to a message", extra=helper.messagedict(message))
         return await message.channel.send(content, reference=reference, **kwargs)
 
     async def reply_question(self, message, question):

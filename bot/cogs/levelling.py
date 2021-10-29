@@ -7,7 +7,7 @@ import config
 from datetime import *
 import math
 
-from bot.libraries import helper
+from libraries import helper
 
 
 class UserProfile:
