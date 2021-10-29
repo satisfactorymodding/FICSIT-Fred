@@ -9,11 +9,6 @@ import logging
 
 line_return = '\n'  # needed later for f-strings because finicky interpreter
 
-if not os.path.exists("../config/config.json"):
-    shutil.copyfile("../config/config_example.json", "../config/config.json")
-with open("../config/config.json", "r") as file:
-    Config = json.load(file)
-
 
 # Github Update Embed Formats
 async def run(data, client):

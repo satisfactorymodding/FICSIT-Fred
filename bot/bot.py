@@ -2,17 +2,17 @@ import asyncio
 import logging
 import os
 import sys
+import time
 import traceback
 import aiohttp
 from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
 import discord
 import discord.ext.commands
 import sqlobject as sql
-import psycopg2
-import psycopg2.extensions
-import config
-import libraries.createembed as CreateEmbed
+from libraries import createembed, helper
 from logstash_async.handler import AsynchronousLogstashHandler
+import config
+
 
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
@@ -71,33 +71,19 @@ class Bot(discord.ext.commands.Bot):
         port = os.environ.get("FRED_SQL_PORT")
         dbname = os.environ.get("FRED_SQL_DB")
         uri = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
-        try:
-            connection = sql.connectionForURI(uri)
-            sql.sqlhub.processConnection = connection
-            config.create_missing_tables()
-        except sql.dberrors.OperationalError:
-            logging.warning("DB is either empty of not running")
+        trycount = 0
+        maxtries = 5
+        while trycount < maxtries:
             try:
-                con = psycopg2.connect(dbname="postgres", user=user, password=password, host=host, port=port)
-            except psycopg2.OperationalError:
-                logging.error("The DB isn't running")
-                raise EnvironmentError("The DB isn't running")
-            autocommit = psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT
-            con.set_isolation_level(autocommit)
-            cursor = con.cursor()
-            cursor.execute("CREATE DATABASE " + dbname)
-            cursor.close()
-            self.dbcon = con
-
-            connection = sql.connectionForURI(uri)
-            sql.sqlhub.processConnection = connection
-            config.create_missing_tables()
-
-        try:
-            config.Commands.get(1)
-        except:
-            logging.warning("There is no registered command. Populating the database with the old config file")
-            config.convert_old_config()
+                connection = sql.connectionForURI(uri)
+                sql.sqlhub.processConnection = connection
+                break
+            except sql.dberrors.OperationalError:
+                logging.error("Could not connect to the DB")
+                trycount +=1
+                time.sleep(5)
+        if trycount == maxtries:
+            raise EnvironmentError("Could not connect to the DB")
 
     def setup_logger(self):
         if os.environ.get("FRED_LOG_HOST") and os.environ.get("FRED_LOG_PORT"):
@@ -146,7 +132,7 @@ class Bot(discord.ext.commands.Bot):
 
     async def githook_send(self, data):
         logging.info("Handling GitHub payload", extra={'data': data})
-        embed = await CreateEmbed.run(data, self)
+        embed = await createembed.run(data, self)
         if embed == "Debug":
             self.logger.info("Non-supported Payload received")
         else:
@@ -167,7 +153,7 @@ class Bot(discord.ext.commands.Bot):
             await user.create_dm()
         try:
             if not embed:
-                embed = CreateEmbed.DM(content)
+                embed = createembed.DM(content)
                 content = None
             return await user.dm_channel.send(content=content, embed=embed, file=file)
         except Exception as e:
@@ -179,9 +165,7 @@ class Bot(discord.ext.commands.Bot):
         reference = (message.reference if propagate_reply else None) or message
         if isinstance(reference, discord.MessageReference):
             reference.fail_if_not_exists = False
-        logpayload = helper.messagedict(message)
-        logpayload['reference'] = reference.message_id if 'message_id' in reference else reference.id
-        logging.info(f"Replying to a message", extra=logpayload)
+        logging.info(f"Replying to a message", extra=helper.messagedict(message))
         return await message.channel.send(content, reference=reference, **kwargs)
 
     async def reply_question(self, message, question):
