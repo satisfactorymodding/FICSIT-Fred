@@ -132,3 +132,5 @@ dmypy.json
 .idea/
 *.xml
 Secrets.json
+mount/
+/.env

@@ -2,14 +2,13 @@ import asyncio
 import logging
 import os
 import sys
+import time
 import traceback
 import aiohttp
 from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
 import discord
 import discord.ext.commands
 import sqlobject as sql
-import psycopg2
-import psycopg2.extensions
 import config
 import libraries.createembed as CreateEmbed
 from logstash_async.handler import AsynchronousLogstashHandler
@@ -71,33 +70,19 @@ class Bot(discord.ext.commands.Bot):
         port = os.environ.get("FRED_SQL_PORT")
         dbname = os.environ.get("FRED_SQL_DB")
         uri = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
-        try:
-            connection = sql.connectionForURI(uri)
-            sql.sqlhub.processConnection = connection
-            config.create_missing_tables()
-        except sql.dberrors.OperationalError:
-            logging.warning("DB is either empty of not running")
+        trycount = 0
+        maxtries = 5
+        while trycount < maxtries:
             try:
-                con = psycopg2.connect(dbname="postgres", user=user, password=password, host=host, port=port)
-            except psycopg2.OperationalError:
-                logging.error("The DB isn't running")
-                raise EnvironmentError("The DB isn't running")
-            autocommit = psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT
-            con.set_isolation_level(autocommit)
-            cursor = con.cursor()
-            cursor.execute("CREATE DATABASE " + dbname)
-            cursor.close()
-            self.dbcon = con
-
-            connection = sql.connectionForURI(uri)
-            sql.sqlhub.processConnection = connection
-            config.create_missing_tables()
-
-        try:
-            config.Commands.get(1)
-        except:
-            logging.warning("There is no registered command. Populating the database with the old config file")
-            config.convert_old_config()
+                connection = sql.connectionForURI(uri)
+                sql.sqlhub.processConnection = connection
+                break
+            except sql.dberrors.OperationalError:
+                logging.error("Could not connect to the DB")
+                trycount +=1
+                time.sleep(5)
+        if trycount == maxtries:
+            raise EnvironmentError("Could not connect to the DB")
 
     def setup_logger(self):
         if os.environ.get("FRED_LOG_HOST") and os.environ.get("FRED_LOG_PORT"):
