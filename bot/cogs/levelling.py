@@ -66,7 +66,6 @@ class UserProfile:
         if expected_level != self.rank:
             logging.info(f"Correcting a mismatched level", extra=logpayload)
             self.DB_user.rank = expected_level
-            self.rank = expected_level
             if self.DB_user.accepts_dms:
                 if expected_level > self.rank:
                     await self.bot.send_DM(self.member,
