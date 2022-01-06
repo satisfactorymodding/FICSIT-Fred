@@ -1,7 +1,6 @@
-import logging
-import re
+from fred_core_imports import *
+
 from html.parser import HTMLParser
-import config
 
 
 def is_bot_author(user_id: int):
@@ -29,16 +28,18 @@ def permission_check(ctx, level: int):
         logging.warning("Checked permissions for someone but they weren't in the main guild", extra=logpayload)
         return False
 
-    has_roles = [role.id for role in (main_guild_member.roles)]
+    user_roles = [role.id for role in main_guild_member.roles]
 
-    for role in perms:
-        if role.perm_lvl >= level:
-            if role.role_id in has_roles:
-                logging.info("A permission check was negative", extra=logpayload)
+    for clearance in perms:
+        if clearance.perm_lvl >= level:
+            if clearance.role_id in user_roles:
+                logging.info(f"A permission check was positive with level {clearance.perm_lvl}", extra=logpayload)
                 return True
         else:
+            logging.info(f"A permission check was negative with level less than required ({clearance.perm_lvl}<",
+                         extra=logpayload)
             break
-    logging.info("A permission check was positive", extra=logpayload)
+
     return False
 
 

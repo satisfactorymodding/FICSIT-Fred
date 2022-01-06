@@ -197,11 +197,11 @@ class Commands(SQLObject):
     content = StringCol()
     attachment = StringCol(default=None)
 
-    def as_dict(self):
+    def as_dict(self) -> dict:
         return dict(name=self.name, content=self.content, attachment=self.attachment)
 
     @staticmethod
-    def fetch(name):
+    def fetch(name) -> dict | None:
         query = Commands.selectBy(name=name.lower())
         results = list(query)
         if results:
@@ -215,11 +215,11 @@ class Crashes(SQLObject):
     crash = StringCol()
     response = StringCol()
 
-    def as_dict(self):
+    def as_dict(self) -> dict:
         return dict(name=self.name, response=self.response, crash=self.crash)
 
     @staticmethod
-    def fetch(name):
+    def fetch(name) -> dict | None:
         query = Crashes.selectBy(name=name.lower())
         results = list(query)
         if results:
@@ -228,10 +228,10 @@ class Crashes(SQLObject):
             return None
 
     @staticmethod
-    def fetch_all():
-        query = Crashes.select()
+    def fetch_all() -> list[dict]:
+        query = Crashes.selectBy()
         results = list(query)
-        return (crash.as_dict() for crash in results)
+        return [crash.as_dict() for crash in results]
 
 
 class ReservedCommands(SQLObject):

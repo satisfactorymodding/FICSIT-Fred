@@ -1,0 +1,379 @@
+{
+    "ref": "refs/heads/master-new",
+    "before": "903108964dd3b0f20e3321d396f7bc268d44a973",
+    "after": "ea85d3cb0a8e9ef392543b79c98c7ed9289f8106",
+    "repository": {
+      "id": 390342348,
+      "node_id": "MDEwOlJlcG9zaXRvcnkzOTAzNDIzNDg=",
+      "name": "FICSIT-Fred",
+      "full_name": "AstroFloof/FICSIT-Fred",
+      "private": false,
+      "owner": {
+        "name": "AstroFloof",
+        "email": "80119007+AstroFloof@users.noreply.github.com",
+        "login": "AstroFloof",
+        "id": 80119007,
+        "node_id": "MDQ6VXNlcjgwMTE5MDA3",
+        "avatar_url": "https://avatars.githubusercontent.com/u/80119007?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/AstroFloof",
+        "html_url": "https://github.com/AstroFloof",
+        "followers_url": "https://api.github.com/users/AstroFloof/followers",
+        "following_url": "https://api.github.com/users/AstroFloof/following{/other_user}",
+        "gists_url": "https://api.github.com/users/AstroFloof/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/AstroFloof/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/AstroFloof/subscriptions",
+        "organizations_url": "https://api.github.com/users/AstroFloof/orgs",
+        "repos_url": "https://api.github.com/users/AstroFloof/repos",
+        "events_url": "https://api.github.com/users/AstroFloof/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/AstroFloof/received_events",
+        "type": "User",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/AstroFloof/FICSIT-Fred",
+      "description": "A Discord bot for the Satisfactory Modding Discord",
+      "fork": true,
+      "url": "https://github.com/AstroFloof/FICSIT-Fred",
+      "forks_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/forks",
+      "keys_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/teams",
+      "hooks_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/hooks",
+      "issue_events_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/events",
+      "assignees_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/tags",
+      "blobs_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/languages",
+      "stargazers_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/stargazers",
+      "contributors_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/contributors",
+      "subscribers_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/subscribers",
+      "subscription_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/subscription",
+      "commits_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/merges",
+      "archive_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/downloads",
+      "issues_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/labels{/name}",
+      "releases_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/AstroFloof/FICSIT-Fred/deployments",
+      "created_at": 1627475007,
+      "updated_at": "2021-11-06T22:28:17Z",
+      "pushed_at": 1640470365,
+      "git_url": "git://github.com/AstroFloof/FICSIT-Fred.git",
+      "ssh_url": "git@github.com:AstroFloof/FICSIT-Fred.git",
+      "clone_url": "https://github.com/AstroFloof/FICSIT-Fred.git",
+      "svn_url": "https://github.com/AstroFloof/FICSIT-Fred",
+      "homepage": null,
+      "size": 2468,
+      "stargazers_count": 0,
+      "watchers_count": 0,
+      "language": "Python",
+      "has_issues": false,
+      "has_projects": true,
+      "has_downloads": true,
+      "has_wiki": false,
+      "has_pages": false,
+      "forks_count": 0,
+      "mirror_url": null,
+      "archived": false,
+      "disabled": false,
+      "open_issues_count": 0,
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "node_id": "MDc6TGljZW5zZTEz"
+      },
+      "allow_forking": true,
+      "is_template": false,
+      "topics": [
+  
+      ],
+      "visibility": "public",
+      "forks": 0,
+      "open_issues": 0,
+      "watchers": 0,
+      "default_branch": "dev",
+      "stargazers": 0,
+      "master_branch": "dev"
+    },
+    "pusher": {
+      "name": "AstroFloof",
+      "email": "80119007+AstroFloof@users.noreply.github.com"
+    },
+    "sender": {
+      "login": "AstroFloof",
+      "id": 80119007,
+      "node_id": "MDQ6VXNlcjgwMTE5MDA3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/80119007?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/AstroFloof",
+      "html_url": "https://github.com/AstroFloof",
+      "followers_url": "https://api.github.com/users/AstroFloof/followers",
+      "following_url": "https://api.github.com/users/AstroFloof/following{/other_user}",
+      "gists_url": "https://api.github.com/users/AstroFloof/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/AstroFloof/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/AstroFloof/subscriptions",
+      "organizations_url": "https://api.github.com/users/AstroFloof/orgs",
+      "repos_url": "https://api.github.com/users/AstroFloof/repos",
+      "events_url": "https://api.github.com/users/AstroFloof/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/AstroFloof/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "created": false,
+    "deleted": false,
+    "forced": false,
+    "base_ref": null,
+    "compare": "https://github.com/AstroFloof/FICSIT-Fred/compare/903108964dd3...ea85d3cb0a8e",
+    "commits": [
+      {
+        "id": "e9f31928d725418ae476e976b89e51f2a3b2a687",
+        "tree_id": "3911715e77b2beb6b8680691d566a950213dbb33",
+        "distinct": true,
+        "message": "feat: structural pattern matching from py 3.10",
+        "timestamp": "2021-10-08T16:00:30-04:00",
+        "url": "https://github.com/AstroFloof/FICSIT-Fred/commit/e9f31928d725418ae476e976b89e51f2a3b2a687",
+        "author": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "committer": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "added": [
+  
+        ],
+        "removed": [
+  
+        ],
+        "modified": [
+          "bot/bot.py",
+          "bot/cogs/commands.py",
+          "bot/cogs/crashes.py",
+          "bot/cogs/webhooklistener.py",
+          "bot/config.py",
+          "bot/libraries/createembed.py"
+        ]
+      },
+      {
+        "id": "6020978256f9db461792510b0a27cdd5f66f12c9",
+        "tree_id": "ae1ee9280f10a806f2955ad6090c589c83b4fbdc",
+        "distinct": true,
+        "message": "spam **kwargs in message passing because it should be there",
+        "timestamp": "2021-10-10T15:07:20-04:00",
+        "url": "https://github.com/AstroFloof/FICSIT-Fred/commit/6020978256f9db461792510b0a27cdd5f66f12c9",
+        "author": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "committer": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "added": [
+  
+        ],
+        "removed": [
+  
+        ],
+        "modified": [
+          "bot/bot.py"
+        ]
+      },
+      {
+        "id": "71244034d52968d745bea548e8f5a7d0d40884ea",
+        "tree_id": "412a4d82bf39272071431096b9e86aa367635ff5",
+        "distinct": true,
+        "message": "Merge remote-tracking branch 'origin/master-new' into master-new\n\n# Conflicts:\n#\tbot/cogs/crashes.py",
+        "timestamp": "2021-10-13T20:03:54-04:00",
+        "url": "https://github.com/AstroFloof/FICSIT-Fred/commit/71244034d52968d745bea548e8f5a7d0d40884ea",
+        "author": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "committer": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "added": [
+  
+        ],
+        "removed": [
+  
+        ],
+        "modified": [
+          "bot/bot.py",
+          "bot/cogs/commands.py",
+          "bot/cogs/crashes.py",
+          "bot/cogs/levelling.py",
+          "bot/cogs/webhooklistener.py"
+        ]
+      },
+      {
+        "id": "49560980407f9df8638a23c10473d08e452b95a0",
+        "tree_id": "63a8b7db6ee7f23a5d1bd81455c27daa87e98023",
+        "distinct": true,
+        "message": "Merge remote-tracking branch 'origin/master-new' into master-new",
+        "timestamp": "2021-11-03T19:47:44-04:00",
+        "url": "https://github.com/AstroFloof/FICSIT-Fred/commit/49560980407f9df8638a23c10473d08e452b95a0",
+        "author": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "committer": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "added": [
+  
+        ],
+        "removed": [
+  
+        ],
+        "modified": [
+          "bot/bot.py",
+          "bot/cogs/commands.py",
+          "bot/cogs/crashes.py"
+        ]
+      },
+      {
+        "id": "04ba6f645f409fecd31f370df29fe128f5cc9bdb",
+        "tree_id": "e6eb1792de5b632004ef0c64e9ee91cea9cfc214",
+        "distinct": true,
+        "message": "Merge remote-tracking branch 'origin/master-new' into master-new\n\n# Conflicts:\n#\tbot/bot.py\n#\tbot/cogs/crashes.py\n#\tbot/cogs/webhooklistener.py\n#\tbot/config.py\n#\tbot/libraries/createembed.py",
+        "timestamp": "2021-11-06T14:07:26-04:00",
+        "url": "https://github.com/AstroFloof/FICSIT-Fred/commit/04ba6f645f409fecd31f370df29fe128f5cc9bdb",
+        "author": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "committer": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "added": [
+          "exampledb.sql"
+        ],
+        "removed": [
+          "config/config_example.json"
+        ],
+        "modified": [
+          ".github/workflows/docker-publish.yml",
+          ".gitignore",
+          "bot/bot.py",
+          "bot/cogs/commands.py",
+          "bot/cogs/crashes.py",
+          "bot/cogs/dialogflow.py",
+          "bot/cogs/levelling.py",
+          "bot/cogs/mediaonly.py",
+          "bot/cogs/webhooklistener.py",
+          "bot/cogs/welcome.py",
+          "bot/config.py",
+          "bot/libraries/createembed.py",
+          "bot/libraries/helper.py",
+          "docker-compose.yml"
+        ]
+      },
+      {
+        "id": "ea85d3cb0a8e9ef392543b79c98c7ed9289f8106",
+        "tree_id": "5de1048b2425c9b5c427f14d970dd185be1ca6ad",
+        "distinct": true,
+        "message": "refactor, qol, and some bug fixes",
+        "timestamp": "2021-12-25T17:11:57-05:00",
+        "url": "https://github.com/AstroFloof/FICSIT-Fred/commit/ea85d3cb0a8e9ef392543b79c98c7ed9289f8106",
+        "author": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "committer": {
+          "name": "AstroFloof",
+          "email": "does.not.kompute@gmail.com",
+          "username": "AstroFloof"
+        },
+        "added": [
+          "bot/libraries/common.py"
+        ],
+        "removed": [
+          "bot/libraries/helper.py"
+        ],
+        "modified": [
+          "Dockerfile",
+          "bot/bot.py",
+          "bot/cogs/commands.py",
+          "bot/cogs/crashes.py",
+          "bot/cogs/dialogflow.py",
+          "bot/cogs/levelling.py",
+          "bot/cogs/mediaonly.py",
+          "bot/cogs/welcome.py",
+          "bot/config.py",
+          "bot/libraries/createembed.py",
+          "requirements.txt"
+        ]
+      }
+    ],
+    "head_commit": {
+      "id": "ea85d3cb0a8e9ef392543b79c98c7ed9289f8106",
+      "tree_id": "5de1048b2425c9b5c427f14d970dd185be1ca6ad",
+      "distinct": true,
+      "message": "refactor, qol, and some bug fixes",
+      "timestamp": "2021-12-25T17:11:57-05:00",
+      "url": "https://github.com/AstroFloof/FICSIT-Fred/commit/ea85d3cb0a8e9ef392543b79c98c7ed9289f8106",
+      "author": {
+        "name": "AstroFloof",
+        "email": "does.not.kompute@gmail.com",
+        "username": "AstroFloof"
+      },
+      "committer": {
+        "name": "AstroFloof",
+        "email": "does.not.kompute@gmail.com",
+        "username": "AstroFloof"
+      },
+      "added": [
+        "bot/libraries/common.py"
+      ],
+      "removed": [
+        "bot/libraries/helper.py"
+      ],
+      "modified": [
+        "Dockerfile",
+        "bot/bot.py",
+        "bot/cogs/commands.py",
+        "bot/cogs/crashes.py",
+        "bot/cogs/dialogflow.py",
+        "bot/cogs/levelling.py",
+        "bot/cogs/mediaonly.py",
+        "bot/cogs/welcome.py",
+        "bot/config.py",
+        "bot/libraries/createembed.py",
+        "requirements.txt"
+      ]
+    }
+  }

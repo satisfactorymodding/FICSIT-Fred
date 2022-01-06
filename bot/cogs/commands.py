@@ -1,18 +1,10 @@
-import logging
-import re
-import discord
-import asyncio
-import config
+from fred_core_imports import *
 from cogs import levelling
-from libraries import createembed, helper
-import json
+from libraries import createembed, common
+ 
 from algoliasearch.search_client import SearchClient
-import io
-import typing
-import aiohttp
-
-from discord.ext import commands
-from discord.ext.commands.view import StringView
+from nextcord.ext import commands
+from nextcord.ext.commands.view import StringView
 
 
 def extract_target_type_from_converter_param(missing_argument: commands.MissingRequiredArgument):
@@ -41,41 +33,43 @@ class Commands(commands.Cog):
             if config.Commands.fetch(command):
                 return
         elif isinstance(error, commands.MissingRequiredArgument):
+            self.bot.logger.info("Successfully deferred error of missing required argument")
             missing_argument_name, target_type = extract_target_type_from_converter_param(error.param)
             output = f"You are missing at least one parameter for this command: '{missing_argument_name}'"
             if target_type:
                 output += f" of type '{target_type}'"
             await ctx.send(output)
         elif isinstance(error, commands.CheckFailure):
+            self.bot.logger.info("Successfully deferred error af insufficient permissions")
             await ctx.send("Sorry, but you do not have enough permissions to do this.")
         elif isinstance(error, commands.errors.CommandInvokeError):
-            # use error.original here because error is discord.ext.commands.errors.CommandInvokeError
+            self.bot.logger.info("Deferring error of command invocation")
+            # use error.original here because error is nextcord.ext.commands.errors.CommandInvokeError
             if isinstance(error.original, asyncio.exceptions.TimeoutError):
-                pass  # this is raised to escape a bunch of value passing if timed out, but should not raise big errors.
-        else:
-            await ctx.send("I encountered an error while trying to call this command. Feyko has been notified")
-            raise error
+                return  # this is raised to escape a bunch of value passing if timed out, but should not raise big errors.
+
+        await ctx.send("I encountered an error while trying to call this command. Feyko has been notified")
+        raise error
 
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or not self.bot.is_running():
             return
-        self.bot.logger.info("Commands: Processing a message", extra=helper.messagedict(message))
+        self.bot.logger.info("Commands: Processing a message", extra=common.messagedict(message))
         if message.content.startswith(self.bot.command_prefix):
             name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
-            self.bot.logger.info(f"Commands: Processing the command {name}", extra=helper.messagedict(message))
+            self.bot.logger.info(f"Commands: Processing the command {name}", extra=common.messagedict(message))
             if command := config.Commands.fetch(name):
                 if content := command['content']:
                     if content.startswith(self.bot.command_prefix):  # for linked aliases of commands like rp<-ff
-                        if (lnk_cmd := config.Commands.fetch(command['content'][1:])):
+                        if lnk_cmd := config.Commands.fetch(command['content'][1:]):
                             command = lnk_cmd
 
                 attachment = None
                 if command["attachment"]:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(command["attachment"]) as resp:
-                            buff = io.BytesIO(await resp.read())
-                            attachment = discord.File(filename=command["attachment"].split("/")[-1], fp=buff)
+                    async with self.bot.web_session.get(command["attachment"]) as resp:
+                        buff = io.BytesIO(await resp.read())
+                        attachment = nextcord.File(filename=command["attachment"].split("/")[-1], fp=buff)
                 args = []
                 view = StringView(message.content.lstrip(self.bot.command_prefix))
                 view.get_word()  # command name
@@ -169,35 +163,35 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, f"{user.name} is level {DB_user.rank} with {DB_user.xp_count} xp")
 
     @commands.group()
-    @commands.check(helper.t3_only)
+    @commands.check(common.t3_only)
     async def add(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(helper.t3_only)
+    @commands.check(common.t3_only)
     async def remove(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(helper.t3_only)
+    @commands.check(common.t3_only)
     async def set(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(helper.t3_only)
+    @commands.check(common.t3_only)
     async def modify(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
             return
 
     @commands.group()
-    @commands.check(helper.mod_only)
+    @commands.check(common.mod_only)
     async def xp(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
@@ -275,7 +269,7 @@ class Commands(commands.Cog):
             try:
                 question = "Command could not be found! Do you want to create it?"
                 if await self.bot.reply_yes_or_no(ctx.message, question):
-                    await self.add_command(ctx, command_name, command_response)
+                    await self.add_command(ctx, command_name, response=command_response)
                 else:
                     await self.bot.reply_to_msg(ctx.message, "Understood. Aborting")
                 return
@@ -285,7 +279,7 @@ class Commands(commands.Cog):
         elif (linked_command := results[0].content)[0] == self.bot.command_prefix:
             try:
                 question = f"`{command_name}` is an alias of `{linked_command[1:]}`. Modify original?"
-                if (choice := await self.bot.reply_yes_or_no(ctx.message, question)):
+                if await self.bot.reply_yes_or_no(ctx.message, question):
                     command_name = linked_command[1:]
                 else:
                     await self.bot.reply_to_msg(ctx.message, f"Modifying {command_name}")
@@ -388,7 +382,7 @@ class Commands(commands.Cog):
             match, _ = await self.bot.reply_question(ctx.message, "What should the logs match (regex)?")
         try:
             re.search(match, "test")
-        except:
+        except re.error:
             await self.bot.reply_to_msg(ctx.message,
                                         "The regex isn't valid. Please refer to "
                                         "https://docs.python.org/3/library/re.html for docs on Python's regex library")
@@ -441,7 +435,7 @@ class Commands(commands.Cog):
         await self.bot.reply_to_msg(ctx.message, f"Crash '{crash_name}' modified!")
 
     @add.command(name="dialogflow")
-    async def add_dialogflow(self, ctx, intent_id: str, response: typing.Union[bool, str], has_followup: bool, *args):
+    async def add_dialogflow(self, ctx, intent_id: str, response: bool | str, has_followup: bool, *args):
         if len(args) == 0:
             data = None
         else:
@@ -579,25 +573,25 @@ class Commands(commands.Cog):
             config.Misc.change("latest_info", latest_info)
             await self.bot.reply_to_msg(ctx.message, "The latest info message has been changed!")
 
-    @commands.check(helper.mod_only)
+    @commands.check(common.mod_only)
     @set.command(name="base_level_value")
     async def set_base_rank_value(self, ctx, base_level_value: int):
         config.Misc.change("base_level_value", base_level_value)
         await self.bot.reply_to_msg(ctx.message, "The base level value has been changed!")
 
-    @commands.check(helper.mod_only)
+    @commands.check(common.mod_only)
     @set.command(name="level_value_multiplier")
     async def set_rank_value_multiplier(self, ctx, level_value_multiplier: float):
         config.Misc.change("level_value_multiplier", level_value_multiplier)
         await self.bot.reply_to_msg(ctx.message, "The level value multiplier has been changed!")
 
-    @commands.check(helper.mod_only)
+    @commands.check(common.mod_only)
     @set.command(name="xp_gain_value")
     async def set_xp_gain_value(self, ctx, xp_gain_value: int):
         config.Misc.change("xp_gain_value", xp_gain_value)
         await self.bot.reply_to_msg(ctx.message, "The xp gain value has been changed!")
 
-    @commands.check(helper.mod_only)
+    @commands.check(common.mod_only)
     @set.command(name="xp_gain_delay")
     async def set_xp_gain_delay(self, ctx, xp_gain_delay: int):
         config.Misc.change("xp_gain_delay", xp_gain_delay)
@@ -612,7 +606,7 @@ class Commands(commands.Cog):
             config.Misc.change("levelling_state", True)
             await self.bot.reply_to_msg(ctx.message, "The levelling system is now active!")
 
-    @commands.check(helper.mod_only)
+    @commands.check(common.mod_only)
     @set.command(name="main_guild")
     async def set_main_guild(self, ctx, guild_id: int = None):
         if not guild_id:
@@ -673,7 +667,7 @@ class Commands(commands.Cog):
                                         f"They are now rank {profile.rank} ({profile.xp_count} xp)")
 
     @commands.command()
-    @commands.check(helper.mod_only)
+    @commands.check(common.mod_only)
     async def set_git_hook_channel(self, ctx, channel: commands.TextChannelConverter):
         config.Misc.change("githook_channel", channel.id)
         await self.bot.reply_to_msg(ctx.message,
@@ -681,7 +675,7 @@ class Commands(commands.Cog):
                                     f"{self.bot.get_channel(channel.id).mention}!")
 
     @commands.command()
-    @commands.check(helper.mod_only)
+    @commands.check(common.mod_only)
     async def prefix(self, ctx, *, prefix: str):
         config.Misc.change("prefix", prefix)
         self.bot.command_prefix = prefix
