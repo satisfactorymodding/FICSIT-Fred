@@ -3,7 +3,7 @@ import asyncio
 import config
 import io
 import json
-import jsonpickle
+# import jsonpickle
 import logging
 import math
 import nextcord

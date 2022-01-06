@@ -32,6 +32,8 @@ class Commands(commands.Cog):
             command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if config.Commands.fetch(command):
                 return
+            self.bot.logger.warning("Commands: invalid command attempted")
+            return
         elif isinstance(error, commands.MissingRequiredArgument):
             self.bot.logger.info("Successfully deferred error of missing required argument")
             missing_argument_name, target_type = extract_target_type_from_converter_param(error.param)
@@ -39,9 +41,11 @@ class Commands(commands.Cog):
             if target_type:
                 output += f" of type '{target_type}'"
             await ctx.send(output)
+            return
         elif isinstance(error, commands.CheckFailure):
             self.bot.logger.info("Successfully deferred error af insufficient permissions")
             await ctx.send("Sorry, but you do not have enough permissions to do this.")
+            return
         elif isinstance(error, commands.errors.CommandInvokeError):
             self.bot.logger.info("Deferring error of command invocation")
             # use error.original here because error is nextcord.ext.commands.errors.CommandInvokeError
