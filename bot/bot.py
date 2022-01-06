@@ -38,7 +38,7 @@ class Bot(nextcord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.17.5"
+        self.version = "2.17.6"
 
         self.loop = asyncio.new_event_loop()
 
