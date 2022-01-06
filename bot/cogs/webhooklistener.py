@@ -1,13 +1,9 @@
-import logging
-import traceback
+from fred_core_imports import *
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import json
-import sys
 import socket
-import os
 import threading
-import discord.ext.commands as commands
-import asyncio
+import nextcord.ext.commands as commands
 
 
 def runServer(self, bot):
@@ -20,7 +16,7 @@ class Githook(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        # Run Github webhook handling server
+        # Run GitHub webhook handling server
         try:
             botargs = [bot, bot]
             daemon = threading.Thread(target=runServer, args=botargs)
@@ -34,7 +30,7 @@ class Githook(commands.Cog):
             logging.error(f'Failed to run the webserver:\n{tbs}')
 
 
-# handle POST events from github server
+# handle POST events from GitHub server
 # We should also make sure to ignore requests from the IRC, which can clutter
 # the output with errors
 CONTENT_TYPE = 'content-type'
@@ -47,21 +43,23 @@ def MakeGithookHandler(bot):
 
         def do_HEAD(self):
             logging.info("Handling a HEAD request")
-            if self.path == "/ready":
-                self.send_response(200 if bot.isReady else 503)
-            elif self.path == "/healthy":
-                self.send_response(200 if bot.isAlive() else 503)
-            else:
-                self.send_response(200)
+            match self.path:
+                case "/ready":
+                    self.send_response(200 if bot.isReady else 503)
+                case "/healthy":
+                    self.send_response(200 if bot.isAlive() else 503)
+                case _:
+                    self.send_response(200)
 
         def do_GET(self):
             logging.info("Handling a GET request")
-            if self.path == "/ready":
-                self.send_response(200 if bot.isReady else 503)
-            elif self.path == "/healthy":
-                self.send_response(200 if bot.isAlive() else 503)
-            else:
-                self.send_response(200)
+            match self.path:
+                case "/ready":
+                    self.send_response(200 if bot.isReady else 503)
+                case "/healthy":
+                    self.send_response(200 if bot.isAlive() else 503)
+                case _:
+                    self.send_response(200)
 
         def do_CONNECT(self):
             logging.info("Handling a CONNECT request")
