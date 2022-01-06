@@ -14,7 +14,7 @@ class UserProfile:
         self.bot = bot
         self.user_id = user_id
 
-        assert bot.intents.members, "The bot has no member read permissions!!"
+        assert bot.intents.members, "The bot has no member intents, so it cannot do levelling!!"
         self.member = bot.get_user(user_id)
         assert self.member is not None, "This member does not exist o.0"
         logging.info(f"Found member id {self.member}")
