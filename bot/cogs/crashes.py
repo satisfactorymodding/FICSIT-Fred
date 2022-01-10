@@ -10,11 +10,17 @@ from time import strptime
 from typing import AsyncIterator
 
 
+REGEX_LIMIT: float = 2
+
+
 async def regex_with_timeout(*args, **kwargs):
     try:
-        return await asyncio.wait_for(asyncio.to_thread(re.search, *args, **kwargs), 5)
+        return await asyncio.wait_for(asyncio.to_thread(re.search, *args, **kwargs), REGEX_LIMIT)
     except asyncio.TimeoutError:
-        logging.error(f"A regex timed out! ({args[0]}) with flags {kwargs['flags']} on text of length {len(args[1])}")
+        raise TimeoutError(f"A regex timed out after {REGEX_LIMIT} seconds! \n"
+                           f"pattern: ({args[0]}) \n"
+                           f"flags: {kwargs['flags']} \n"
+                           f"on text of length {len(args[1])}")
 
 
 class Crashes(commands.Cog):
@@ -32,7 +38,7 @@ class Crashes(commands.Cog):
     def filter_epic_commandline(cli: str) -> str:
         return ' '.join(filter(lambda opt: "auth" not in opt.lower(), cli.split()))
 
-    def parse_factory_game_log(self, text: str) -> dict[str, str | int]:
+    async def parse_factory_game_log(self, text: str) -> dict[str, str | int]:
         logging.info("ContentParse: Extracting game info")
         lines = text.splitlines()
         vanilla_info_search_area = filter(lambda l: re.match("^LogInit", l), lines)
@@ -42,7 +48,7 @@ class Crashes(commands.Cog):
         for line in vanilla_info_search_area:
             if not patterns:
                 break
-            elif match := patterns[0].search(line):
+            elif match := await regex_with_timeout(patterns[0], line):
                 info |= match.groupdict()
                 patterns.pop(0)
         else:
@@ -50,7 +56,7 @@ class Crashes(commands.Cog):
 
         mod_loader_logs = filter(lambda l: re.match("LogSatisfactoryModLoader", l), lines)
         for line in mod_loader_logs:
-            if match := re.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):
+            if match := await regex_with_timeout(r"(?<=v\.)(?P<sml>[\d.]+)", line):
                 info |= match.groupdict()
                 break
 
@@ -228,7 +234,7 @@ class Crashes(commands.Cog):
                         # Try to find CL and SML versions in FactoryGame.log
                         with zip_f.open("FactoryGame.log") as fg_log:
                             fg_log_content = fg_log.read().decode("utf-8")
-                            fg_log_info = self.parse_factory_game_log(fg_log_content)
+                            fg_log_info = await self.parse_factory_game_log(fg_log_content)
                             # merge log info into current info
                             # with log as priority because it is more likely to be correct
                             info = {k: x if (x := fg_log_info.get(k)) else info.get(k) for k in fg_log_info | info}
@@ -253,7 +259,7 @@ class Crashes(commands.Cog):
                 logging.info(f"Completed mass-regex for standalone text file - {len(messages)} results")
 
                 logging.info("Attempting to find game info for standalone text file")
-                log_file_info = self.parse_factory_game_log(text)
+                log_file_info = await self.parse_factory_game_log(text)
 
                 if sml_outdated := await self.make_sml_version_message(**log_file_info):
                     messages += [dict(name="Outdated SML!", value=sml_outdated, inline=True)]
@@ -349,7 +355,7 @@ class Crashes(commands.Cog):
 
             responses += await self.process_text(text)
 
-            maybe_log_info = self.parse_factory_game_log(message.content)
+            maybe_log_info = await self.parse_factory_game_log(message.content)
 
             sml_outdated = await self.make_sml_version_message(**maybe_log_info)
             if sml_outdated:
