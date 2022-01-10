@@ -266,12 +266,15 @@ async def mod(name: str, bot) -> (nextcord.Embed, str):
                 desc = f'{desc}{mod["name"]}[™](https://ficsit.app/mod/{mod["id"]})\n'
             if cut:
                 desc += f"\n*And {cut} more...*"
+
             embed = nextcord.Embed(title="Multiple mods found:",
                                   colour=config.ActionColours.fetch("Light Blue"),
                                   description=desc)
+
             embed.set_author(name="ficsit.app Mod Lookup")
             embed.set_thumbnail(url="https://ficsit.app/static/assets/images/no_image.png")
             embed.set_footer(text="Click™ on the TM™ to open the link™ to the mod™ page on SMR™")
+
             return embed, None
         elif len(data) == 0:
             return None, None
@@ -300,19 +303,19 @@ def desc(full_desc: str) -> nextcord.Embed:
     return embed
 
 
-def crashes(responses: list[tuple[str, str]]) -> nextcord.Embed:
+def crashes(responses: list[dict]) -> nextcord.Embed:
     embed = nextcord.Embed(
         title=f"{len(responses)} automated responses found: ",
         colour=config.ActionColours.fetch("Purple")
     )
     # sort the responses by size, so they display in a more efficient order
-    responses = sorted(responses, key=lambda r: len(r[1]), reverse=True)  # smaller = less important, can be cut
+    responses = sorted(responses, key=lambda r: len(r['value']), reverse=True)  # smaller = less important, can be cut
 
-    for title, response in responses[:24]:
-        embed.add_field(name=title, value=response)
+    for response in responses[:24]:
+        embed.add_field(**response)
         
     if unsaid := responses[24:]:
         embed.add_field(name=f"And {len(unsaid)} more that don't fit here...",
-                        value=", ".join(r[0] for r in unsaid) + "\nuse `help crash [name]` to see what they are")
+                        value=", ".join(r['name'] for r in unsaid) + "\nuse `help crash [name]` to see what they are")
     
     return embed
