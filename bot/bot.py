@@ -23,7 +23,6 @@ class Bot(nextcord.ext.commands.Bot):
     async def isAlive(self):
         try:
             t = config.Misc.get(1)
-            logging.debug(t)
             coro = self.fetch_user(227473074616795137)
             await asyncio.wait_for(coro, timeout=5)
         except Exception as e:
@@ -38,7 +37,7 @@ class Bot(nextcord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.17.10"
+        self.version = "2.17.11"
 
         self.loop = asyncio.new_event_loop()
 
