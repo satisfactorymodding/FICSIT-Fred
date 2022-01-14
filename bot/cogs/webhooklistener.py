@@ -41,29 +41,29 @@ EVENT_TYPE = 'x-github-event'
 def MakeGithookHandler(bot):
     class MyGithookHandler(BaseHTTPRequestHandler):
 
-        def do_HEAD(self):
-            logging.info("Handling a HEAD request")
+        def respond(self, code: int, message: str | None = None):
+            self.send_response(code, message)
+            self.end_headers()
+
+        def handle_check(self):
             match self.path:
                 case "/ready":
-                    self.send_response(200 if bot.isReady else 503)
+                    self.respond(200 if bot.isReady else 503)
                 case "/healthy":
-                    self.send_response(200 if bot.isAlive() else 503)
+                    fut = asyncio.run_coroutine_threadsafe(bot.isAlive(), bot.loop)
+                    healthy = fut.result(5)
+                    self.respond(200 if healthy else 503)
                 case _:
-                    self.send_response(200)
+                    self.respond(200)
+
+        def do_HEAD(self):
+            self.handle_check()
 
         def do_GET(self):
-            logging.info("Handling a GET request")
-            match self.path:
-                case "/ready":
-                    self.send_response(200 if bot.isReady else 503)
-                case "/healthy":
-                    self.send_response(200 if bot.isAlive() else 503)
-                case _:
-                    self.send_response(200)
+            self.handle_check()
 
         def do_CONNECT(self):
-            logging.info("Handling a CONNECT request")
-            self.send_response(200)
+            self.respond(200)
 
         def do_POST(self):
             logging.info("Handling a POST request")
