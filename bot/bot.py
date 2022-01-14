@@ -7,9 +7,7 @@ import sqlobject as sql
 from dotenv import load_dotenv
 import nextcord.ext.commands
 
-
 load_dotenv()
-
 
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
@@ -24,10 +22,12 @@ class Bot(nextcord.ext.commands.Bot):
 
     async def isAlive(self):
         try:
-            cursor = self.dbcon.cursor()
-            cursor.execute("SELECT 1")
-            cursor.close()
-        except:
+            t = config.Misc.get(1)
+            logging.debug(t)
+            coro = self.fetch_user(227473074616795137)
+            await asyncio.wait_for(coro, timeout=5)
+        except Exception as e:
+            logging.error(f"Healthiness check failed: {e}")
             return False
         return True
 
@@ -38,10 +38,9 @@ class Bot(nextcord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.17.9"
+        self.version = "2.17.10"
 
         self.loop = asyncio.new_event_loop()
-
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
@@ -227,5 +226,6 @@ class Bot(nextcord.ext.commands.Bot):
 
 intents = nextcord.Intents.all()
 
-client = Bot("?", help_command=None, intents=intents)
+client = Bot("?", help_command=None, intents=intents, chunk_guilds_at_startup=False)
+
 client.run(os.environ.get("FRED_TOKEN"))
