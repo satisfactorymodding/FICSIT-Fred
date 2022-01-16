@@ -100,7 +100,7 @@ class Crashes(commands.Cog):
                 }
               }
             }"""
-            result = await common.repository_query(query, self.bot)
+            result = await self.bot.repository_query(query)
             sml_versions = result["data"]["getSMLVersions"]["sml_versions"]
             is_compatible = lambda s: s["satisfactory_version"] <= game_version
             latest_compatible_sml = next(filter(is_compatible, sml_versions))
@@ -160,7 +160,7 @@ class Crashes(commands.Cog):
                     date
                 }
             }"""
-            result = await common.repository_query(query, self.bot)
+            result = await self.bot.repository_query(query)
             results.update(result)
 
         mods_with_dates: list[dict[str, str]] = results["data"]["getMods"]["mods"]

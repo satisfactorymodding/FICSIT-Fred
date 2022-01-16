@@ -248,7 +248,7 @@ async def mod(name: str, bot) -> (nextcord.Embed, str):
             }
           }
         }''')
-    result = await common.repository_query(query, bot)
+    result = await bot.repository_query(query)
     data = result["data"]["getMods"]["mods"]
 
     for mod in data:

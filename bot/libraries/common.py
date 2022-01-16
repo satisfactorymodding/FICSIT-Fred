@@ -90,16 +90,6 @@ def formatDesc(desc):
     return desc
 
 
-async def repository_query(query: str, bot):
-    bot.logger.info(f"SMR query of length {len(query)} requested")
-
-    async with await bot.web_session.post("https://api.ficsit.app/v2/query", json={"query": query}) as response:
-        bot.logger.info(f"SMR query returned with response {response.status}")
-        value = await response.json()
-        bot.logger.info("SMR response decoded")
-        return value
-
-
 def fullname(user):
     return f"{user.name}#{user.discriminator}"
 

@@ -222,6 +222,15 @@ class Bot(nextcord.ext.commands.Bot):
                     await self.DialogFlow.process_message(message)
         self.logger.info("Finished processing a message", extra=common.messagedict(message))
 
+    async def repository_query(self, query: str):
+        self.logger.info(f"SMR query of length {len(query)} requested")
+
+        async with await self.web_session.post("https://api.ficsit.app/v2/query", json={"query": query}) as response:
+            self.logger.info(f"SMR query returned with response {response.status}")
+            value = await response.json()
+            self.logger.info("SMR response decoded")
+            return value
+
 
 intents = nextcord.Intents.all()
 
