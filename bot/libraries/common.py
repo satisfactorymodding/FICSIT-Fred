@@ -3,29 +3,32 @@ from fred_core_imports import *
 from html.parser import HTMLParser
 
 
+logger = logging.Logger("PERMISSIONS")
+
+
 def is_bot_author(user_id: int):
-    logging.info("Checking if someone is the author", extra={"user_id": user_id})
+    logger.info("Checking if someone is the author", extra={"user_id": user_id})
     return user_id == 227473074616795137
 
 
 async def t3_only(ctx):
-    logging.info("Checking if someone is a T3", extra=userdict(ctx.author))
+    logger.info("Checking if someone is a T3", extra=userdict(ctx.author))
     return is_bot_author(ctx.author.id) or permission_check(ctx, 4)
 
 
 async def mod_only(ctx):
-    logging.info("Checking if someone is a Moderator", extra=userdict(ctx.author))
+    logger.info("Checking if someone is a Moderator", extra=userdict(ctx.author))
     return is_bot_author(ctx.author.id) or permission_check(ctx, 6)
 
 
 def permission_check(ctx, level: int):
     logpayload = userdict(ctx.author)
     logpayload['level'] = level
-    logging.info("Checking permissions for someone", extra=logpayload)
+    logger.info("Checking permissions for someone", extra=logpayload)
     perms = config.PermissionRoles.fetch_by_lvl(level)
     main_guild = ctx.bot.get_guild(config.Misc.fetch("main_guild_id"))
     if (main_guild_member := main_guild.get_member(ctx.author.id)) is None:
-        logging.warning("Checked permissions for someone but they weren't in the main guild", extra=logpayload)
+        logger.warning("Checked permissions for someone but they weren't in the main guild", extra=logpayload)
         return False
 
     user_roles = [role.id for role in main_guild_member.roles]
@@ -33,11 +36,11 @@ def permission_check(ctx, level: int):
     for clearance in perms:
         if clearance.perm_lvl >= level:
             if clearance.role_id in user_roles:
-                logging.info(f"A permission check was positive with level {clearance.perm_lvl}", extra=logpayload)
+                logger.info(f"A permission check was positive with level {clearance.perm_lvl}", extra=logpayload)
                 return True
         else:
-            logging.info(f"A permission check was negative with level less than required ({clearance.perm_lvl}<",
-                         extra=logpayload)
+            logger.info(f"A permission check was negative with level less than required ({clearance.perm_lvl}<",
+                        extra=logpayload)
             break
 
     return False

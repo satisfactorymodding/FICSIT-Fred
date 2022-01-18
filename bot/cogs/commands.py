@@ -24,6 +24,7 @@ def extract_target_type_from_converter_param(missing_argument: commands.MissingR
 class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.logger = logging.Logger("COMMANDS")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -32,10 +33,10 @@ class Commands(commands.Cog):
             command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if config.Commands.fetch(command):
                 return
-            self.bot.logger.warning("Commands: invalid command attempted")
+            self.logger.warning("Invalid command attempted")
             return
         elif isinstance(error, commands.MissingRequiredArgument):
-            self.bot.logger.info("Successfully deferred error of missing required argument")
+            self.logger.info("Successfully deferred error of missing required argument")
             missing_argument_name, target_type = extract_target_type_from_converter_param(error.param)
             output = f"You are missing at least one parameter for this command: '{missing_argument_name}'"
             if target_type:
@@ -43,11 +44,11 @@ class Commands(commands.Cog):
             await ctx.send(output)
             return
         elif isinstance(error, commands.CheckFailure):
-            self.bot.logger.info("Successfully deferred error af insufficient permissions")
+            self.logger.info("Successfully deferred error af insufficient permissions")
             await ctx.send("Sorry, but you do not have enough permissions to do this.")
             return
         elif isinstance(error, commands.errors.CommandInvokeError):
-            self.bot.logger.info("Deferring error of command invocation")
+            self.logger.info("Deferring error of command invocation")
             # use error.original here because error is nextcord.ext.commands.errors.CommandInvokeError
             if isinstance(error.original, asyncio.exceptions.TimeoutError):
                 return  # this is raised to escape a bunch of value passing if timed out, but should not raise big errors.
@@ -59,10 +60,10 @@ class Commands(commands.Cog):
     async def on_message(self, message):
         if message.author.bot or not self.bot.is_running():
             return
-        self.bot.logger.info("Commands: Processing a message", extra=common.messagedict(message))
+        self.logger.info("Processing a message", extra=common.messagedict(message))
         if message.content.startswith(self.bot.command_prefix):
             name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
-            self.bot.logger.info(f"Commands: Processing the command {name}", extra=common.messagedict(message))
+            self.logger.info(f"Processing the command {name}", extra=common.messagedict(message))
             if command := config.Commands.fetch(name):
                 if content := command['content']:
                     if content.startswith(self.bot.command_prefix):  # for linked aliases of commands like rp<-ff
@@ -360,7 +361,7 @@ class Commands(commands.Cog):
                 user_info = f"Alias added for {cmd_to_alias}: {aliases_added[0]}"
         else:
             user_info = "No aliases were added."
-        self.bot.logger.info(user_info)
+        self.logger.info(user_info)
         await self.bot.reply_to_msg(ctx.message, user_info)
 
     @remove.command(name="alias")

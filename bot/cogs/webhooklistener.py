@@ -6,8 +6,11 @@ import threading
 import nextcord.ext.commands as commands
 
 
+logger = logging.Logger("GITHOOK")
+
+
 def runServer(self, bot):
-    logging.info("Running the webserver for the Githook")
+    logger.info("Running the webserver for the Githook")
     server = HTTPServerV6((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MakeGithookHandler(bot))
     server.serve_forever()
 
@@ -66,9 +69,9 @@ def MakeGithookHandler(bot):
             self.respond(200)
 
         def do_POST(self):
-            logging.info("Handling a POST request")
+            logger.info("Handling a POST request")
             if not all(x in self.headers for x in [CONTENT_TYPE, CONTENT_LEN, EVENT_TYPE]):
-                logging.error("Invalid POST request")
+                logger.error("Invalid POST request")
                 self.send_response(417)
                 return
             content_type = self.headers['content-type']
@@ -77,7 +80,7 @@ def MakeGithookHandler(bot):
 
             # Return error if the payload type is that other weird format instead of a normal json
             if content_type != "application/json":
-                logging.error("POST request has invalid content_type", extra={'content_type': content_type})
+                logger.error("POST request has invalid content_type", extra={'content_type': content_type})
                 self.send_error(400, "Bad Request", "Expected a JSON request")
                 return
 

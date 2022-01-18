@@ -33,13 +33,14 @@ class Crashes(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.logger = logging.Logger("CRASH_PARSING")
 
     @staticmethod
     def filter_epic_commandline(cli: str) -> str:
         return ' '.join(filter(lambda opt: "auth" not in opt.lower(), cli.split()))
 
     async def parse_factory_game_log(self, text: str) -> dict[str, str | int]:
-        logging.info("ContentParse: Extracting game info")
+        self.logger.info("Extracting game info")
         lines = text.splitlines()
         vanilla_info_search_area = filter(lambda l: re.match("^LogInit", l), lines)
 
@@ -52,7 +53,7 @@ class Crashes(commands.Cog):
                 info |= match.groupdict()
                 patterns.pop(0)
         else:
-            logging.info("Didn't find all four pieces of information normally found in a log")
+            self.logger.info("Didn't find all four pieces of information normally found in a log")
 
         mod_loader_logs = filter(lambda l: re.match("LogSatisfactoryModLoader", l), lines)
         for line in mod_loader_logs:
@@ -176,7 +177,7 @@ class Crashes(commands.Cog):
         return incompatible_mods
 
     async def process_file(self, file, extension) -> list[dict]():
-        logging.info(f"ContentParse: processing {extension} file")
+        self.logger.info(f"Processing {extension} file")
         match extension:
             case "":
                 return []
@@ -195,25 +196,25 @@ class Crashes(commands.Cog):
 
                 with zipfile.ZipFile(file) as zip_f:
                     zf_contents: list[str] = zip_f.namelist()
-                    logging.info("ContentParse: Zip contents: " + ' '.join(zf_contents))
+                    self.logger.info("Zip contents: " + ' '.join(zf_contents))
                     for zip_file_name in zf_contents:
                         with zip_f.open(zip_file_name) as zip_file:
                             try:
                                 zip_file_content: str = zip_file.read().decode("utf-8")
                             except zipfile.BadZipFile as e:
-                                logging.error(str(e))
+                                self.logger.error(str(e))
                                 return messages + [dict(
                                     name="Bad Zip File!",
                                     value="This zipfile is invalid! Its contents may have been changed after zipping.",
                                     inline=False)]
 
-                            logging.info(f"Entering mass-regex of {zip_file_name}")
+                            self.logger.info(f"Entering mass-regex of {zip_file_name}")
                             results = await self.process_text(zip_file_content)
-                            logging.info(f"Finished mass-regex of {zip_file_name} - {len(results)} results")
+                            self.logger.info(f"Finished mass-regex of {zip_file_name} - {len(results)} results")
                             messages += results
 
                     if 'metadata.json' in zf_contents:
-                        logging.info("ContentParse: found SMM metadata file")
+                        self.logger.info("found SMM metadata file")
                         with zip_f.open("metadata.json") as metadataFile:
                             metadata: dict = json.load(metadataFile)
                             if metadata["selectedInstall"]:
@@ -230,7 +231,7 @@ class Crashes(commands.Cog):
                             info['smm'] = metadata["smmVersion"]
 
                     if 'FactoryGame.log' in zf_contents:
-                        logging.info("ContentParse: found FactoryGame.log file")
+                        self.logger.info("found FactoryGame.log file")
                         # Try to find CL and SML versions in FactoryGame.log
                         with zip_f.open("FactoryGame.log") as fg_log:
                             fg_log_content = fg_log.read().decode("utf-8")
@@ -254,11 +255,11 @@ class Crashes(commands.Cog):
 
             case "log" | "txt":
                 text = file.read().decode("utf-8", errors="ignore")
-                logging.info("Entering mass-regex for standalone text file")
+                self.logger.info("Entering mass-regex for standalone text file")
                 messages = await self.process_text(text)
-                logging.info(f"Completed mass-regex for standalone text file - {len(messages)} results")
+                self.logger.info(f"Completed mass-regex for standalone text file - {len(messages)} results")
 
-                logging.info("Attempting to find game info for standalone text file")
+                self.logger.info("Attempting to find game info for standalone text file")
                 log_file_info = await self.parse_factory_game_log(text)
 
                 if sml_outdated := await self.make_sml_version_message(**log_file_info):
@@ -283,14 +284,14 @@ class Crashes(commands.Cog):
                     image = enhancer_sharpness.enhance(10)
                     with ThreadPoolExecutor() as pool:
                         image_text = await self.bot.loop.run_in_executor(pool, image_to_string, image)
-                        logging.info("OCR returned the following data:\n" + image_text)
+                        self.logger.info("OCR returned the following data:\n" + image_text)
                         return await self.process_text(image_text)
 
                 except TesseractError:
-                    self.bot.logger.error(f"OCR error:\n{traceback.format_exc()}")
+                    self.logger.error(f"OCR error:\n{traceback.format_exc()}")
                     return []
                 except UnidentifiedImageError:
-                    self.bot.logger.warning("Tried OCR-ing file but it was not an image")
+                    self.logger.warning("Tried OCR-ing file but it was not an image")
                     return []
 
     async def mass_regex(self, text: str) -> AsyncIterator[dict]:
@@ -315,17 +316,17 @@ class Crashes(commands.Cog):
         # attachments
         cdn_link = re.search(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
         if cdn_link or message.attachments:
-            logging.info("ContentParse: Found file in message")
+            self.logger.info("Found file in message")
 
             try:
                 file = await message.attachments[0].to_file()
                 file = file.fp
                 name = message.attachments[0].filename
-                logging.info("ContentParse: Acquired file from discord API")
+                self.logger.info("Acquired file from discord API")
             except IndexError:
-                logging.info("ContentParse: Couldn't acquire file from discord API")
+                self.logger.info("Couldn't acquire file from discord API")
                 try:
-                    logging.info("ContentParse: Attempting to acquire linked file manually")
+                    self.logger.info("Attempting to acquire linked file manually")
                     url = cdn_link.group(1)
                     name = url.split("/")[-1]
                     async with self.bot.web_session.get(url) as response:
@@ -334,7 +335,7 @@ class Crashes(commands.Cog):
                 except (AttributeError, AssertionError) as e:
                     if isinstance(e, AttributeError):
                         e = "there was no CDN url"
-                    logging.warning(f"ContentParse: Couldn't acquire file manually because {e}.")
+                    self.logger.warning(f"Couldn't acquire file manually because {e}.")
                     return False  # did not have any responses
 
             extension = name.rpartition(".")[-1]

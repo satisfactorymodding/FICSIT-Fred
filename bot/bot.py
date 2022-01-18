@@ -88,13 +88,13 @@ class Bot(nextcord.ext.commands.Bot):
                 AsynchronousLogstashHandler(os.environ.get("FRED_LOG_HOST"), int(os.environ.get("FRED_LOG_PORT")), ""))
             logging.root.addHandler(logging.StreamHandler())
         else:
-            logging.root = logging.Logger("logger")
+            logging.root = logging.Logger("FRED")
         logging.root.setLevel(logging.DEBUG)
 
         self.logger = logging.root
 
-        logging.info("Successfully set up the logger")
-        logging.info(f'Prefix: {self.command_prefix}')
+        self.logger.info("Successfully set up the logger")
+        self.logger.info(f'Prefix: {self.command_prefix}')
 
     def setup_cogs(self):
         logging.info("Setting up cogs")
