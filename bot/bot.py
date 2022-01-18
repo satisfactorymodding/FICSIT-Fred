@@ -7,7 +7,9 @@ import sqlobject as sql
 from dotenv import load_dotenv
 import nextcord.ext.commands
 
+
 load_dotenv()
+
 
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
@@ -22,7 +24,7 @@ class Bot(nextcord.ext.commands.Bot):
 
     async def isAlive(self):
         try:
-            t = config.Misc.get(1)
+            _ = config.Misc.get(1)
             coro = self.fetch_user(227473074616795137)
             await asyncio.wait_for(coro, timeout=5)
         except Exception as e:
@@ -146,7 +148,7 @@ class Bot(nextcord.ext.commands.Bot):
             return None
 
         if not user.dm_channel:
-            logging.info(f"We did not have a DM channel with someone, creating one", extra=common.userdict(user))
+            self.logger.info("We did not have a DM channel with someone, creating one", extra=common.userdict(user))
             await user.create_dm()
         try:
             if not embed:
@@ -159,7 +161,7 @@ class Bot(nextcord.ext.commands.Bot):
 
     @staticmethod
     async def reply_to_msg(message, content=None, propagate_reply=True, **kwargs):
-        logging.info(f"Replying to a message", extra=common.messagedict(message))
+        self.logger.info("Replying to a message", extra=common.messagedict(message))
         # use this line if you're trying to debug discord throwing code 400s
         # logging.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
         reference = (message.reference if propagate_reply else None) or message

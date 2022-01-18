@@ -1,5 +1,5 @@
 from fred_core_imports import *
-from libraries import common, createembed
+from libraries import createembed
 
 import nextcord.ext.commands as commands
 from PIL import Image, ImageEnhance, UnidentifiedImageError
@@ -44,7 +44,7 @@ class Crashes(commands.Cog):
         lines = text.splitlines()
         vanilla_info_search_area = filter(lambda l: re.match("^LogInit", l), lines)
 
-        info = dict()
+        info = {}
         patterns = self.vanilla_info_patterns[:]
         for line in vanilla_info_search_area:
             if not patterns:
@@ -116,14 +116,13 @@ class Crashes(commands.Cog):
 
     @staticmethod
     def make_outdated_mods_message(mods: list) -> str:
+        mod_list = "\n".join(mods)
         if len(mods) == 1:
-            header = f"You are attempting to use a mod that no longer works! \n```"
-            mod_list = "\n".join(mods)
+            header = "You are attempting to use a mod that no longer works! \n```"
             footer = "```Please attempt to remove/disable that mod, " \
                      "so that it no longer forces the old SML to be used (this is why your mods don't load)"
         else:
             header = f"You are attempting to use {len(mods)} mods that no longer work! \n```"
-            mod_list = "\n".join(mods)
             footer = "```Please attempt to remove/disable these mods, " \
                      "so that they no longer force the old SML to be used (this is why your mods don't load)"
         return header + mod_list + footer
@@ -139,7 +138,7 @@ class Crashes(commands.Cog):
             return []
 
         # This block separates the mods into blocks of 100 because that's
-        results = dict()
+        results = {}
         for chunk in [enabled_mods[i:i + 100] for i in range(0, len(enabled_mods), 100)]:
             query_mods, length = str(chunk).replace("'", '"'), str(len(chunk))
 
@@ -168,13 +167,11 @@ class Crashes(commands.Cog):
         latest_compatible_loader = strptime(results["data"]["getSMLVersion"]["date"], "%Y-%m-%dT%H:%M:%SZ")
 
         # Checking mods against SML date
-        incompatible_mods: list[str] = [
+        return [
             mod['name']
             for mod in mods_with_dates
             if latest_compatible_loader > strptime(mod["last_version_date"], "%Y-%m-%dT%H:%M:%S.%fZ")
         ]
-
-        return incompatible_mods
 
     async def process_file(self, file, extension) -> list[dict]():
         self.logger.info(f"Processing {extension} file")
@@ -240,16 +237,12 @@ class Crashes(commands.Cog):
                             # with log as priority because it is more likely to be correct
                             info = {k: x if (x := fg_log_info.get(k)) else info.get(k) for k in fg_log_info | info}
 
-                if sml_outdated := await self.make_sml_version_message(**info):
-                    messages += [dict(name="Outdated SML!", value=sml_outdated, inline=True)]
+                messages += self.complex_responses(info)
 
                 if info['outdated_mods']:
                     messages += [dict(name="Outdated Mods!",
                                       value=self.make_outdated_mods_message(info['outdated_mods']),
                                       inline=True)]
-
-                if version_info := self.make_version_info_message(**info):
-                    messages += [dict(name="Quick debug summary", value=version_info, inline=False)]
 
                 return messages
 
@@ -262,11 +255,7 @@ class Crashes(commands.Cog):
                 self.logger.info("Attempting to find game info for standalone text file")
                 log_file_info = await self.parse_factory_game_log(text)
 
-                if sml_outdated := await self.make_sml_version_message(**log_file_info):
-                    messages += [dict(name="Outdated SML!", value=sml_outdated, inline=True)]
-
-                if version_info := self.make_version_info_message(**log_file_info):
-                    messages += [dict(name="Quick log summary", value=version_info, inline=False)]
+                messages += self.complex_responses(log_file_info)
 
                 return messages
 
@@ -307,9 +296,16 @@ class Crashes(commands.Cog):
                     response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
                     yield dict(name=crash["name"], value=response, inline=True)
 
+    async def complex_responses(self, log_details: dict):
+        responses = []
+        if sml_outdated := await self.make_sml_version_message(**log_details):
+            responses += [dict(name="Outdated SML!", value=sml_outdated, inline=True)]
+        if version_info := self.make_version_info_message(**log_details):
+            responses += [dict(name="Quick log summary", value=version_info, inline=True)]
+        return responses
+
     async def process_text(self, text: str) -> list[dict]:
-        messages = [msg async for msg in self.mass_regex(text)]
-        return messages
+        return [msg async for msg in self.mass_regex(text)]
 
     async def process_message(self, message) -> bool:
         responses: list[dict] = []
@@ -355,16 +351,8 @@ class Crashes(commands.Cog):
                 text: str = await response.text()
 
             responses += await self.process_text(text)
-
             maybe_log_info = await self.parse_factory_game_log(message.content)
-
-            sml_outdated = await self.make_sml_version_message(**maybe_log_info)
-            if sml_outdated:
-                responses += [dict(name="Outdated SML!", value=sml_outdated, inline=True)]
-
-            version_info = self.make_version_info_message(**maybe_log_info)
-            if version_info:
-                responses += [dict(name="Quick log summary", value=version_info, inline=True)]
+            responses += self.complex_responses(maybe_log_info)
 
         else:
             responses += await self.process_text(message.content)

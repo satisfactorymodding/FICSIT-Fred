@@ -1,5 +1,6 @@
 from fred_core_imports import *
 
+from functools import lru_cache
 from html.parser import HTMLParser
 
 
@@ -78,14 +79,13 @@ def formatDesc(desc):
     }
     for old, new in revisions.items():
         desc = desc.replace(old, new)
-    items = []
-    embeds = dict()
-    items.extend([i.groups() for i in re.finditer('(<a.+>.+</a>)', desc)])  # Finds all unhandled links
+    items = [i.groups() for i in re.finditer('(<a.+>.+</a>)', desc)]  # Finds all unhandled links
+    embeds = {}
     for i in items:
         i = i[0]  # regex returns a one-element tuple :/
         parser = aTagParser()
         parser.feed(i)
-        embeds.update({i: parser.view_text + parser.link})
+        embeds[i] = parser.view_text + parser.link
     for old, new in embeds.items():
         desc = desc.replace(old, new)
 
@@ -93,16 +93,14 @@ def formatDesc(desc):
     return desc
 
 
-def fullname(user):
-    return f"{user.name}#{user.discriminator}"
-
-
+@lru_cache(5)
 def userdict(user):
     if user is None:
         return {}
-    return {'user_full_name': fullname(user), 'user_id': user.id}
+    return {'user_full_name': str(user), 'user_id': user.id}
 
 
+@lru_cache(5)
 def messagedict(message):
     if message is None:
         return {}

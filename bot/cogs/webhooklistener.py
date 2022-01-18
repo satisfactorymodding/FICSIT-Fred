@@ -19,6 +19,7 @@ class Githook(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
         # Run GitHub webhook handling server
         try:
             botargs = [bot, bot]
@@ -27,10 +28,8 @@ class Githook(commands.Cog):
             daemon.start()
         except Exception as e:
             type, value, tb = sys.exc_info()
-            tbs = ""
-            for string in traceback.format_tb(tb):
-                tbs = tbs + string
-            logging.error(f'Failed to run the webserver:\n{tbs}')
+            tbs = "".join(traceback.format_tb(tb))
+            logger.error(f'Failed to run the webserver:\n{tbs}')
 
 
 # handle POST events from GitHub server

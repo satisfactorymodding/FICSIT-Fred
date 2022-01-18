@@ -6,7 +6,6 @@ from google.oauth2 import service_account
 from google.cloud import dialogflow
 import uuid
 
-
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(
     credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH))

@@ -13,14 +13,12 @@ class PermissionRoles(SQLObject):
     @staticmethod
     def fetch_by_lvl(perm_lvl):
         query = PermissionRoles.select(PermissionRoles.q.perm_lvl >= perm_lvl).orderBy("-perm_lvl")
-        results = list(query)
-        return results
+        return list(query)
 
     @staticmethod
     def fetch_by_role(role_id):
         query = PermissionRoles.selectBy(role_id=role_id)
-        results = list(query)
-        return results
+        return list(query)
 
 
 class RankRoles(SQLObject):
@@ -34,19 +32,13 @@ class RankRoles(SQLObject):
     def fetch_by_rank(rank):
         query = RankRoles.select(RankRoles.q.rank <= rank).orderBy("-rank")
         results = list(query)
-        if results:
-            return results[0].role_id
-        else:
-            return None
+        return results[0].role_id if results else None
 
     @staticmethod
     def fetch_by_role(role_id):
         query = RankRoles.selectBy(role_id=role_id)
         results = list(query)
-        if results:
-            return results[0].rank
-        else:
-            return None
+        return results[0].rank if results else None
 
 
 class XpRoles(SQLObject):
@@ -60,10 +52,7 @@ class XpRoles(SQLObject):
     def fetch(role_id):
         query = XpRoles.selectBy(role_id=role_id)
         results = list(query)
-        if results:
-            return results[0]
-        else:
-            return None
+        return results[0] if results else None
 
 
 class Users(SQLObject):
@@ -86,10 +75,7 @@ class Users(SQLObject):
     def fetch(user_id):
         query = Users.selectBy(user_id=user_id)
         results = list(query)
-        if results:
-            return results[0]
-        else:
-            return None
+        return results[0] if results else None
 
     @staticmethod
     def create_if_missing(user):
@@ -112,10 +98,7 @@ class ActionColours(SQLObject):
     def fetch(name):
         query = ActionColours.selectBy(name=name.lower())
         results = list(query)
-        if results:
-            return results[0].colour
-        else:
-            return None
+        return results[0].colour if results else None
 
 
 class MediaOnlyChannels(SQLObject):
@@ -128,10 +111,7 @@ class MediaOnlyChannels(SQLObject):
     def fetch(channel_id):
         query = MediaOnlyChannels.selectBy(channel_id=channel_id)
         results = list(query)
-        if results:
-            return results[0].channel_id
-        else:
-            return None
+        return results[0].channel_id if results else None
 
 
 class DialogflowChannels(SQLObject):
@@ -144,10 +124,7 @@ class DialogflowChannels(SQLObject):
     def fetch(channel_id):
         query = DialogflowChannels.selectBy(channel_id=channel_id)
         results = list(query)
-        if results:
-            return results[0].channel_id
-        else:
-            return None
+        return results[0].channel_id if results else None
 
 
 class DialogflowExceptionRoles(SQLObject):
@@ -160,10 +137,7 @@ class DialogflowExceptionRoles(SQLObject):
     def fetch(role_id):
         query = DialogflowExceptionRoles.selectBy(role_id=role_id)
         results = list(query)
-        if results:
-            return results[0].role_id
-        else:
-            return None
+        return results[0].role_id if results else None
 
     @staticmethod
     def fetch_all():
@@ -186,10 +160,7 @@ class Dialogflow(SQLObject):
     def fetch(intent_id, data):
         query = Dialogflow.selectBy(intent_id=intent_id, data=data)
         results = list(query)
-        if results:
-            return results[0].as_dict()
-        else:
-            return None
+        return results[0].as_dict() if results else None
 
 
 class Commands(SQLObject):
@@ -204,10 +175,7 @@ class Commands(SQLObject):
     def fetch(name) -> dict | None:
         query = Commands.selectBy(name=name.lower())
         results = list(query)
-        if results:
-            return results[0].as_dict()
-        else:
-            return None
+        return results[0].as_dict() if results else None
 
 
 class Crashes(SQLObject):
@@ -222,10 +190,7 @@ class Crashes(SQLObject):
     def fetch(name) -> dict | None:
         query = Crashes.selectBy(name=name.lower())
         results = list(query)
-        if results:
-            return results[0].as_dict()
-        else:
-            return None
+        return results[0].as_dict() if results else None
 
     @staticmethod
     def fetch_all() -> list[dict]:
@@ -244,10 +209,7 @@ class ReservedCommands(SQLObject):
     def fetch(name):
         query = ReservedCommands.selectBy(name=name.lower())
         results = list(query)
-        if results:
-            return True
-        else:
-            return False
+        return bool(results)
 
 
 class Misc(SQLObject):
@@ -261,10 +223,7 @@ class Misc(SQLObject):
     def fetch(key):
         query = Misc.selectBy(key=key)
         results = list(query)
-        if results:
-            return results[0].value
-        else:
-            return None
+        return results[0].value if results else None
 
     @staticmethod
     def change(key, value):
