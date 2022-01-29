@@ -51,24 +51,29 @@ class Commands(commands.Cog):
             self.logger.info("Deferring error of command invocation")
             # use error.original here because error is nextcord.ext.commands.errors.CommandInvokeError
             if isinstance(error.original, asyncio.exceptions.TimeoutError):
-                return  # this is raised to escape a bunch of value passing if timed out, but should not raise big errors.
+                # this is raised to escape a bunch of value passing if timed out, but should not raise big errors.
+                return
 
         await ctx.send("I encountered an error while trying to call this command. Feyko has been notified")
-        raise error
+        raise error.original
 
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or not self.bot.is_running():
             return
+
+        prefix = self.bot.command_prefix
         self.logger.info("Processing a message", extra=common.messagedict(message))
-        if message.content.startswith(self.bot.command_prefix):
-            name = message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
+        if message.content.startswith(prefix):
+            name = message.content.lower().lstrip(prefix).split(" ")[0]
             self.logger.info(f"Processing the command {name}", extra=common.messagedict(message))
             if command := config.Commands.fetch(name):
-                if content := command['content']:
-                    if content.startswith(self.bot.command_prefix):  # for linked aliases of commands like rp<-ff
-                        if lnk_cmd := config.Commands.fetch(command['content'][1:]):
-                            command = lnk_cmd
+                if (
+                    (content := command['content'])
+                    and content.startswith(prefix)  # for linked aliases of commands like ff->rp
+                    and (linked_command := config.Commands.fetch(command['content'].lstrip(prefix)))
+                ):
+                    command = linked_command
 
                 attachment = None
                 if command["attachment"]:
@@ -76,7 +81,7 @@ class Commands(commands.Cog):
                         buff = io.BytesIO(await resp.read())
                         attachment = nextcord.File(filename=command["attachment"].split("/")[-1], fp=buff)
                 args = []
-                view = StringView(message.content.lstrip(self.bot.command_prefix))
+                view = StringView(message.content.lstrip(prefix))
                 view.get_word()  # command name
                 while not view.eof:
                     view.skip_ws()
@@ -105,33 +110,15 @@ class Commands(commands.Cog):
 
     @commands.command()
     async def mod(self, ctx, *, mod_name):
-        result, desc = await createembed.mod(mod_name, self.bot)
-        if result is None:
+        start = time.time()
+        embed, attachment = await createembed.mod_embed(mod_name, self.bot)
+        if embed is None:
             await self.bot.reply_to_msg(ctx.message, "No mods found!")
-        elif isinstance(result, str):
-            await self.bot.reply_to_msg(ctx.message, "multiple mods found")
         else:
-            new_message = await self.bot.reply_to_msg(ctx.message, content=None, embed=result)
-            if desc:
-                await new_message.add_reaction("📋")
-                await asyncio.sleep(0.5)
+            await self.bot.reply_to_msg(ctx.message, embed=embed, file=attachment)
+        end = time.time()
 
-                def check(reaction, user):
-                    if reaction.emoji == "📋" and reaction.message.id == new_message.id:
-                        return True
-
-                while True:
-                    try:
-                        r = await self.bot.wait_for('reaction_add', timeout=240.0, check=check)
-                        member = r[1]
-                        sent = await self.bot.send_DM(member, content=None, embed=createembed.desc(desc))
-                        if sent:
-                            await new_message.add_reaction("✅")
-                        else:
-                            await ctx("I was unable to send you a direct message. "
-                                      "Please check your discord settings regarding those!")
-                    except asyncio.TimeoutError:
-                        break
+        self.logger.debug(f"{end - start:.2f} seconds")
 
     @commands.command()
     async def docsearch(self, ctx, search):
@@ -316,7 +303,7 @@ class Commands(commands.Cog):
                                                         f"`{cmd_to_alias}` is an alias for `{link[1:]}`. "
                                                         f"Add aliases to `{link[1:]}`?")
                 if not confirm:
-                    await self.bot.reply_to_msg(ctx.message, f"Aborting")
+                    await self.bot.reply_to_msg(ctx.message, "Aborting")
                     return
 
                 else:
@@ -651,7 +638,7 @@ class Commands(commands.Cog):
     @xp.command(name="multiplier")
     async def xp_multiplier(self, ctx, target: commands.UserConverter, multiplier: float):
         DB_user = config.Users.create_if_missing(target)
-        amount = 0 if multiplier < 0 else multiplier  # no negative gain, thank you
+        amount = max(multiplier, 0)  # no negative gain allowed
         DB_user.xp_multiplier = amount
 
         if amount == 0:

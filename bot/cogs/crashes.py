@@ -142,7 +142,7 @@ class Crashes(commands.Cog):
         for chunk in [enabled_mods[i:i + 100] for i in range(0, len(enabled_mods), 100)]:
             query_mods, length = str(chunk).replace("'", '"'), str(len(chunk))
 
-            # Replace argument smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
+            # Replace smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
             query = """
             {
                 getMods(

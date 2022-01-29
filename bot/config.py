@@ -153,7 +153,9 @@ class Dialogflow(SQLObject):
     has_followup = BoolCol()
 
     def as_dict(self):
-        return dict(intent_id=self.intent_id, data=json.loads(str(self.data)) if self.data else None, response=self.response,
+        return dict(intent_id=self.intent_id,
+                    data=json.loads(str(self.data)) if self.data else None,
+                    response=self.response,
                     has_followup=self.has_followup)
 
     @staticmethod

@@ -139,8 +139,7 @@ class Bot(nextcord.ext.commands.Bot):
             channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
 
-    @staticmethod
-    async def send_DM(user, content, embed=None, file=None, **kwargs):
+    async def send_DM(self, user, content, embed=None, file=None, **kwargs):
         logging.info("Sending a DM", extra=common.userdict(user))
         DB_user = config.Users.create_if_missing(user)
         if not DB_user.accepts_dms:
@@ -159,8 +158,7 @@ class Bot(nextcord.ext.commands.Bot):
             logging.error(f"DMs: Failed to DM, reason: \n{e}")
             return None
 
-    @staticmethod
-    async def reply_to_msg(message, content=None, propagate_reply=True, **kwargs):
+    async def reply_to_msg(self, message, content=None, propagate_reply=True, **kwargs):
         self.logger.info("Replying to a message", extra=common.messagedict(message))
         # use this line if you're trying to debug discord throwing code 400s
         # logging.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
@@ -232,6 +230,19 @@ class Bot(nextcord.ext.commands.Bot):
             value = await response.json()
             self.logger.info("SMR response decoded")
             return value
+
+    async def async_url_get(self, url: str, /, get: type = bytes) -> str | bytes | dict:
+        async with self.web_session.get(url) as response:
+            self.logger.info(f"Requested {get} from {url} with response {response.status}")
+
+            if get == dict:
+                rtn = await response.json()
+            else:
+                content = await response.read()
+                rtn = content.decode('utf-8') if get == str else content
+
+        self.logger.info(f"Data has length of {len(rtn)}")
+        return rtn
 
 
 intents = nextcord.Intents.all()
