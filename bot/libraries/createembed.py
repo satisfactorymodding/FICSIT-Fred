@@ -272,13 +272,13 @@ def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.
 
 
 async def webp_icon_as_png(url: str, bot) -> tuple[nextcord.File, str]:
-    virtual_webp = BytesIO(await bot.async_url_get(url, get=bytes))
-    webp_dat = Image.open(virtual_webp).convert("RGB")
-    virtual_png = BytesIO()
-    webp_dat.save(virtual_png, 'png')
-    virtual_png.seek(0)
-    filename = f"{url.split('/')[-2]}.png".strip()
-    return nextcord.File(virtual_png, filename=filename), filename
+    with BytesIO(await bot.async_url_get(url, get=bytes)) as virtual_webp, BytesIO() as virtual_png:
+        webp_dat = Image.open(virtual_webp).convert("RGB")
+        webp_dat.save(virtual_png, 'png')
+        virtual_png.seek(0)
+        filename = f"{url.split('/')[-2]}.png".strip()
+        file = nextcord.File(virtual_png, filename=filename)
+    return file, filename  # this is out of the ctx manager to ensure the buffers are closed
 
 
 # SMR Lookup Embed Formats
