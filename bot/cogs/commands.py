@@ -1,7 +1,12 @@
-from fred_core_imports import *
-from cogs import levelling
-from libraries import createembed, common
- 
+from __future__ import annotations
+
+import asyncio
+import io
+import json
+import logging
+import re
+
+import nextcord
 from algoliasearch.search_client import SearchClient
 from nextcord.ext import commands
 from nextcord.ext.commands.view import StringView

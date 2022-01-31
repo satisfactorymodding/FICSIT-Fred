@@ -1,7 +1,7 @@
-from fred_core_imports import *
-from libraries import common
-
 import nextcord.ext.commands as commands
+
+import config
+from libraries import common
 
 
 class Welcome(commands.Cog):

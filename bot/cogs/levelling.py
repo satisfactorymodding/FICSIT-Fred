@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from fred_core_imports import *
-from libraries import common
+import config
+import logging
+import math
+from datetime import *
 
 import nextcord.ext.commands as commands
 from nextcord import DMChannel
-from datetime import *
+
+from libraries import common
 
 
 class UserProfile:

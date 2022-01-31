@@ -1,14 +1,20 @@
-from fred_core_imports import *
-from libraries import createembed
-
-import nextcord.ext.commands as commands
-from PIL import Image, ImageEnhance, UnidentifiedImageError
-from pytesseract import image_to_string, TesseractError
+import asyncio
+import config
+import io
+import json
+import logging
+import re
+import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from time import strptime
 from typing import AsyncIterator
 
+import nextcord.ext.commands as commands
+from PIL import Image, ImageEnhance, UnidentifiedImageError
+from pytesseract import image_to_string, TesseractError
+
+from libraries import createembed
 
 REGEX_LIMIT: float = 2
 

@@ -1,7 +1,9 @@
-from fred_core_imports import *
-from libraries import common
+import config
+import logging
 
 import nextcord.ext.commands as commands
+
+from libraries import common
 
 
 class MediaOnly(commands.Cog):

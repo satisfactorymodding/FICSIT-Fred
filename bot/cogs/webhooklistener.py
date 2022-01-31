@@ -1,10 +1,14 @@
-from fred_core_imports import *
-
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import asyncio
+import json
+import logging
+import os
 import socket
+import sys
 import threading
-import nextcord.ext.commands as commands
+import traceback
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
+import nextcord.ext.commands as commands
 
 logger = logging.Logger("GITHOOK")
 

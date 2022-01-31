@@ -1,15 +1,21 @@
-from fred_core_imports import *
-from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
-from libraries import createembed, common
+import asyncio
+import logging
+import os
+import sys
+import time
+import traceback
 
-from logstash_async.handler import AsynchronousLogstashHandler
+import aiohttp
+import nextcord.ext.commands
 import sqlobject as sql
 from dotenv import load_dotenv
-import nextcord.ext.commands
+from logstash_async.handler import AsynchronousLogstashHandler
 
+import config
+from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
+from libraries import createembed, common, fred_help
 
 load_dotenv()
-
 
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",

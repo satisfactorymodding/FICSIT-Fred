@@ -1,10 +1,16 @@
-from fred_core_imports import *
-from libraries import common
+import asyncio
+import config
+import json
+import logging
+import nextcord
+import os
+import uuid
 
 import nextcord.ext.commands as commands
-from google.oauth2 import service_account
 from google.cloud import dialogflow
-import uuid
+from google.oauth2 import service_account
+
+from libraries import common
 
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(

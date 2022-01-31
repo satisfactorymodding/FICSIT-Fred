@@ -1,9 +1,12 @@
+import config
+import logging
+import nextcord
 from datetime import datetime
 from io import BytesIO
+
 from PIL import Image
 from nextcord.utils import format_dt
 
-from fred_core_imports import *
 from libraries import common
 
 

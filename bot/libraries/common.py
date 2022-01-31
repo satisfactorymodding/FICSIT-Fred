@@ -1,5 +1,7 @@
-from fred_core_imports import *
-
+import config
+import logging
+from nextcord import User, Message
+from nextcord.ext.commands import Context
 from functools import lru_cache
 
 logger = logging.Logger("PERMISSIONS")
