@@ -37,7 +37,7 @@ class UserProfile:
             self.logger.info("Could not validate someone's level role because they aren't in the main guild",
                              extra={'user_id': self.user_id})
             return
-        logpayload = common.userdict(self.member)
+        logpayload = common.user_info(self.member)
         if role_id := config.RankRoles.fetch_by_rank(self.rank):
             role = self.guild.get_role(role_id)
             if not role:
@@ -63,7 +63,7 @@ class UserProfile:
             self.logger.info("Could not validate someone's level because they aren't in the main guild",
                              extra={'user_id': self.user_id})
             return
-        logpayload = common.userdict(self.member)
+        logpayload = common.user_info(self.member)
         expected_level = math.log(self.xp_count / config.Misc.fetch("base_level_value")) / math.log(
             config.Misc.fetch("level_value_multiplier"))
         if expected_level < 0:
@@ -89,7 +89,7 @@ class UserProfile:
 
     async def increment_xp(self):
         xp_gain = config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier * self.DB_user.role_xp_multiplier
-        logpayload = common.userdict(self.member)
+        logpayload = common.user_info(self.member)
         logpayload['xp_increment'] = xp_gain
         self.logger.info("Incrementing someone's xp", logpayload)
         await self.give_xp(xp_gain)
@@ -97,7 +97,7 @@ class UserProfile:
     async def give_xp(self, xp):
         if xp <= 0:
             return
-        logpayload = common.userdict(self.member)
+        logpayload = common.user_info(self.member)
         logpayload['xp_gain'] = xp
         self.logger.info("Giving someone xp", logpayload)
         self.DB_user.xp_count += xp
@@ -109,7 +109,7 @@ class UserProfile:
         if xp > self.DB_user.xp_count:
             return False  # can't take more than a user has
 
-        logpayload = common.userdict(self.member)
+        logpayload = common.user_info(self.member)
         logpayload['xp_loss'] = xp
         self.logger.info("Taking xp from someone", logpayload)
         self.DB_user.xp_count -= xp
@@ -118,7 +118,7 @@ class UserProfile:
         return True
 
     async def set_xp(self, xp):
-        logpayload = common.userdict(self.member)
+        logpayload = common.user_info(self.member)
         logpayload['new_xp'] = xp
         self.logger.info("Setting someone's xp", logpayload)
         self.DB_user.xp_count = xp
@@ -141,7 +141,7 @@ class Levelling(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        self.logger.info("Levelling: Processing message", extra=common.messagedict(message))
+        self.logger.info("Levelling: Processing message", extra=common.message_info(message))
         if message.author.bot or isinstance(message.channel, DMChannel) or \
                 message.guild.id != config.Misc.fetch("main_guild_id") or not config.Misc.fetch("levelling_state"):
             return
@@ -152,5 +152,5 @@ class Levelling(commands.Cog):
                 await profile.increment_xp()
             else:
                 self.logger.info("Levelling: Someone sent a message too fast and will not be awarded xp",
-                                 extra=common.messagedict(message))
+                                 extra=common.message_info(message))
         self.bot.xp_timers[profile.user_id] = datetime.now() + timedelta(seconds=config.Misc.fetch("xp_gain_delay"))
