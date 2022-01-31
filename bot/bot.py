@@ -46,6 +46,7 @@ class Bot(nextcord.ext.commands.Bot):
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
         self.version = "2.17.11"
+        fred_help.FredHelpEmbed.setup()
 
         self.loop = asyncio.new_event_loop()
 
@@ -159,10 +160,21 @@ class Bot(nextcord.ext.commands.Bot):
             if not embed:
                 embed = createembed.DM(content)
                 content = None
-            return await user.dm_channel.send(content=content, embed=embed, file=file, **kwargs)
-        except Exception as e:
-            logging.error(f"DMs: Failed to DM, reason: \n{e}")
-            return None
+            self.logger.debug(f"{embed!r}")
+            await user.dm_channel.send(content=content, embed=embed, **kwargs)
+        except Exception:
+            self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
+
+    async def checked_DM(self, user: nextcord.User, **kwargs) -> bool:
+        user_meta = config.Users.create_if_missing(user)
+        if user_meta.accepts_dms:
+            try:
+                await self.send_DM(user, user_meta=user_meta, **kwargs)
+                return True
+            except (nextcord.HTTPException, nextcord.Forbidden):
+                # user has blocked bot or does not take mutual-server DMs
+                pass
+        return False
 
     async def reply_to_msg(self, message, content=None, propagate_reply=True, **kwargs):
         self.logger.info("Replying to a message", extra=common.messagedict(message))
