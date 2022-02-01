@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "ficsit-fred"
+name = "FICSIT-Fred"
 version = "2.18.0"
-description = ""
-authors = []
-license = "MIT"
+description = "A Discord bot for the Satisfactory Modding Discord "
+authors = ["Feyko <feykook@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>", "Astro Floof <does.not.kompute@gmail.com>"]
+license = "MIT License"
 
 [tool.poetry.dependencies]
 python = "^3.10"
