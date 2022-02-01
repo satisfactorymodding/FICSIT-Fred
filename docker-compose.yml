@@ -36,7 +36,7 @@ services:
             PGADMIN_DEFAULT_EMAIL: 'fred@fred.com'
             PGADMIN_DEFAULT_PASSWORD: 'fred'
         ports:
-            - "5050:80"
+            - "8080:80"
 
 volumes:
     pgdata:
