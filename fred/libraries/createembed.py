@@ -1,13 +1,13 @@
-import config
 import logging
-import nextcord
 from datetime import datetime
 from io import BytesIO
 
+import nextcord
 from PIL import Image
 from nextcord.utils import format_dt
 
-from libraries import common
+from . import common
+from .. import config
 
 
 def timestamp(iso8601: str) -> str:

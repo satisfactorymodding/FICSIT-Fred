@@ -1,5 +1,4 @@
 import asyncio
-import config
 import io
 import json
 import logging
@@ -14,7 +13,8 @@ import nextcord.ext.commands as commands
 from PIL import Image, ImageEnhance, UnidentifiedImageError
 from pytesseract import image_to_string, TesseractError
 
-from libraries import createembed
+from .. import config
+from ..libraries import createembed
 
 REGEX_LIMIT: float = 2
 
