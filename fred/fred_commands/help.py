@@ -237,7 +237,7 @@ class FredHelpEmbed(nextcord.Embed):
                 for field in range(0, len(page), field_size)
             ]
             return FredHelpEmbed(title, desc, fields=fields, usage="crashes [page]")
-    
+
         except IndexError:
             desc = f"There aren't that many crashes! Try a number less than {index}."
             return FredHelpEmbed(title, desc, usage="crashes [page]")
@@ -280,7 +280,7 @@ class FredHelpEmbed(nextcord.Embed):
                 for field in range(0, len(page), field_size)
             ]
             return cls(title, desc, fields=fields, usage="commands [page]")
-    
+
         except IndexError:
             desc = f"There aren't that many commands! Try a number less than {index}."
             return cls(title, desc, usage="commands [page]")
