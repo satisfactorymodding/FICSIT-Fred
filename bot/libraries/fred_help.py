@@ -87,14 +87,12 @@ def all_special_commands(commands_class: Cog) -> FredHelpEmbed:
     embed = FredHelpEmbed("Special Commands", desc)
     solo_cmds = []
     for name, cmd in cmds.items():
-        logging.debug(f"{name} {len(cmd.subcommands)}")
         if not cmd.subcommands:
             solo_cmds.append(cmd)
         else:
             embed.add_field(name=name, value='\n'.join(sorted(map(lambda s: s.name, cmd.subcommands))), inline=True)
     if solo_cmds:
         embed.add_field(name='other', value='\n'.join(sorted(map(lambda s: s.name, solo_cmds))), inline=True)
-    logging.debug(embed.to_dict())
 
     return embed
 
@@ -153,12 +151,9 @@ def crashes(index: int = 0) -> FredHelpEmbed:
 
 
 def specific_crash(name: str) -> FredHelpEmbed:
-    logging.debug(f"Specific crash requested: {name}")
     if answer := list(config.Crashes.selectBy(name=name.lower())):
         crash = answer[0].as_dict()
-        logging.debug(f"Crash found!: {crash}")
     else:
-        logging.debug("No crash found!")
         crash = None
 
     desc = "Crash could not be found!" if crash is None else \

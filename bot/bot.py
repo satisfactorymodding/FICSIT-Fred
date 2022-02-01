@@ -165,7 +165,6 @@ class Bot(nextcord.ext.commands.Bot):
             if not embed:
                 embed = createembed.DM(content)
                 content = None
-            self.logger.debug(f"{embed!r}")
             await user.dm_channel.send(content=content, embed=embed, **kwargs)
         except Exception:
             self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
