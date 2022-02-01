@@ -129,7 +129,7 @@ class Bot(commands.Bot):
             tbs = tbs + string
         tbs = tbs + "```"
         logging.error(tbs.replace("```", ""))
-        await self.get_channel(857324049892900864).send(tbs)
+        await self.get_channel(748229790825185311).send(tbs)
 
     async def githook_send(self, data):
         self.logger.info("Handling GitHub payload", extra={'data': data})
