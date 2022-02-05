@@ -130,7 +130,7 @@ class Commands(commands.Cog):
     async def help(self, ctx: commands.Context) -> None:
         """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
         Usage: `help [commands/crash(es)/special/media_only/webhooks] [page: int/name: str]`
-        Reply: information about what you requested"""
+        Response: Information about what you requested"""
         if ctx.invoked_subcommand is None:
             await self.help_special(ctx, name='help')
             return
@@ -251,7 +251,7 @@ class Commands(commands.Cog):
     async def level(self, ctx: commands.Context, target_user: commands.UserConverter = None):
         """Usage: `level` [user]
         Response: Either your level or the level of the user specified
-        Notes: user can be a ping or a user's ID to avoid irritating them"""
+        Notes: the user parameter can be the user's @ mention or their UID, like 506192269557366805"""
         if target_user:
             user_id = target_user.id
             user = self.bot.get_user(user_id)
@@ -641,8 +641,7 @@ class Commands(commands.Cog):
     @add.command(name="dialogflowChannel")
     async def add_dialogflow_channel(self, ctx: commands.Context, channel: commands.TextChannelConverter):
         """Usage: `add dialogflowChannel (channel)`
-        Purpose: Adds channel to the list of channels that natural language processing is applied to
-        Notes: probably don't mess around with this, Mircea is the only wizard that knows how these works"""
+        Purpose: Adds channel to the list of channels that natural language processing is applied to"""
         if config.DialogflowChannels.fetch(channel.id):
             await self.bot.reply_to_msg(ctx.message, "This channel is already a dialogflow channel!")
         else:
@@ -653,8 +652,7 @@ class Commands(commands.Cog):
     @remove.command(name="dialogflowChannel")
     async def remove_dialogflow_channel(self, ctx: commands.Context, channel: commands.TextChannelConverter):
         """Usage: `remove dialogflowChannel (channel)`
-        Purpose: Removes channel from the list of channels that natural language processing is applied to
-        Notes: probably don't mess around with this, Mircea is the only wizard that knows how these works"""
+        Purpose: Removes channel from the list of channels that natural language processing is applied to"""
         if config.DialogflowChannels.fetch(channel.id):
             config.DialogflowChannels.deleteBy(channel_id=channel.id)
             await self.bot.reply_to_msg(ctx.message,
@@ -665,8 +663,7 @@ class Commands(commands.Cog):
     @add.command(name="dialogflowRole")
     async def add_dialogflow_role(self, ctx: commands.Context, role: commands.RoleConverter):
         """Usage: `add dialogflowRole (role)`
-        Purpose: Adds role to the list of roles that natural language processing is not applied to
-        Notes: probably don't mess around with this, Mircea is the only wizard that knows how these works"""
+        Purpose: Adds role to the list of roles that natural language processing is not applied to"""
         role_id = role.id
 
         if config.DialogflowExceptionRoles.fetch(role_id):
@@ -679,8 +676,7 @@ class Commands(commands.Cog):
     @remove.command(name="dialogflowRole")
     async def remove_dialogflow_role(self, ctx: commands.Context, role: commands.RoleConverter):
         """Usage: `remove dialogflowRole (role)`
-        Purpose: Removes role from the list of roles that natural language processing is not applied to
-        Notes: probably don't mess around with this, Mircea is the only wizard that knows how these works"""
+        Purpose: Removes role from the list of roles that natural language processing is not applied to"""
         role_id = role.id
 
         if config.DialogflowExceptionRoles.fetch(role_id):
@@ -732,7 +728,7 @@ class Commands(commands.Cog):
     async def set_NLP_debug(self, ctx: commands.Context, enabled: bool):
         """Usage: `set NLP_debug (true/false)`
         Purpose: turns NLP debug (ignores all ignore rules) on or off
-        Notes: no touchy"""
+        Notes: no touchy, can get very spammy"""
         if not enabled:
             config.Misc.change("dialogflow_debug_state", False)
             await self.bot.reply_to_msg(ctx.message, "The NLP debugging mode is now off!")
