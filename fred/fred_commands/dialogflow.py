@@ -57,8 +57,7 @@ class DialogflowCmds(BaseCmds):
     @BaseCmds.add.command(name="dialogflowRole")
     async def add_dialogflow_role(self, ctx: commands.Context, role: commands.RoleConverter):
         """Usage: `add dialogflowRole (role)`
-        Purpose: Adds role to the list of roles that natural language processing is not applied to
-        Notes: probably don't mess around with this, Mircea is the only wizard that knows how these works"""
+        Purpose: Adds role to the list of roles that natural language processing is not applied to"""
         role_id = role.id
 
         if config.DialogflowExceptionRoles.fetch(role_id):
@@ -71,8 +70,7 @@ class DialogflowCmds(BaseCmds):
     @BaseCmds.remove.command(name="dialogflowRole")
     async def remove_dialogflow_role(self, ctx: commands.Context, role: commands.RoleConverter):
         """Usage: `remove dialogflowRole (role)`
-        Purpose: Removes role from the list of roles that natural language processing is not applied to
-        Notes: probably don't mess around with this, Mircea is the only wizard that knows how these works"""
+        Purpose: Removes role from the list of roles that natural language processing is not applied to"""
         role_id = role.id
 
         if config.DialogflowExceptionRoles.fetch(role_id):
@@ -97,7 +95,7 @@ class DialogflowCmds(BaseCmds):
     async def set_NLP_debug(self, ctx: commands.Context, enabled: bool):
         """Usage: `set NLP_debug (true/false)`
         Purpose: turns NLP debug (ignores all ignore rules) on or off
-        Notes: no touchy"""
+        Notes: no touchy, can get very spammy"""
         if not enabled:
             config.Misc.change("dialogflow_debug_state", False)
             await self.bot.reply_to_msg(ctx.message, "The NLP debugging mode is now off!")

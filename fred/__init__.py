@@ -166,14 +166,12 @@ class Bot(commands.Bot):
 
     async def checked_DM(self, user: nextcord.User, **kwargs) -> bool:
         user_meta = config.Users.create_if_missing(user)
-        if user_meta.accepts_dms:
-            try:
-                await self.send_DM(user, user_meta=user_meta, **kwargs)
-                return True
-            except (nextcord.HTTPException, nextcord.Forbidden):
-                # user has blocked bot or does not take mutual-server DMs
-                pass
-        return False
+        try:
+            await self.send_DM(user, user_meta=user_meta, **kwargs)
+            return True
+        except (nextcord.HTTPException, nextcord.Forbidden):
+            # user has blocked bot or does not take mutual-server DMs
+            return False
 
     async def reply_to_msg(self, message, content=None, propagate_reply=True, **kwargs):
         self.logger.info("Replying to a message", extra=common.message_info(message))

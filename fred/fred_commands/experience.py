@@ -145,7 +145,7 @@ class EXPCmds(BaseCmds):
     async def level(self, ctx: commands.Context, target_user: commands.UserConverter = None):
         """Usage: `level` [user]
         Response: Either your level or the level of the user specified
-        Notes: user can be a ping or a user's ID to avoid irritating them"""
+        Notes: the user parameter can be the user's @ mention or their UID, like 506192269557366805"""
         if target_user:
             user_id = target_user.id
             user = self.bot.get_user(user_id)

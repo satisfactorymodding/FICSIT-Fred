@@ -17,7 +17,7 @@ class HelpCmds(BaseCmds):
     async def help(self, ctx: commands.Context) -> None:
         """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
         Usage: `help [commands/crash(es)/special/media_only/webhooks] [page: int/name: str]`
-        Reply: information about what you requested"""
+        Response: Information about what you requested"""
         if ctx.invoked_subcommand is None:
             await self.help_special(ctx, name='help')
             return
