@@ -1,11 +1,16 @@
-from fred_core_imports import *
-from libraries import common
-
-import nextcord.ext.commands as commands
-from google.oauth2 import service_account
-from google.cloud import dialogflow
+import asyncio
+import config
+import json
+import logging
+import nextcord
+import os
 import uuid
 
+import nextcord.ext.commands as commands
+from google.cloud import dialogflow
+from google.oauth2 import service_account
+
+from libraries import common
 
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(
@@ -18,25 +23,26 @@ class DialogFlow(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.session_ids = {}
+        self.logger = logging.Logger("DIALOGFLOW")
 
     async def process_message(self, message):
         if message.content.startswith(self.bot.command_prefix):
             return
         if not message.content:
-            self.bot.logger.info("NLP: Ignoring a message because it was empty",
-                                 extra=common.userdict(message.author))
+            self.logger.info("Ignoring a message because it was empty",
+                             extra=common.user_info(message.author))
             return
         if isinstance(message.author, nextcord.User):
             # We're in a DM channel
-            self.bot.logger.info("NLP: Ignoring a message because it is in a DM channel",
-                                 extra=common.messagedict(message))
+            self.logger.info("Ignoring a message because it is in a DM channel",
+                             extra=common.message_info(message))
             return
         if not config.Misc.fetch("dialogflow_state"):
-            self.bot.logger.info("NLP: Ignoring a message because NLP is disabled",
-                                 extra=common.messagedict(message))
+            self.logger.info("Ignoring a message because NLP is disabled",
+                             extra=common.message_info(message))
             return
         if not config.Misc.fetch("dialogflow_debug_state"):
-            self.bot.logger.info("NLP: Checking someone's permissions", extra=common.userdict(message.author))
+            self.logger.info("Checking someone's permissions", extra=common.user_info(message.author))
             roles = message.author.roles[1:]
             exception_roles = config.DialogflowExceptionRoles.fetch_all()
             # Why the fuck was that here? Probably some optimisation but it was all wrong.
@@ -45,15 +51,15 @@ class DialogFlow(commands.Cog):
             #     authorised = True
             for role in roles:
                 if role.id not in exception_roles:
-                    self.bot.logger.info("NLP: Ignoring someone's message because they are authorised",
-                                         extra=common.userdict(message.author))
+                    self.logger.info("Ignoring someone's message because they are authorised",
+                                     extra=common.user_info(message.author))
                     return
 
         if message.author.id in self.session_ids:
-            self.bot.logger.info("NLP: Continuing a session", extra=common.userdict(message.author))
+            self.logger.info("Continuing a session", extra=common.user_info(message.author))
             session_id = self.session_ids[message.author.id]
         else:
-            self.bot.logger.info("NLP: Creating a new session", extra=common.userdict(message.author))
+            self.logger.info("Creating a new session", extra=common.user_info(message.author))
             session_id = uuid.uuid4()
             self.session_ids[message.author.id] = session_id
 
@@ -63,7 +69,7 @@ class DialogFlow(commands.Cog):
 
         query_input = dialogflow.QueryInput(text=text_input)
 
-        self.bot.logger.info("NLP: Detecting the intent of a message", extra=common.messagedict(message))
+        self.logger.info("Detecting the intent of a message", extra=common.message_info(message))
         response = session_client.detect_intent(request={'session': session, 'query_input': query_input})
 
         response_text = response.query_result.fulfillment_text
@@ -75,34 +81,34 @@ class DialogFlow(commands.Cog):
         results = list(query)
 
         if intent_id == config.Misc.fetch("dialogflow_steam_scam_intent_id"):
-            self.bot.logger.info("NLP: Detected a Steam scam. Deleting", extra=common.messagedict(message))
+            self.logger.info("Detected a Steam scam. Deleting", extra=common.message_info(message))
             await message.delete()
             return
 
         if not len(results):
-            self.bot.logger.info("NLP: No intent detected", extra=common.messagedict(message))
+            self.logger.info("No intent detected", extra=common.message_info(message))
             return
 
         dialogflow_reply = results[0].as_dict()
 
         if not dialogflow_reply["response"]:
-            self.bot.logger.info("NLP: Responding to a message", extra=common.messagedict(message))
+            self.logger.info("Responding to a message", extra=common.message_info(message))
             await self.bot.reply_to_msg(message, response_text)
         else:
             if dialogflow_reply["response"].startswith(self.bot.command_prefix):
                 command_name = dialogflow_reply["response"].lower().lstrip(self.bot.command_prefix).split(" ")[0]
                 if command := config.Commands.fetch(command_name):
-                    self.bot.logger.info("NLP: Responding to a message with a command",
-                                         extra=common.messagedict(message))
+                    self.logger.info("Responding to a message with a command",
+                                     extra=common.message_info(message))
                     await self.bot.reply_to_msg(message, command["content"], file=command["attachment"])
 
             else:
-                self.bot.logger.info("NLP: Responding to a message with a predefined response",
-                                     extra=common.messagedict(message))
+                self.logger.info("Responding to a message with a predefined response",
+                                 extra=common.message_info(message))
                 await self.bot.reply_to_msg(message, dialogflow_reply["response"])
 
         if dialogflow_reply["has_followup"]:
-            self.bot.logger.info("NLP: Setting up a check for a followup", extra=common.messagedict(message))
+            self.logger.info("Setting up a check for a followup", extra=common.message_info(message))
 
             def check(message2):
                 return message2.author == message.author and message2.channel == message.channel
@@ -112,5 +118,5 @@ class DialogFlow(commands.Cog):
             except asyncio.TimeoutError:
                 del self.session_ids[message.author.id]
         else:
-            self.bot.logger.info("NLP: Deleting a session", extra=common.messagedict(message))
+            self.logger.info("Deleting a session", extra=common.message_info(message))
             del self.session_ids[message.author.id]

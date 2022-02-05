@@ -1,11 +1,19 @@
-from fred_core_imports import *
-from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
-from libraries import createembed, common
+import asyncio
+import logging
+import os
+import sys
+import time
+import traceback
 
-from logstash_async.handler import AsynchronousLogstashHandler
+import aiohttp
+import nextcord.ext.commands
 import sqlobject as sql
 from dotenv import load_dotenv
-import nextcord.ext.commands
+from logstash_async.handler import AsynchronousLogstashHandler
+
+import config
+from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
+from libraries import createembed, common, fred_help
 
 load_dotenv()
 
@@ -22,11 +30,11 @@ class Bot(nextcord.ext.commands.Bot):
 
     async def isAlive(self):
         try:
-            t = config.Misc.get(1)
+            _ = config.Misc.get(1)
             coro = self.fetch_user(227473074616795137)
             await asyncio.wait_for(coro, timeout=5)
         except Exception as e:
-            logging.error(f"Healthiness check failed: {e}")
+            self.logger.error(f"Healthiness check failed: {e}")
             return False
         return True
 
@@ -38,6 +46,7 @@ class Bot(nextcord.ext.commands.Bot):
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
         self.version = "2.17.11"
+        fred_help.FredHelpEmbed.setup()
 
         self.loop = asyncio.new_event_loop()
 
@@ -56,12 +65,12 @@ class Bot(nextcord.ext.commands.Bot):
         logging.info(f'We have logged in as {self.user} with prefix {self.command_prefix}')
 
     @staticmethod
-    async def on_reaction_add(reaction, user):
+    async def on_reaction_add(reaction: nextcord.Reaction, user: nextcord.User) -> None:
         if not user.bot and reaction.message.author.bot and reaction.emoji == "❌":
             await reaction.message.delete()
 
     def setup_DB(self):
-        logging.info("Connecting to the database")
+        self.logger.info("Connecting to the database")
         user = os.environ.get("FRED_SQL_USER")
         password = os.environ.get("FRED_SQL_PASSWORD")
         host = os.environ.get("FRED_SQL_HOST")
@@ -75,7 +84,7 @@ class Bot(nextcord.ext.commands.Bot):
                 sql.sqlhub.processConnection = connection
                 break
             except sql.dberrors.OperationalError:
-                logging.error(f"Could not connect to the DB on attempt {attempt}")
+                self.logger.error(f"Could not connect to the DB on attempt {attempt}")
                 attempt += 1
                 time.sleep(5)
         else:  # this happens if the loop is not broken by a successful connection
@@ -88,13 +97,13 @@ class Bot(nextcord.ext.commands.Bot):
                 AsynchronousLogstashHandler(os.environ.get("FRED_LOG_HOST"), int(os.environ.get("FRED_LOG_PORT")), ""))
             logging.root.addHandler(logging.StreamHandler())
         else:
-            logging.root = logging.Logger("logger")
+            logging.root = logging.Logger("FRED")
         logging.root.setLevel(logging.DEBUG)
 
         self.logger = logging.root
 
-        logging.info("Successfully set up the logger")
-        logging.info(f'Prefix: {self.command_prefix}')
+        self.logger.info("Successfully set up the logger")
+        self.logger.info(f'Prefix: {self.command_prefix}')
 
     def setup_cogs(self):
         logging.info("Setting up cogs")
@@ -128,40 +137,52 @@ class Bot(nextcord.ext.commands.Bot):
         await self.get_channel(748229790825185311).send(tbs)
 
     async def githook_send(self, data):
-        logging.info("Handling GitHub payload", extra={'data': data})
+        self.logger.info("Handling GitHub payload", extra={'data': data})
         embed = await createembed.run(data)
         if embed == "Debug":
             self.logger.info("Non-supported Payload received")
         else:
-            logging.info("GitHub payload was supported, sending an embed")
+            self.logger.info("GitHub payload was supported, sending an embed")
             channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
 
-    @staticmethod
-    async def send_DM(user, content, embed=None, file=None, **kwargs):
-        logging.info("Sending a DM", extra=common.userdict(user))
-        DB_user = config.Users.create_if_missing(user)
-        if not DB_user.accepts_dms:
-            logging.info("The user refuses to have DMs sent to them")
-            return None
+    async def send_DM(self, user: nextcord.User, content: str = None,
+                      embed: nextcord.Embed=None, user_meta: config.Users = None, **kwargs) -> None:
+
+        self.logger.info("Sending a DM", extra=common.user_info(user))
+        if not user_meta:
+            user_meta = config.Users.create_if_missing(user)
+
+        if not user_meta.accepts_dms:
+            self.logger.info("The user refuses to have DMs sent to them")
+            return
 
         if not user.dm_channel:
-            logging.info(f"We did not have a DM channel with someone, creating one", extra=common.userdict(user))
+            self.logger.info("We did not have a DM channel with someone, creating one", extra=common.user_info(user))
             await user.create_dm()
+
         try:
             if not embed:
                 embed = createembed.DM(content)
                 content = None
-            return await user.dm_channel.send(content=content, embed=embed, file=file, **kwargs)
-        except Exception as e:
-            logging.error(f"DMs: Failed to DM, reason: \n{e}")
-            return None
+            await user.dm_channel.send(content=content, embed=embed, **kwargs)
+        except Exception:
+            self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
 
-    @staticmethod
-    async def reply_to_msg(message, content=None, propagate_reply=True, **kwargs):
-        logging.info(f"Replying to a message", extra=common.messagedict(message))
+    async def checked_DM(self, user: nextcord.User, **kwargs) -> bool:
+        user_meta = config.Users.create_if_missing(user)
+        try:
+            await self.send_DM(user, user_meta=user_meta, **kwargs)
+            return True
+        except (nextcord.HTTPException, nextcord.Forbidden):
+            # user has blocked bot or does not take mutual-server DMs
+            self.logger.warning("Attempted to DM a user but this was forbidden.")
+            return False
+
+    async def reply_to_msg(self, message, content=None, propagate_reply=True, **kwargs):
+        self.logger.info("Replying to a message", extra=common.message_info(message))
         # use this line if you're trying to debug discord throwing code 400s
-        # logging.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
+        # self.logger.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
         reference = (message.reference if propagate_reply else None) or message
         if isinstance(reference, nextcord.MessageReference):
             reference.fail_if_not_exists = False
@@ -194,21 +215,22 @@ class Bot(nextcord.ext.commands.Bot):
             raise ValueError(f"Could not convert {s} to bool")
 
     async def on_message(self, message):
-        logging.info("Processing a message", extra=common.messagedict(message))
+        self.logger.info("Processing a message", extra=common.message_info(message))
         if (is_bot := message.author.bot) or not self.is_running():
-            logging.info(f"OnMessage: Didn't read message because {'the sender was a bot' if is_bot else 'I am dead'}.")
+            self.logger.info("OnMessage: Didn't read message because "
+                             f"{'the sender was a bot' if is_bot else 'I am dead'}.")
             return
 
         if isinstance(message.channel, nextcord.DMChannel):
-            logging.info("Processing a DM", extra=common.messagedict(message))
+            self.logger.info("Processing a DM", extra=common.message_info(message))
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
-                logging.info("A user now accepts to receive DMs", extra=common.messagedict(message))
+                self.logger.info("A user now accepts to receive DMs", extra=common.message_info(message))
                 await self.reply_to_msg(message, "You will now receive level changes notifications !")
                 return
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
-                logging.info("A user now refuses to receive DMs", extra=common.messagedict(message))
+                self.logger.info("A user now refuses to receive DMs", extra=common.message_info(message))
                 await self.reply_to_msg(message, "You will no longer receive level changes notifications !")
                 return
 
@@ -220,7 +242,29 @@ class Bot(nextcord.ext.commands.Bot):
                 reacted = await self.Crashes.process_message(message)
                 if not reacted:
                     await self.DialogFlow.process_message(message)
-        self.logger.info("Finished processing a message", extra=common.messagedict(message))
+        self.logger.info("Finished processing a message", extra=common.message_info(message))
+
+    async def repository_query(self, query: str):
+        self.logger.info(f"SMR query of length {len(query)} requested")
+
+        async with await self.web_session.post("https://api.ficsit.app/v2/query", json={"query": query}) as response:
+            self.logger.info(f"SMR query returned with response {response.status}")
+            value = await response.json()
+            self.logger.info("SMR response decoded")
+            return value
+
+    async def async_url_get(self, url: str, /, get: type = bytes) -> str | bytes | dict:
+        async with self.web_session.get(url) as response:
+            self.logger.info(f"Requested {get} from {url} with response {response.status}")
+
+            if get == dict:
+                rtn = await response.json()
+            else:
+                content = await response.read()
+                rtn = content.decode('utf-8') if get == str else content
+
+        self.logger.info(f"Data has length of {len(rtn)}")
+        return rtn
 
 
 intents = nextcord.Intents.all()
