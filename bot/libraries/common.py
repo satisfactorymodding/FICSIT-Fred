@@ -1,116 +1,72 @@
-from fred_core_imports import *
+import config
+import logging
+from nextcord import User, Message
+from nextcord.ext.commands import Context
+from functools import lru_cache
 
-from html.parser import HTMLParser
+logger = logging.Logger("PERMISSIONS")
 
 
-def is_bot_author(user_id: int):
-    logging.info("Checking if someone is the author", extra={"user_id": user_id})
+def is_bot_author(user_id: int) -> bool:
+    logger.info("Checking if someone is the author", extra={"user_id": user_id})
     return user_id == 227473074616795137
 
 
-async def t3_only(ctx):
-    logging.info("Checking if someone is a T3", extra=userdict(ctx.author))
+async def l4_only(ctx: Context) -> bool:
+    logger.info("Checking if someone is a T3", extra=user_info(ctx.author))
     return is_bot_author(ctx.author.id) or permission_check(ctx, 4)
 
 
-async def mod_only(ctx):
-    logging.info("Checking if someone is a Moderator", extra=userdict(ctx.author))
+async def mod_only(ctx: Context) -> bool:
+    logger.info("Checking if someone is a Moderator", extra=user_info(ctx.author))
     return is_bot_author(ctx.author.id) or permission_check(ctx, 6)
 
 
-def permission_check(ctx, level: int):
-    logpayload = userdict(ctx.author)
+def permission_check(ctx: Context, level: int) -> bool:
+    logpayload = user_info(ctx.author)
     logpayload['level'] = level
-    logging.info("Checking permissions for someone", extra=logpayload)
+    logger.info("Checking permissions for someone", extra=logpayload)
     perms = config.PermissionRoles.fetch_by_lvl(level)
     main_guild = ctx.bot.get_guild(config.Misc.fetch("main_guild_id"))
     if (main_guild_member := main_guild.get_member(ctx.author.id)) is None:
-        logging.warning("Checked permissions for someone but they weren't in the main guild", extra=logpayload)
+        logger.warning("Checked permissions for someone but they weren't in the main guild", extra=logpayload)
         return False
 
     user_roles = [role.id for role in main_guild_member.roles]
 
-    for clearance in perms:
-        if clearance.perm_lvl >= level:
-            if clearance.role_id in user_roles:
-                logging.info(f"A permission check was positive with level {clearance.perm_lvl}", extra=logpayload)
-                return True
-        else:
-            logging.info(f"A permission check was negative with level less than required ({clearance.perm_lvl}<",
-                         extra=logpayload)
-            break
+    ranks_above_level = [*filter(lambda c: c.perm_lvl >= level, perms)]
+    if ranks_above_level:  # it shouldn't be possible to request a level above the defined levels but check anyway
+        try:
+            role = next(filter(lambda c: c.role_id in user_roles, ranks_above_level))
+            logger.info(f"A permission check was positive with level {role.perm_lvl}", extra=logpayload)
+            return True  # user has a role that is above the requested level
+        except StopIteration:
+            pass  # ran through all the clearances above the requested level but the user had none of them
 
+    logger.info(f"A permission check was negative with level less than required ({level})", extra=logpayload)
     return False
 
 
-class aTagParser(HTMLParser):
-    link = ''
-    view_text = ''
-
-    def clear_output(self):
-        self.link = ''
-        self.view_text = ''
-
-    def handle_starttag(self, tag, attrs):
-        if tag == 'a':
-            for attr in attrs:
-                if attr[0] == 'href':
-                    self.link = f'({attr[1]})'
-
-    def handle_endtag(self, tag):
-        pass
-
-    def handle_data(self, data):
-        self.view_text = f'[{data}]'
+@lru_cache(5)
+def user_info(user: User | config.Users) -> dict:
+    if isinstance(user, User):
+        return {'user_full_name': str(user), 'user_id': user.id}
+    elif isinstance(user, config.Users):
+        return {'user_full_name': user.full_name, 'user_id': user.id}
+    return {}
 
 
-def formatDesc(desc):
-    logging.info("Formatting a mod description")
-    revisions = {
-        "<b>": "**",
-        "</b>": "**",
-        "<u>": "__",
-        "</u>": "__",
-        "<br>": "",
-    }
-    for old, new in revisions.items():
-        desc = desc.replace(old, new)
-    items = []
-    embeds = dict()
-    items.extend([i.groups() for i in re.finditer('(<a.+>.+</a>)', desc)])  # Finds all unhandled links
-    for i in items:
-        i = i[0]  # regex returns a one-element tuple :/
-        parser = aTagParser()
-        parser.feed(i)
-        embeds.update({i: parser.view_text + parser.link})
-    for old, new in embeds.items():
-        desc = desc.replace(old, new)
-
-    desc = re.sub('#+ ', "", desc)
-    return desc
-
-
-async def repository_query(query: str, bot):
-    bot.logger.info(f"SMR query of length {len(query)} requested")
-
-    async with await bot.web_session.post("https://api.ficsit.app/v2/query", json={"query": query}) as response:
-        bot.logger.info(f"SMR query returned with response {response.status}")
-        value = await response.json()
-        bot.logger.info("SMR response decoded")
-        return value
-
-
-def fullname(user):
-    return f"{user.name}#{user.discriminator}"
-
-
-def userdict(user):
-    if user is None:
-        return {}
-    return {'user_full_name': fullname(user), 'user_id': user.id}
-
-
-def messagedict(message):
+@lru_cache(5)
+def message_info(message: Message) -> dict:
     if message is None:
         return {}
     return {'message_id': message.id, 'channel_id': message.channel.id, 'user_id': message.author.id}
+
+
+def reduce_str(string: str) -> str:
+    # reduces a string into something that's more comparable
+    return ''.join(string.split()).lower()
+
+
+def mod_name_eq(name1: str, name2: str) -> bool:
+    return reduce_str(name1) == reduce_str(name2)

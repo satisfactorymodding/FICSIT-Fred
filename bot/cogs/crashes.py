@@ -1,14 +1,20 @@
-from fred_core_imports import *
-from libraries import common, createembed
-
-import nextcord.ext.commands as commands
-from PIL import Image, ImageEnhance, UnidentifiedImageError
-from pytesseract import image_to_string, TesseractError
+import asyncio
+import config
+import io
+import json
+import logging
+import re
+import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from time import strptime
 from typing import AsyncIterator
 
+import nextcord.ext.commands as commands
+from PIL import Image, ImageEnhance, UnidentifiedImageError
+from pytesseract import image_to_string, TesseractError
+
+from libraries import createembed
 
 REGEX_LIMIT: float = 2
 
@@ -33,17 +39,18 @@ class Crashes(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.logger = logging.Logger("CRASH_PARSING")
 
     @staticmethod
     def filter_epic_commandline(cli: str) -> str:
         return ' '.join(filter(lambda opt: "auth" not in opt.lower(), cli.split()))
 
     async def parse_factory_game_log(self, text: str) -> dict[str, str | int]:
-        logging.info("ContentParse: Extracting game info")
+        self.logger.info("Extracting game info")
         lines = text.splitlines()
         vanilla_info_search_area = filter(lambda l: re.match("^LogInit", l), lines)
 
-        info = dict()
+        info = {}
         patterns = self.vanilla_info_patterns[:]
         for line in vanilla_info_search_area:
             if not patterns:
@@ -52,7 +59,7 @@ class Crashes(commands.Cog):
                 info |= match.groupdict()
                 patterns.pop(0)
         else:
-            logging.info("Didn't find all four pieces of information normally found in a log")
+            self.logger.info("Didn't find all four pieces of information normally found in a log")
 
         mod_loader_logs = filter(lambda l: re.match("LogSatisfactoryModLoader", l), lines)
         for line in mod_loader_logs:
@@ -100,7 +107,7 @@ class Crashes(commands.Cog):
                 }
               }
             }"""
-            result = await common.repository_query(query, self.bot)
+            result = await self.bot.repository_query(query)
             sml_versions = result["data"]["getSMLVersions"]["sml_versions"]
             is_compatible = lambda s: s["satisfactory_version"] <= game_version
             latest_compatible_sml = next(filter(is_compatible, sml_versions))
@@ -115,14 +122,13 @@ class Crashes(commands.Cog):
 
     @staticmethod
     def make_outdated_mods_message(mods: list) -> str:
+        mod_list = "\n".join(mods)
         if len(mods) == 1:
-            header = f"You are attempting to use a mod that no longer works! \n```"
-            mod_list = "\n".join(mods)
+            header = "You are attempting to use a mod that no longer works! \n```"
             footer = "```Please attempt to remove/disable that mod, " \
                      "so that it no longer forces the old SML to be used (this is why your mods don't load)"
         else:
             header = f"You are attempting to use {len(mods)} mods that no longer work! \n```"
-            mod_list = "\n".join(mods)
             footer = "```Please attempt to remove/disable these mods, " \
                      "so that they no longer force the old SML to be used (this is why your mods don't load)"
         return header + mod_list + footer
@@ -138,11 +144,11 @@ class Crashes(commands.Cog):
             return []
 
         # This block separates the mods into blocks of 100 because that's
-        results = dict()
+        results = {}
         for chunk in [enabled_mods[i:i + 100] for i in range(0, len(enabled_mods), 100)]:
             query_mods, length = str(chunk).replace("'", '"'), str(len(chunk))
 
-            # Replace argument smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
+            # Replace smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
             query = """
             {
                 getMods(
@@ -160,23 +166,21 @@ class Crashes(commands.Cog):
                     date
                 }
             }"""
-            result = await common.repository_query(query, self.bot)
+            result = await self.bot.repository_query(query)
             results.update(result)
 
         mods_with_dates: list[dict[str, str]] = results["data"]["getMods"]["mods"]
         latest_compatible_loader = strptime(results["data"]["getSMLVersion"]["date"], "%Y-%m-%dT%H:%M:%SZ")
 
         # Checking mods against SML date
-        incompatible_mods: list[str] = [
+        return [
             mod['name']
             for mod in mods_with_dates
             if latest_compatible_loader > strptime(mod["last_version_date"], "%Y-%m-%dT%H:%M:%S.%fZ")
         ]
 
-        return incompatible_mods
-
     async def process_file(self, file, extension) -> list[dict]():
-        logging.info(f"ContentParse: processing {extension} file")
+        self.logger.info(f"Processing {extension} file")
         match extension:
             case "":
                 return []
@@ -195,25 +199,25 @@ class Crashes(commands.Cog):
 
                 with zipfile.ZipFile(file) as zip_f:
                     zf_contents: list[str] = zip_f.namelist()
-                    logging.info("ContentParse: Zip contents: " + ' '.join(zf_contents))
+                    self.logger.info("Zip contents: " + ' '.join(zf_contents))
                     for zip_file_name in zf_contents:
                         with zip_f.open(zip_file_name) as zip_file:
                             try:
                                 zip_file_content: str = zip_file.read().decode("utf-8")
                             except zipfile.BadZipFile as e:
-                                logging.error(str(e))
+                                self.logger.error(str(e))
                                 return messages + [dict(
                                     name="Bad Zip File!",
                                     value="This zipfile is invalid! Its contents may have been changed after zipping.",
                                     inline=False)]
 
-                            logging.info(f"Entering mass-regex of {zip_file_name}")
+                            self.logger.info(f"Entering mass-regex of {zip_file_name}")
                             results = await self.process_text(zip_file_content)
-                            logging.info(f"Finished mass-regex of {zip_file_name} - {len(results)} results")
+                            self.logger.info(f"Finished mass-regex of {zip_file_name} - {len(results)} results")
                             messages += results
 
                     if 'metadata.json' in zf_contents:
-                        logging.info("ContentParse: found SMM metadata file")
+                        self.logger.info("found SMM metadata file")
                         with zip_f.open("metadata.json") as metadataFile:
                             metadata: dict = json.load(metadataFile)
                             if metadata["selectedInstall"]:
@@ -230,7 +234,7 @@ class Crashes(commands.Cog):
                             info['smm'] = metadata["smmVersion"]
 
                     if 'FactoryGame.log' in zf_contents:
-                        logging.info("ContentParse: found FactoryGame.log file")
+                        self.logger.info("found FactoryGame.log file")
                         # Try to find CL and SML versions in FactoryGame.log
                         with zip_f.open("FactoryGame.log") as fg_log:
                             fg_log_content = fg_log.read().decode("utf-8")
@@ -239,33 +243,25 @@ class Crashes(commands.Cog):
                             # with log as priority because it is more likely to be correct
                             info = {k: x if (x := fg_log_info.get(k)) else info.get(k) for k in fg_log_info | info}
 
-                if sml_outdated := await self.make_sml_version_message(**info):
-                    messages += [dict(name="Outdated SML!", value=sml_outdated, inline=True)]
+                messages += self.complex_responses(info)
 
                 if info['outdated_mods']:
                     messages += [dict(name="Outdated Mods!",
                                       value=self.make_outdated_mods_message(info['outdated_mods']),
                                       inline=True)]
 
-                if version_info := self.make_version_info_message(**info):
-                    messages += [dict(name="Quick debug summary", value=version_info, inline=False)]
-
                 return messages
 
             case "log" | "txt":
                 text = file.read().decode("utf-8", errors="ignore")
-                logging.info("Entering mass-regex for standalone text file")
+                self.logger.info("Entering mass-regex for standalone text file")
                 messages = await self.process_text(text)
-                logging.info(f"Completed mass-regex for standalone text file - {len(messages)} results")
+                self.logger.info(f"Completed mass-regex for standalone text file - {len(messages)} results")
 
-                logging.info("Attempting to find game info for standalone text file")
+                self.logger.info("Attempting to find game info for standalone text file")
                 log_file_info = await self.parse_factory_game_log(text)
 
-                if sml_outdated := await self.make_sml_version_message(**log_file_info):
-                    messages += [dict(name="Outdated SML!", value=sml_outdated, inline=True)]
-
-                if version_info := self.make_version_info_message(**log_file_info):
-                    messages += [dict(name="Quick log summary", value=version_info, inline=False)]
+                messages += self.complex_responses(log_file_info)
 
                 return messages
 
@@ -283,14 +279,14 @@ class Crashes(commands.Cog):
                     image = enhancer_sharpness.enhance(10)
                     with ThreadPoolExecutor() as pool:
                         image_text = await self.bot.loop.run_in_executor(pool, image_to_string, image)
-                        logging.info("OCR returned the following data:\n" + image_text)
+                        self.logger.info("OCR returned the following data:\n" + image_text)
                         return await self.process_text(image_text)
 
                 except TesseractError:
-                    self.bot.logger.error(f"OCR error:\n{traceback.format_exc()}")
+                    self.logger.error(f"OCR error:\n{traceback.format_exc()}")
                     return []
                 except UnidentifiedImageError:
-                    self.bot.logger.warning("Tried OCR-ing file but it was not an image")
+                    self.logger.warning("Tried OCR-ing file but it was not an image")
                     return []
 
     async def mass_regex(self, text: str) -> AsyncIterator[dict]:
@@ -306,26 +302,33 @@ class Crashes(commands.Cog):
                     response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
                     yield dict(name=crash["name"], value=response, inline=True)
 
+    async def complex_responses(self, log_details: dict):
+        responses = []
+        if sml_outdated := await self.make_sml_version_message(**log_details):
+            responses += [dict(name="Outdated SML!", value=sml_outdated, inline=True)]
+        if version_info := self.make_version_info_message(**log_details):
+            responses += [dict(name="Quick log summary", value=version_info, inline=True)]
+        return responses
+
     async def process_text(self, text: str) -> list[dict]:
-        messages = [msg async for msg in self.mass_regex(text)]
-        return messages
+        return [msg async for msg in self.mass_regex(text)]
 
     async def process_message(self, message) -> bool:
         responses: list[dict] = []
         # attachments
         cdn_link = re.search(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
         if cdn_link or message.attachments:
-            logging.info("ContentParse: Found file in message")
+            self.logger.info("Found file in message")
 
             try:
                 file = await message.attachments[0].to_file()
                 file = file.fp
                 name = message.attachments[0].filename
-                logging.info("ContentParse: Acquired file from discord API")
+                self.logger.info("Acquired file from discord API")
             except IndexError:
-                logging.info("ContentParse: Couldn't acquire file from discord API")
+                self.logger.info("Couldn't acquire file from discord API")
                 try:
-                    logging.info("ContentParse: Attempting to acquire linked file manually")
+                    self.logger.info("Attempting to acquire linked file manually")
                     url = cdn_link.group(1)
                     name = url.split("/")[-1]
                     async with self.bot.web_session.get(url) as response:
@@ -334,7 +337,7 @@ class Crashes(commands.Cog):
                 except (AttributeError, AssertionError) as e:
                     if isinstance(e, AttributeError):
                         e = "there was no CDN url"
-                    logging.warning(f"ContentParse: Couldn't acquire file manually because {e}.")
+                    self.logger.warning(f"Couldn't acquire file manually because {e}.")
                     return False  # did not have any responses
 
             extension = name.rpartition(".")[-1]
@@ -354,16 +357,8 @@ class Crashes(commands.Cog):
                 text: str = await response.text()
 
             responses += await self.process_text(text)
-
             maybe_log_info = await self.parse_factory_game_log(message.content)
-
-            sml_outdated = await self.make_sml_version_message(**maybe_log_info)
-            if sml_outdated:
-                responses += [dict(name="Outdated SML!", value=sml_outdated, inline=True)]
-
-            version_info = self.make_version_info_message(**maybe_log_info)
-            if version_info:
-                responses += [dict(name="Quick log summary", value=version_info, inline=True)]
+            responses += self.complex_responses(maybe_log_info)
 
         else:
             responses += await self.process_text(message.content)
