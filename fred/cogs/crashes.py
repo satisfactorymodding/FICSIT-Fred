@@ -243,7 +243,7 @@ class Crashes(commands.Cog):
                             # with log as priority because it is more likely to be correct
                             info = {k: x if (x := fg_log_info.get(k)) else info.get(k) for k in fg_log_info | info}
 
-                messages += self.complex_responses(info)
+                messages += await self.complex_responses(info)
 
                 if info['outdated_mods']:
                     messages += [dict(name="Outdated Mods!",
@@ -261,7 +261,7 @@ class Crashes(commands.Cog):
                 self.logger.info("Attempting to find game info for standalone text file")
                 log_file_info = await self.parse_factory_game_log(text)
 
-                messages += self.complex_responses(log_file_info)
+                messages += await self.complex_responses(log_file_info)
 
                 return messages
 
@@ -358,7 +358,7 @@ class Crashes(commands.Cog):
 
             responses += await self.process_text(text)
             maybe_log_info = await self.parse_factory_game_log(message.content)
-            responses += self.complex_responses(maybe_log_info)
+            responses += await self.complex_responses(maybe_log_info)
 
         else:
             responses += await self.process_text(message.content)
