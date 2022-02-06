@@ -20,7 +20,7 @@ load_dotenv()
 
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
-           "FRED_SQL_HOST", "FRED_SQL_PORT", "ERROR_CHANNEL"]
+           "FRED_SQL_HOST", "FRED_SQL_PORT"]
 
 for var in ENVVARS:
     if not os.getenv(var):
@@ -50,6 +50,7 @@ class Bot(commands.Bot):
         FredHelpEmbed.setup()
 
         self.loop = asyncio.new_event_loop()
+        self._error_channel = int(env_val) if (env_val := os.getenv("ERROR_CHANNEL")) else 748229790825185311
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
@@ -129,7 +130,7 @@ class Bot(commands.Bot):
             tbs = tbs + string
         tbs = tbs + "```"
         logging.error(tbs.replace("```", ""))
-        await self.get_channel(int(os.getenv("ERROR_CHANNEL"))).send(tbs)
+        await self.get_channel(self._error_channel).send(tbs)
 
     async def githook_send(self, data):
         self.logger.info("Handling GitHub payload", extra={'data': data})
