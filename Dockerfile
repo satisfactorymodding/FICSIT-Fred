@@ -9,7 +9,7 @@ RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local python3
 VOLUME /config
 WORKDIR /app
 
-COPY pyproject.toml .env ./
+COPY pyproject.toml *.env ./
 RUN poetry config virtualenvs.create false
 RUN poetry install -n
 
