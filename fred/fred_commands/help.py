@@ -36,7 +36,7 @@ class HelpCmds(BaseCmds):
         if page is None:
             response = FredHelpEmbed.commands()
         elif page < 1:
-            response = FredHelpEmbed("Bad input", "No negative/zero indices! >:(")
+            response = FredHelpEmbed("Bad input", "No negative/zero indices! >:(", "commands")
             response.set_footer(text="y r u like dis")
         else:
             response = FredHelpEmbed.commands(index=page - 1)
@@ -58,7 +58,7 @@ class HelpCmds(BaseCmds):
         if page is None:
             response = FredHelpEmbed.crashes()
         elif page < 1:
-            response = FredHelpEmbed("Bad input", "No negative/zero indices! >:(")
+            response = FredHelpEmbed("Bad input", "No negative/zero indices! >:(", "crashes [page]")
             response.set_footer(text="y r u like dis")
         else:
             response = FredHelpEmbed.crashes(index=page - 1)
@@ -72,7 +72,7 @@ class HelpCmds(BaseCmds):
         if name is None:
             response = FredHelpEmbed.crashes()
         elif name.isnumeric():
-            response = FredHelpEmbed("Bad input", f"Did you mean `help crashes {name}`?")
+            response = FredHelpEmbed("Bad input", f"Did you mean `help crashes {name}`?", "crash [name]")
         else:
             response = FredHelpEmbed.specific_crash(name=name)
         await self._send_help(ctx, embed=response)
@@ -115,12 +115,15 @@ class FredHelpEmbed(nextcord.Embed):
     prefix: str = '>'
     logger = logging.Logger("HELP-EMBEDS")
 
-    def __init__(self: FredHelpEmbed, name: str, desc: str, fields: list[dict] = [], **kwargs) -> None:
+    def __init__(self: FredHelpEmbed, name: str, desc: str, /,
+                 usage: str = '', fields: list[dict] = (), **kwargs) -> None:
+
         desc = re.sub(r"`(.+)`", rf"`{self.prefix}\1`", desc)
         desc = re.sub(r"^\s*(\w+:) ", r"**\1** ", desc, flags=re.MULTILINE)
         super().__init__(title=f"**{name}**", colour=self.help_colour, description=desc, **kwargs)
         for f in fields:
             self.add_field(**f)
+        self.set_footer(text=f"Usage: `{self.prefix}help {usage}`")
 
     @classmethod
     def setup(cls: type(FredHelpEmbed)) -> None:
@@ -144,19 +147,12 @@ class FredHelpEmbed(nextcord.Embed):
         return f"{start}-{end}"
 
     @classmethod
-    def name_is_index(cls, category: str) -> FredHelpEmbed:
-        return cls("Bad input", f"help {category} expected a special command's name, not a number")
-
-    @classmethod
-    def index_is_name(cls, category: str) -> FredHelpEmbed:
-        return cls("Bad input", f"help {category} expected a page number, not a specific name")
-
-    @classmethod
     def git_webhooks(cls) -> FredHelpEmbed:
         return cls(
             "GitHub webhooks",
             'I am sent updates from GitHub about the most important modding repositories, '
-            f'then publish updates to <#{config.Misc.fetch("githook_channel")}>!'
+            f'then publish updates to <#{config.Misc.fetch("githook_channel")}>!',
+            usage="webhooks"
         )
 
     @staticmethod
@@ -175,7 +171,7 @@ class FredHelpEmbed(nextcord.Embed):
         desc = "*These are special commands doing something else than just replying with a predetermined answer.*"
     
         cmds = cls._get_specials(commands_class)
-        embed = cls("Special Commands", desc)
+        embed = cls("Special Commands", desc, usage="special [name]")
         solo_cmds = []
         for name, cmd in cmds.items():
             if not cmd.subcommands:
@@ -202,7 +198,7 @@ class FredHelpEmbed(nextcord.Embed):
                    '\nCheck your spelling, or use `help special` to see all special commands.' \
                 + ('\nHint: no numbers!' if name.isnumeric() else '')
     
-        return cls(f'Help using special command "{name}"', desc)
+        return cls(f'Help using special command "{name}"', desc, usage="special [name]")
     
     @classmethod
     def media_only(cls) -> FredHelpEmbed:
@@ -212,7 +208,7 @@ class FredHelpEmbed(nextcord.Embed):
     
         desc += "\n*All other messages will get deleted (if it doesn't, I might be down :( )*"
     
-        return cls("Media-Only Channels", desc)
+        return cls("Media-Only Channels", desc, usage="media_only")
     
     @classmethod
     def crashes(cls, index: int = 0) -> FredHelpEmbed:
@@ -235,11 +231,11 @@ class FredHelpEmbed(nextcord.Embed):
                  'inline': True}
                 for field in range(0, len(page), field_size)
             ]
-            return FredHelpEmbed(title, desc, fields=fields)
+            return FredHelpEmbed(title, desc, fields=fields, usage="crashes [page]")
     
         except IndexError:
             desc = f"There aren't that many crashes! Try a number less than {index}."
-            return FredHelpEmbed(title, desc)
+            return FredHelpEmbed(title, desc, usage="crashes [page]")
     
     @classmethod
     def specific_crash(cls, name: str) -> FredHelpEmbed:
@@ -255,7 +251,7 @@ class FredHelpEmbed(nextcord.Embed):
             **Response:**
             {crash['response']}
             """
-        return cls(f"Crash - {name}", desc)
+        return cls(f"Crash - {name}", desc, usage="crash [name]")
     
     @classmethod
     def commands(cls, index: int = 0) -> FredHelpEmbed:
@@ -278,8 +274,8 @@ class FredHelpEmbed(nextcord.Embed):
                  'inline': True}
                 for field in range(0, len(page), field_size)
             ]
-            return cls(title, desc, fields=fields)
+            return cls(title, desc, fields=fields, usage="commands [page]")
     
         except IndexError:
             desc = f"There aren't that many commands! Try a number less than {index}."
-            return cls(title, desc)
+            return cls(title, desc, usage="commands [page]")
