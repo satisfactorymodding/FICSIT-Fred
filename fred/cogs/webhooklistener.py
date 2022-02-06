@@ -30,7 +30,7 @@ class Githook(commands.Cog):
             daemon = threading.Thread(target=runServer, args=botargs)
             daemon.daemon = True
             daemon.start()
-        except Exception as e:
+        except Exception:
             type, value, tb = sys.exc_info()
             tbs = "".join(traceback.format_tb(tb))
             logger.error(f'Failed to run the webserver:\n{tbs}')

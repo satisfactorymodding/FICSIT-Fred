@@ -1,16 +1,18 @@
-FROM python:3.10.1
+FROM python:3.10
 
 RUN apt-get update -y
+RUN apt-get install -y apt-utils
 RUN apt-get install -y tesseract-ocr
 
-VOLUME /app/config
-WORKDIR /app/bot
+RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local python3 -
 
-COPY ./requirements.txt /app
+VOLUME /config
+WORKDIR /app
 
-RUN pip install --upgrade pip wheel setuptools
-RUN pip install -r ../requirements.txt
+COPY pyproject.toml *.env ./
+RUN poetry config virtualenvs.create false
+RUN poetry install -n
 
-COPY . /app
-
-CMD python ./bot.py
+COPY fred ./fred
+RUN poetry install -n
+CMD python3 -m fred

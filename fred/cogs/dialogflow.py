@@ -1,16 +1,16 @@
 import asyncio
-import config
 import json
 import logging
-import nextcord
 import os
 import uuid
 
-import nextcord.ext.commands as commands
+import nextcord
+from nextcord.ext import commands
 from google.cloud import dialogflow
 from google.oauth2 import service_account
 
-from libraries import common
+from .. import config
+from ..libraries import common
 
 DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
 session_client = dialogflow.SessionsClient(

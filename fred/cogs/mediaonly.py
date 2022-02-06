@@ -1,9 +1,9 @@
-import config
 import logging
 
 import nextcord.ext.commands as commands
 
-from libraries import common
+from ..libraries import common
+from .. import config
 
 
 class MediaOnly(commands.Cog):
