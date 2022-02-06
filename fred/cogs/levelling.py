@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import config
 import logging
 import math
 from datetime import *
@@ -8,7 +7,8 @@ from datetime import *
 import nextcord.ext.commands as commands
 from nextcord import DMChannel
 
-from libraries import common
+from .. import config
+from ..libraries import common
 
 
 class UserProfile:
@@ -49,8 +49,7 @@ class UserProfile:
             # self.rank_role_id = role_id
             if not self.member.permissions_in(self.bot.modchannel).send_messages:
                 for member_role in self.member.roles:
-                    rank = config.RankRoles.fetch_by_role(member_role.id)
-                    if rank:
+                    if rank := config.RankRoles.fetch_by_role(member_role.id):
                         logpayload['role_id'] = member_role.id
                         self.logger.info("Removing a mismatched level role from someone", extra=logpayload)
                         await self.member.remove_roles(member_role)

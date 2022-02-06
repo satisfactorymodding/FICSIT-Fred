@@ -6,14 +6,15 @@ import time
 import traceback
 
 import aiohttp
-import nextcord.ext.commands
+import nextcord
+from nextcord.ext import commands
 import sqlobject as sql
 from dotenv import load_dotenv
-from logstash_async.handler import AsynchronousLogstashHandler
 
-import config
-from cogs import commands, crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
-from libraries import createembed, common, fred_help
+from . import config
+from .fred_commands import Commands, FredHelpEmbed
+from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
+from .libraries import createembed, common
 
 load_dotenv()
 
@@ -22,11 +23,11 @@ ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_HOST", "FRED_SQL_PORT"]
 
 for var in ENVVARS:
-    if not os.environ.get(var):
+    if not os.getenv(var):
         raise EnvironmentError(f"The ENV variable '{var}' isn't set")
 
 
-class Bot(nextcord.ext.commands.Bot):
+class Bot(commands.Bot):
 
     async def isAlive(self):
         try:
@@ -45,10 +46,11 @@ class Bot(nextcord.ext.commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.18.0"
-        fred_help.FredHelpEmbed.setup()
+        self.version = "2.18.1"
+        FredHelpEmbed.setup()
 
         self.loop = asyncio.new_event_loop()
+        self._error_channel = int(env_val) if (env_val := os.getenv("ERROR_CHANNEL")) else 748229790825185311
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
@@ -91,13 +93,7 @@ class Bot(nextcord.ext.commands.Bot):
             raise ConnectionError("Could not connect to the DB")
 
     def setup_logger(self):
-        if os.environ.get("FRED_LOG_HOST") and os.environ.get("FRED_LOG_PORT"):
-            logging.root = logging.getLogger("python-logstash-logger")
-            logging.root.addHandler(
-                AsynchronousLogstashHandler(os.environ.get("FRED_LOG_HOST"), int(os.environ.get("FRED_LOG_PORT")), ""))
-            logging.root.addHandler(logging.StreamHandler())
-        else:
-            logging.root = logging.Logger("FRED")
+        logging.root = logging.Logger("FRED")
         logging.root.setLevel(logging.DEBUG)
 
         self.logger = logging.root
@@ -107,7 +103,7 @@ class Bot(nextcord.ext.commands.Bot):
 
     def setup_cogs(self):
         logging.info("Setting up cogs")
-        self.add_cog(commands.Commands(self))
+        self.add_cog(Commands(self))
         self.add_cog(webhooklistener.Githook(self))
         self.add_cog(mediaonly.MediaOnly(self))
         self.add_cog(crashes.Crashes(self))
@@ -134,7 +130,7 @@ class Bot(nextcord.ext.commands.Bot):
             tbs = tbs + string
         tbs = tbs + "```"
         logging.error(tbs.replace("```", ""))
-        await self.get_channel(748229790825185311).send(tbs)
+        await self.get_channel(self._error_channel).send(tbs)
 
     async def githook_send(self, data):
         self.logger.info("Handling GitHub payload", extra={'data': data})
@@ -147,7 +143,7 @@ class Bot(nextcord.ext.commands.Bot):
             await channel.send(content=None, embed=embed)
 
     async def send_DM(self, user: nextcord.User, content: str = None,
-                      embed: nextcord.Embed=None, user_meta: config.Users = None, **kwargs) -> None:
+                      embed: nextcord.Embed = None, user_meta: config.Users = None, **kwargs) -> None:
 
         self.logger.info("Sending a DM", extra=common.user_info(user))
         if not user_meta:
@@ -176,7 +172,6 @@ class Bot(nextcord.ext.commands.Bot):
             return True
         except (nextcord.HTTPException, nextcord.Forbidden):
             # user has blocked bot or does not take mutual-server DMs
-            self.logger.warning("Attempted to DM a user but this was forbidden.")
             return False
 
     async def reply_to_msg(self, message, content=None, propagate_reply=True, **kwargs):
@@ -265,10 +260,3 @@ class Bot(nextcord.ext.commands.Bot):
 
         self.logger.info(f"Data has length of {len(rtn)}")
         return rtn
-
-
-intents = nextcord.Intents.all()
-
-client = Bot("?", help_command=None, intents=intents, chunk_guilds_at_startup=False)
-
-client.run(os.environ.get("FRED_TOKEN"))

@@ -1,13 +1,13 @@
-import config
 import logging
-import nextcord
 from datetime import datetime
 from io import BytesIO
 
+import nextcord
 from PIL import Image
 from nextcord.utils import format_dt
 
-from libraries import common
+from . import common
+from .. import config
 
 
 def timestamp(iso8601: str) -> str:
@@ -160,12 +160,14 @@ def pull_request(data: dict) -> nextcord.Embed:
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
-    stats = f'''
-            📋 {data["pull_request"]["commits"]}
-            ✅ {data["pull_request"]["additions"]}
-            ❌ {data["pull_request"]["deletions"]}
-            📝 {data["pull_request"]["changed_files"]}
-            '''
+    stats = '\n'.join(
+        [
+            f'📋 {data["pull_request"]["commits"]}',
+            f'✅ {data["pull_request"]["additions"]}',
+            f'❌ {data["pull_request"]["deletions"]}',
+            f'📝 {data["pull_request"]["changed_files"]}'
+        ]
+    )
 
     direction = f'{data["pull_request"]["head"]["ref"]} -> {data["pull_request"]["base"]["ref"]}'
     embed.add_field(name=direction, value=stats)
