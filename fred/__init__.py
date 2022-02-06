@@ -20,10 +20,10 @@ load_dotenv()
 
 ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
            "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
-           "FRED_SQL_HOST", "FRED_SQL_PORT"]
+           "FRED_SQL_HOST", "FRED_SQL_PORT", "ERROR_CHANNEL"]
 
 for var in ENVVARS:
-    if not os.environ.get(var):
+    if not os.getenv(var):
         raise EnvironmentError(f"The ENV variable '{var}' isn't set")
 
 
@@ -129,7 +129,7 @@ class Bot(commands.Bot):
             tbs = tbs + string
         tbs = tbs + "```"
         logging.error(tbs.replace("```", ""))
-        await self.get_channel(748229790825185311).send(tbs)
+        await self.get_channel(int(os.getenv("ERROR_CHANNEL"))).send(tbs)
 
     async def githook_send(self, data):
         self.logger.info("Handling GitHub payload", extra={'data': data})
