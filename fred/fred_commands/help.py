@@ -18,6 +18,11 @@ class HelpCmds(BaseCmds):
         """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
         Usage: `help [commands/crash(es)/special/media_only/webhooks] [page: int/name: str]`
         Response: Information about what you requested"""
+        try:
+            await ctx.message.delete()
+        except nextcord.Forbidden:
+            pass  # doesn't have delete perms, f.e. in a DM channel
+
         if ctx.invoked_subcommand is None:
             await self.help_special(ctx, name='help')
             return
