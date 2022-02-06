@@ -10,8 +10,9 @@ VOLUME /config
 WORKDIR /app
 
 COPY pyproject.toml .
-COPY fred ./fred
-
 RUN poetry config virtualenvs.create false
+RUN poetry install -n
+
+COPY fred ./fred
 RUN poetry install -n
 CMD python3 -m fred
