@@ -169,7 +169,7 @@ class EXPCmds(BaseCmds):
             return
 
         config.RankRoles(role_id=role_id, rank=rank)
-        await self.bot.reply_to_msg(ctx.message, "level role " + ctx.message.guild.get_role(role_id).name + " added!")
+        await self.bot.reply_to_msg(ctx.message, f'level role {ctx.guild.get_role(role_id).name} added!')
 
     @BaseCmds.remove.command(name="level_role")
     async def remove_level_role(self, ctx: commands.Context, role: commands.RoleConverter):

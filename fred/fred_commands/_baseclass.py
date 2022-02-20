@@ -4,8 +4,8 @@ from nextcord.ext import commands
 from .. import config
 from ..libraries import common
 
-
 assert config  # shut up linter, things that import this need this for convenience
+
 
 class BaseCmds(commands.Cog):
 

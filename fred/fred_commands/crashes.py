@@ -13,6 +13,7 @@ class CrashCmds(BaseCmds):
             - Ensure the regex is surrounded by quotes BUT ONLY if you are doing it in one command.
             - `response` can be my command prefix and the name of a command, which will result in
             the response mirroring that of the command indicated."""
+
         if config.Crashes.fetch(crash_name):
             await self.bot.reply_to_msg(ctx.message, "A crash with this name already exists")
             return

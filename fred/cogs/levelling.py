@@ -141,9 +141,14 @@ class Levelling(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         self.logger.info("Levelling: Processing message", extra=common.message_info(message))
-        if message.author.bot or isinstance(message.channel, DMChannel) or \
-                message.guild.id != config.Misc.fetch("main_guild_id") or not config.Misc.fetch("levelling_state"):
+        if (
+            message.author.bot
+            or isinstance(message.channel, DMChannel)
+            or message.guild.id != config.Misc.fetch("main_guild_id")
+            or not config.Misc.fetch("levelling_state")
+        ):
             return
+
         profile = UserProfile(message.author.id, message.guild, self.bot)
         profile.DB_user.message_count += 1
         if profile.user_id in self.bot.xp_timers:
