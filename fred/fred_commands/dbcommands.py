@@ -109,7 +109,6 @@ class CommandCmds(BaseCmds):
             elif cmd := config.Commands.fetch(name=alias):
                 if cmd['content'] == target:  # contents are identical
                     rtn['failure'].append((alias, 'exists'))
-                    continue
                 else:
                     rtn['overwrite'].append(alias)
             else:
