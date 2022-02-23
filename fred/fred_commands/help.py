@@ -123,8 +123,9 @@ class FredHelpEmbed(nextcord.Embed):
     def __init__(self: FredHelpEmbed, name: str, desc: str, /,
                  usage: str = '', fields: list[dict] = (), **kwargs) -> None:
 
-        desc = re.sub(r"`(.+)`", rf"`{self.prefix}\1`", desc)
-        desc = re.sub(r"^\s*(\w+:) ", r"**\1** ", desc, flags=re.MULTILINE)
+        desc = re.sub(r"^\s*(\S.*)$", r"\1", desc, flags=re.MULTILINE)
+        desc = re.sub(r"(?<=Usage: )`(.+)`", rf"`{self.prefix}\1`", desc)
+        desc = re.sub(r"^(\w+:) ", r"**\1** ", desc, flags=re.MULTILINE)
         super().__init__(title=f"**{name}**", colour=self.help_colour, description=desc, **kwargs)
         for f in fields:
             self.add_field(**f)
@@ -237,7 +238,7 @@ class FredHelpEmbed(nextcord.Embed):
                 for field in range(0, len(page), field_size)
             ]
             return FredHelpEmbed(title, desc, fields=fields, usage="crashes [page]")
-    
+
         except IndexError:
             desc = f"There aren't that many crashes! Try a number less than {index}."
             return FredHelpEmbed(title, desc, usage="crashes [page]")
@@ -280,7 +281,7 @@ class FredHelpEmbed(nextcord.Embed):
                 for field in range(0, len(page), field_size)
             ]
             return cls(title, desc, fields=fields, usage="commands [page]")
-    
+
         except IndexError:
             desc = f"There aren't that many commands! Try a number less than {index}."
             return cls(title, desc, usage="commands [page]")

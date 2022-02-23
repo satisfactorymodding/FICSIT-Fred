@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import sys
+import textwrap
 import time
 import traceback
 
@@ -18,9 +19,9 @@ from .libraries import createembed, common
 
 load_dotenv()
 
-ENVVARS = ["FRED_IP", "FRED_PORT", "FRED_TOKEN", "DIALOGFLOW_AUTH",
-           "FRED_SQL_DB", "FRED_SQL_USER", "FRED_SQL_PASSWORD",
-           "FRED_SQL_HOST", "FRED_SQL_PORT"]
+ENVVARS = ["FRED_IP",       "FRED_PORT",     "FRED_TOKEN",
+           "FRED_SQL_DB",   "FRED_SQL_USER", "FRED_SQL_PASSWORD",
+           "FRED_SQL_HOST", "FRED_SQL_PORT", "DIALOGFLOW_AUTH"]
 
 for var in ENVVARS:
     if not os.getenv(var):
@@ -46,7 +47,7 @@ class Bot(commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.18.1"
+        self.version = "2.18.2"
         FredHelpEmbed.setup()
 
         self.loop = asyncio.new_event_loop()
@@ -62,7 +63,7 @@ class Bot(commands.Bot):
         return config.Misc.fetch("is_running")
 
     async def on_ready(self):
-        await self.change_presence(activity=nextcord.Game("v" + self.version))
+        await self.change_presence(activity=nextcord.Game(f'v{self.version}'))
         self.isReady = True
         logging.info(f'We have logged in as {self.user} with prefix {self.command_prefix}')
 
@@ -125,17 +126,20 @@ class Bot(commands.Bot):
                 channel_str = f" in #{channel.name}"
         else:
             channel_str = ""
-        tbs = f"```Fred v{self.version}\n\n{type.__name__} exception handled in {event}{channel_str}: {value}\n\n"
-        for string in traceback.format_tb(tb):
-            tbs = tbs + string
-        tbs = tbs + "```"
-        logging.error(tbs.replace("```", ""))
-        await self.get_channel(self._error_channel).send(tbs)
+        tbs = textwrap.dedent(f"""
+            Fred v{self.version}
+            {'~'*40}
+            {type.__name__} exception handled in {event}{channel_str}: {value}
+            {'~'*40}
+            """) + ''.join(traceback.format_tb(tb))
+        logging.error(tbs)
+        await self.get_channel(self._error_channel).send(f"```py\n{tbs}```")
 
     async def githook_send(self, data):
         self.logger.info("Handling GitHub payload", extra={'data': data})
-        embed = await createembed.run(data)
-        if embed == "Debug":
+
+        embed: nextcord.Embed | None = await createembed.run(data)
+        if embed is None:
             self.logger.info("Non-supported Payload received")
         else:
             self.logger.info("GitHub payload was supported, sending an embed")
@@ -174,7 +178,7 @@ class Bot(commands.Bot):
             # user has blocked bot or does not take mutual-server DMs
             return False
 
-    async def reply_to_msg(self, message, content=None, propagate_reply=True, **kwargs):
+    async def reply_to_msg(self, message: nextcord.Message, content=None, propagate_reply=True, **kwargs):
         self.logger.info("Replying to a message", extra=common.message_info(message))
         # use this line if you're trying to debug discord throwing code 400s
         # self.logger.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
