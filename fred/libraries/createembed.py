@@ -310,7 +310,7 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
     if not mods:
         return None, None
 
-    if common.mod_name_eq((mod := mods[0])["name"], name):
+    if common.mod_name_eq((mod := mods[0])["name"], name) or len(mods) == 1:
         # we have a near-exact match
         embed = _single_mod_embed(mod)
         file, filename = await webp_icon_as_png(mod["logo"], bot)
