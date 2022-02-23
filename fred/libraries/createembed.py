@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from io import BytesIO
+from urllib.parse import quote as url_safe
 
 import nextcord
 from PIL import Image
@@ -27,9 +28,8 @@ async def run(data: dict) -> nextcord.Embed | None:
         repo_full_name = f'{data["repository"]["name"]}/{data["ref"].split("/")[2]}'
     except (KeyError, IndexError):
         repo_name, repo_full_name = "", ""
-    try:
-        data_type = data["type"]
-    except KeyError:
+
+    if data_type := data.get("type") is None:
         logging.error("data didn't have a type field")
         return
 
@@ -257,22 +257,21 @@ def _single_mod_embed(mod: dict) -> nextcord.Embed:
     return nextcord.Embed(
         title=mod["name"],
         description=desc,
-        url=str("https://ficsit.app/mod/" + mod["id"])
+        url=f'https://ficsit.app/mod/{mod["id"]}',
     )
 
 
 def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.Embed:
-    desc = "".join(
+    desc = "\n".join(
         [
-            mod["name"] +
-            f'[™](https://ficsit.app/mod/{mod["id"]})\n'
+            f'{mod["name"]}[™](https://ficsit.app/mod/{mod["id"]})'
             for mod in mods[:10]
         ]
     ) + (f"\n*And {cut} more...*" if (cut := len(mods[10:])) else '')
     return nextcord.Embed(
         title="Multiple mods found:",
         description=desc,
-        url=f"https://ficsit.app/mods?q={original_query_name}"
+        url=f"https://ficsit.app/mods?q={url_safe(original_query_name)}"
     )
 
 
@@ -289,7 +288,7 @@ async def webp_icon_as_png(url: str, bot) -> tuple[nextcord.File, str]:
 # SMR Lookup Embed Formats
 async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.File | None]:
     # GraphQL Queries
-    query = str('''{
+    query = '''{
           getMods(filter: { search: "''' + name + '''", order_by: search, order:desc, limit:100}) {
             mods {
               name
@@ -304,17 +303,18 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
               id
             }
           }
-        }''')
+        }'''
     result = await bot.repository_query(query)
     mods: list[dict] = result["data"]["getMods"]["mods"]
+    logging.debug(mods)
     if not mods:
         return None, None
 
-    if common.mod_name_eq((mod := mods[0])["name"], name):
+    if common.mod_name_eq((mod := mods[0])["name"], name) or len(mods) == 1:
         # we have a near-exact match
         embed = _single_mod_embed(mod)
         file, filename = await webp_icon_as_png(mod["logo"], bot)
-        thumb_url = "attachment://" + filename
+        thumb_url = f'attachment://{filename}'
         footer = "If this isn't the mod you were looking for, try a different spelling."
     else:
         # we have a bunch of almost matches

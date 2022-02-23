@@ -35,15 +35,20 @@ def permission_check(ctx: Context, level: int) -> bool:
         return False
 
     user_roles = [role.id for role in main_guild_member.roles]
-
-    ranks_above_level = [*filter(lambda c: c.perm_lvl >= level, perms)]
-    if ranks_above_level:  # it shouldn't be possible to request a level above the defined levels but check anyway
-        try:
-            role = next(filter(lambda c: c.role_id in user_roles, ranks_above_level))
-            logger.info(f"A permission check was positive with level {role.perm_lvl}", extra=logpayload)
-            return True  # user has a role that is above the requested level
-        except StopIteration:
-            pass  # ran through all the clearances above the requested level but the user had none of them
+    if (
+        # it shouldn't be possible to request a level above the defined levels but check anyway
+        role := next(
+            (
+                permission
+                for permission in perms
+                if permission.perm_lvl >= level
+                and permission.role_id in user_roles
+            ),
+            False
+        )  # checks for the first occurring, if any
+    ):
+        logger.info(f"A permission check was positive with level {role.perm_lvl}", extra=logpayload)
+        return True  # user has a role that is above the requested level
 
     logger.info(f"A permission check was negative with level less than required ({level})", extra=logpayload)
     return False

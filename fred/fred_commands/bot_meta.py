@@ -37,7 +37,7 @@ class BotCmds(BaseCmds):
     @commands.check(common.mod_only)
     @BaseCmds.set.command(name="main_guild")
     async def set_main_guild(self, ctx: commands.Context, guild_id: int = None):
-        """Usage: `set main_guild (guild_id: int)`
+        """Usage: `set main_guild [guild_id: int]`
         Purpose: changes what counts as the main server
         Notes: unless you're testing me as a beta fork, don't use this"""
         if not guild_id:
