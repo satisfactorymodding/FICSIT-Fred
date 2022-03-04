@@ -1,24 +1,27 @@
-[tool.poetry]
+[project]
 name = "FICSIT-Fred"
-version = "2.18.0"
+version = "2.18.2"
 description = "A Discord bot for the Satisfactory Modding Discord "
-authors = ["Feyko <feykook@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>", "Astro Floof <does.not.kompute@gmail.com>"]
-license = "MIT License"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-nextcord = "^2.0.0-alpha.6"
-Pillow = "^9.0.0"
-pytesseract = "^0.3.8"
-psycopg2-binary = "^2.9.3"
-python-dotenv = "^0.19.2"
-jsonpickle = "^2.1.0"
-algoliasearch = "^2.6.1"
-SQLObject = "^3.9.1"
-google-cloud-dialogflow = "^2.11.0"
-
-[tool.poetry.dev-dependencies]
+readme = "README.md"
+requires-python = "~=3.10"
+license = {file="LICENSE"}
+authors = [
+    { name = "Feyko", email = "feykook@gmail.com"}, 
+    { name = "Mircea Roata", email = "mircearoatapalade@yahoo.ro"},
+    { name = "Astro Floof", email = "does.not.kompute@gmail.com"}
+]
+dependencies = [
+    "nextcord ~= 2.0.0a8",
+    "Pillow ~= 9.0",
+    "pytesseract ~= 0.3.8",
+    "psycopg2-binary ~= 2.9",
+    "python-dotenv ~= 0.19",
+    "jsonpickle ~= 2.1",
+    "algoliasearch ~= 2.6",
+    "SQLObject ~= 3.9",
+    "google-cloud-dialogflow ~= 2.11"
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-pep517"]
+build-backend = "pdm.pep517.api"
