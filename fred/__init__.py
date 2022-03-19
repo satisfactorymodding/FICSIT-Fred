@@ -47,7 +47,7 @@ class Bot(commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.18.2"
+        self.version = "2.18.3"
         FredHelpEmbed.setup()
 
         self.loop = asyncio.new_event_loop()

@@ -29,7 +29,7 @@ async def run(data: dict) -> nextcord.Embed | None:
     except (KeyError, IndexError):
         repo_name, repo_full_name = "", ""
 
-    if data_type := data.get("type") is None:
+    if (data_type := data.get("type")) is None:
         logging.error("data didn't have a type field")
         return
 
