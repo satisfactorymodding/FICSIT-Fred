@@ -11,6 +11,7 @@ import nextcord
 from nextcord.ext import commands
 import sqlobject as sql
 
+from .owo import owoize
 from . import config
 from .fred_commands import Commands, FredHelpEmbed
 from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
@@ -142,6 +143,14 @@ class Bot(commands.Bot):
     async def send_DM(self, user: nextcord.User, content: str = None,
                       embed: nextcord.Embed = None, user_meta: config.Users = None, **kwargs) -> None:
 
+        if content is not None:
+            content = owoize(content)
+
+        if embed is not None:
+            embed.title = owoize(embed.title)
+            embed.description = owoize(embed.description)
+            # don't do the fields because those are most often literal command names, like in help
+
         self.logger.info("Sending a DM", extra=common.user_info(user))
         if not user_meta:
             user_meta = config.Users.create_if_missing(user)
@@ -176,6 +185,7 @@ class Bot(commands.Bot):
         # use this line if you're trying to debug discord throwing code 400s
         # self.logger.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
         reference = (message.reference if propagate_reply else None) or message
+        content = owoize(content)
         if isinstance(reference, nextcord.MessageReference):
             reference.fail_if_not_exists = False
 
