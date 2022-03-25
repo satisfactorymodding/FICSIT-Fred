@@ -17,7 +17,7 @@ owo_table = {
 
 def owoize(string: str) -> str:
     new_string: list[str] = []
-    for line in string.split('\n'):
+    for line in string.split("\n"):
         new_line: list[str] = []
         for word in line.split():
             if "http" not in word:

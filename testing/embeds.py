@@ -4,6 +4,7 @@
 
 from os.path import abspath
 import sys
+
 sys.path.insert(0, abspath("./bot"))
 from libraries.createembed import run
 from asyncio import run as nonawait
@@ -15,8 +16,8 @@ from requests import post
 with open(abspath("./tests/push.json")) as j:
     test_data = load(j)
 
-test_data['type'] = 'push'
+test_data["type"] = "push"
 embed = nonawait(run(test_data))
 url = getenv("TESTWEBHOOKURL")
-response = post(url, json={'embeds': [embed.to_dict()]})
+response = post(url, json={"embeds": [embed.to_dict()]})
 print(response)

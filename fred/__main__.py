@@ -3,9 +3,17 @@ from os import getenv
 
 load_dotenv()
 
-ENVVARS = ["FRED_IP",       "FRED_PORT",     "FRED_TOKEN",
-           "FRED_SQL_DB",   "FRED_SQL_USER", "FRED_SQL_PASSWORD",
-           "FRED_SQL_HOST", "FRED_SQL_PORT", "DIALOGFLOW_AUTH",]
+ENVVARS = [
+    "FRED_IP",
+    "FRED_PORT",
+    "FRED_TOKEN",
+    "FRED_SQL_DB",
+    "FRED_SQL_USER",
+    "FRED_SQL_PASSWORD",
+    "FRED_SQL_HOST",
+    "FRED_SQL_PORT",
+    "DIALOGFLOW_AUTH",
+]
 
 for var in ENVVARS:
     if getenv(var) is None:

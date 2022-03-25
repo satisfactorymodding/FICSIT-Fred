@@ -26,7 +26,7 @@ async def mod_only(ctx: Context) -> bool:
 
 def permission_check(ctx: Context, level: int) -> bool:
     logpayload = user_info(ctx.author)
-    logpayload['level'] = level
+    logpayload["level"] = level
     logger.info("Checking permissions for someone", extra=logpayload)
     perms = config.PermissionRoles.fetch_by_lvl(level)
     main_guild = ctx.bot.get_guild(config.Misc.fetch("main_guild_id"))
@@ -38,13 +38,8 @@ def permission_check(ctx: Context, level: int) -> bool:
     if (
         # it shouldn't be possible to request a level above the defined levels but check anyway
         role := next(
-            (
-                permission
-                for permission in perms
-                if permission.perm_lvl >= level
-                and permission.role_id in user_roles
-            ),
-            False
+            (permission for permission in perms if permission.perm_lvl >= level and permission.role_id in user_roles),
+            False,
         )  # checks for the first occurring, if any
     ):
         logger.info(f"A permission check was positive with level {role.perm_lvl}", extra=logpayload)
@@ -57,9 +52,9 @@ def permission_check(ctx: Context, level: int) -> bool:
 @lru_cache(5)
 def user_info(user: User | config.Users) -> dict:
     if isinstance(user, User):
-        return {'user_full_name': str(user), 'user_id': user.id}
+        return {"user_full_name": str(user), "user_id": user.id}
     elif isinstance(user, config.Users):
-        return {'user_full_name': user.full_name, 'user_id': user.id}
+        return {"user_full_name": user.full_name, "user_id": user.id}
     return {}
 
 
@@ -67,12 +62,12 @@ def user_info(user: User | config.Users) -> dict:
 def message_info(message: Message) -> dict:
     if message is None:
         return {}
-    return {'message_id': message.id, 'channel_id': message.channel.id, 'user_id': message.author.id}
+    return {"message_id": message.id, "channel_id": message.channel.id, "user_id": message.author.id}
 
 
 def reduce_str(string: str) -> str:
     # reduces a string into something that's more comparable
-    return ''.join(string.split()).lower()
+    return "".join(string.split()).lower()
 
 
 def mod_name_eq(name1: str, name2: str) -> bool:

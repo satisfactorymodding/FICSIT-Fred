@@ -4,7 +4,6 @@ from ._baseclass import BaseCmds, commands, config
 
 
 class DialogflowCmds(BaseCmds):
-
     @BaseCmds.add.command(name="dialogflow")
     async def add_dialogflow(self, ctx: commands.Context, intent_id: str, response: bool | str, followup: bool, *args):
         """Usage: `add dialogflow (intent_id: str) (response: bool/str) (has_followup: bool)`
@@ -13,11 +12,12 @@ class DialogflowCmds(BaseCmds):
         if len(args) == 0:
             data = None
         else:
-            data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
+            data = {arg.split("=")[0]: arg.split("=")[1] for arg in args}
 
         if response is True:
-            await self.bot.reply_to_msg(ctx.message,
-                                        "Response should be a string or False (use the response from dialogflow)")
+            await self.bot.reply_to_msg(
+                ctx.message, "Response should be a string or False (use the response from dialogflow)"
+            )
             return
         elif response is False:
             response = None
@@ -33,9 +33,10 @@ class DialogflowCmds(BaseCmds):
                 return
 
         config.Dialogflow(intent_id=intent_id, data=data, response=response, has_followup=followup)
-        await self.bot.reply_to_msg(ctx.message,
-                                    f"Dialogflow response for '{intent_id}' "
-                                    f"({json.dumps(data) if data else 'any data'}) added!")
+        await self.bot.reply_to_msg(
+            ctx.message,
+            f"Dialogflow response for '{intent_id}' " f"({json.dumps(data) if data else 'any data'}) added!",
+        )
 
     @BaseCmds.remove.command(name="dialogflow")
     async def remove_dialogflow(self, ctx: commands.Context, intent_id: str, *args):
@@ -45,7 +46,7 @@ class DialogflowCmds(BaseCmds):
         if len(args) == 0:
             data = None
         else:
-            data = {arg.split('=')[0]: arg.split('=')[1] for arg in args}
+            data = {arg.split("=")[0]: arg.split("=")[1] for arg in args}
 
         if not config.Dialogflow.fetch(intent_id, data):
             await self.bot.reply_to_msg(ctx.message, "Couldn't find the dialogflow reply")
@@ -78,7 +79,7 @@ class DialogflowCmds(BaseCmds):
             await self.bot.reply_to_msg(ctx.message, "Dialogflow role removed!")
         else:
             await self.bot.reply_to_msg(ctx.message, "Dialogflow role could not be found!")
-    
+
     @BaseCmds.set.command(name="NLP_state")
     async def set_NLP_state(self, ctx: commands.Context, enabled: bool):
         """Usage: `set NLP_state (true/false)`

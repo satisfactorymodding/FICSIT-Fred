@@ -67,9 +67,15 @@ class Users(SQLObject):
     accepts_dms = BoolCol(default=True)
 
     def as_dict(self):
-        return dict(user_id=self.user_id, message_count=self.message_count, xp_count=self.xp_count,
-                    rank_role_id=self.rank_role_id, rank=self.rank, full_name=self.full_name,
-                    accepts_dms=self.accepts_dms)
+        return dict(
+            user_id=self.user_id,
+            message_count=self.message_count,
+            xp_count=self.xp_count,
+            rank_role_id=self.rank_role_id,
+            rank=self.rank,
+            full_name=self.full_name,
+            accepts_dms=self.accepts_dms,
+        )
 
     @staticmethod
     def fetch(user_id):
@@ -153,10 +159,12 @@ class Dialogflow(SQLObject):
     has_followup = BoolCol()
 
     def as_dict(self):
-        return dict(intent_id=self.intent_id,
-                    data=json.loads(str(self.data)) if self.data else None,
-                    response=self.response,
-                    has_followup=self.has_followup)
+        return dict(
+            intent_id=self.intent_id,
+            data=json.loads(str(self.data)) if self.data else None,
+            response=self.response,
+            has_followup=self.has_followup,
+        )
 
     @staticmethod
     def fetch(intent_id, data):
