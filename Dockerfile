@@ -11,8 +11,7 @@ WORKDIR /app
 
 COPY pyproject.toml *.env ./
 RUN poetry config virtualenvs.create false
-RUN poetry install -n
+RUN poetry install -nvvv --no-dev
 
 COPY fred ./fred
-RUN poetry install -n
 CMD python3 -m fred
