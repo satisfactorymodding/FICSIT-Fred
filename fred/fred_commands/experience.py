@@ -4,7 +4,6 @@ from ..libraries import createembed
 
 
 class EXPCmds(BaseCmds):
-    
     @commands.group()
     @commands.check(common.mod_only)
     async def xp(self, ctx):
@@ -12,7 +11,7 @@ class EXPCmds(BaseCmds):
         Purpose: Xp stuff. Check individual subcommands for specifics.
         Notes: Limited to moderators and above"""
         if ctx.invoked_subcommand is None:
-            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
+            await self.bot.reply_to_msg(ctx.message, "Invalid sub command passed...")
             return
 
     @xp.command(name="give")
@@ -22,14 +21,17 @@ class EXPCmds(BaseCmds):
         Notes: don't give negative xp, use take"""
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
         if amount < 0:
-            await self.bot.reply_to_msg(ctx.message,
-                                        f"<:thonk:836648850377801769> attempt to give a negative\n"
-                                        f"Did you mean `{self.bot.command_prefix}xp take`?")
+            await self.bot.reply_to_msg(
+                ctx.message,
+                f"<:thonk:836648850377801769> attempt to give a negative\n"
+                f"Did you mean `{self.bot.command_prefix}xp take`?",
+            )
         else:
             await profile.give_xp(amount)
-            await self.bot.reply_to_msg(ctx.message,
-                                        f"Gave {amount} xp to {target.name}. "
-                                        f"They are now rank {profile.rank} ({profile.xp_count} xp)")
+            await self.bot.reply_to_msg(
+                ctx.message,
+                f"Gave {amount} xp to {target.name}. " f"They are now rank {profile.rank} ({profile.xp_count} xp)",
+            )
 
     @xp.command(name="take")
     async def xp_take(self, ctx: commands.Context, target: commands.UserConverter, amount: float):
@@ -38,17 +40,20 @@ class EXPCmds(BaseCmds):
         Notes: don't take negative xp, use give"""
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
         if amount < 0:
-            await self.bot.reply_to_msg(ctx.message,
-                                        f"<:thonk:836648850377801769> attempt to take away a negative\n"
-                                        f"Did you mean `{self.bot.command_prefix}xp give`?")
+            await self.bot.reply_to_msg(
+                ctx.message,
+                f"<:thonk:836648850377801769> attempt to take away a negative\n"
+                f"Did you mean `{self.bot.command_prefix}xp give`?",
+            )
             return
 
         if not await profile.take_xp(amount):
             await self.bot.reply_to_msg(ctx.message, "Cannot take more xp that this user has!")
         else:
-            await self.bot.reply_to_msg(ctx.message,
-                                        f"Took {amount} xp from {target.name}. "
-                                        f"They are now rank {profile.rank} ({profile.xp_count} xp)")
+            await self.bot.reply_to_msg(
+                ctx.message,
+                f"Took {amount} xp from {target.name}. " f"They are now rank {profile.rank} ({profile.xp_count} xp)",
+            )
 
     @xp.command(name="multiplier")
     async def xp_multiplier(self, ctx: commands.Context, target: commands.UserConverter, multiplier: float):
@@ -72,12 +77,14 @@ class EXPCmds(BaseCmds):
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
 
         if amount < 0:
-            await self.bot.reply_to_msg(ctx.message, 'Negative numbers for xp are not allowed!')
+            await self.bot.reply_to_msg(ctx.message, "Negative numbers for xp are not allowed!")
         else:
             await profile.set_xp(amount)
-            await self.bot.reply_to_msg(ctx.message,
-                                        f"Set {target.name}'s xp count to {amount}. "
-                                        f"They are now rank {profile.rank} ({profile.xp_count} xp)")
+            await self.bot.reply_to_msg(
+                ctx.message,
+                f"Set {target.name}'s xp count to {amount}. "
+                f"They are now rank {profile.rank} ({profile.xp_count} xp)",
+            )
 
     @commands.check(common.mod_only)
     @BaseCmds.set.command(name="base_level_value")
@@ -169,7 +176,7 @@ class EXPCmds(BaseCmds):
             return
 
         config.RankRoles(role_id=role_id, rank=rank)
-        await self.bot.reply_to_msg(ctx.message, f'level role {ctx.guild.get_role(role_id).name} added!')
+        await self.bot.reply_to_msg(ctx.message, f"level role {ctx.guild.get_role(role_id).name} added!")
 
     @BaseCmds.remove.command(name="level_role")
     async def remove_level_role(self, ctx: commands.Context, role: commands.RoleConverter):

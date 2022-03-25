@@ -3,7 +3,6 @@ import re
 
 
 class CrashCmds(BaseCmds):
-    
     @BaseCmds.add.command(name="crash")
     async def add_crash(self, ctx: commands.Context, crash_name: str.lower, match: str = None, *, response: str = None):
         """Usage: `add crash (name) ["regex"] [response]`
@@ -23,9 +22,11 @@ class CrashCmds(BaseCmds):
         try:
             re.search(match, "test")
         except re.error:
-            await self.bot.reply_to_msg(ctx.message,
-                                        "The regex isn't valid. Please refer to "
-                                        "https://docs.python.org/3/library/re.html for docs on Python's regex library")
+            await self.bot.reply_to_msg(
+                ctx.message,
+                "The regex isn't valid. Please refer to "
+                "https://docs.python.org/3/library/re.html for docs on Python's regex library",
+            )
             return
 
         if not response:
@@ -66,16 +67,19 @@ class CrashCmds(BaseCmds):
 
         try:
             if change_crash := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the crash to match?"):
-                match, _ = await self.bot.reply_question(ctx.message,
-                                                         "What is the regular expression to match in the logs?")
+                match, _ = await self.bot.reply_question(
+                    ctx.message, "What is the regular expression to match in the logs?"
+                )
         except ValueError:
             return
 
         try:
             if change_response := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the response?"):
-                response, _ = await self.bot.reply_question(ctx.message,
-                                                            "What response do you want it to provide? Responding with "
-                                                            "a command will make the response that command")
+                response, _ = await self.bot.reply_question(
+                    ctx.message,
+                    "What response do you want it to provide? Responding with "
+                    "a command will make the response that command",
+                )
         except ValueError:
             return
 

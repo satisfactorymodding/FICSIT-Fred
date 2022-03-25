@@ -8,7 +8,6 @@ assert config  # shut up linter, things that import this need this for convenien
 
 
 class BaseCmds(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.Logger("COMMANDS")
@@ -20,7 +19,7 @@ class BaseCmds(commands.Cog):
         Purpose: Adds something (duh). Check individual subcommands for specifics.
         Notes: Limited to permission level 4 and above"""
         if ctx.invoked_subcommand is None:
-            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
+            await self.bot.reply_to_msg(ctx.message, "Invalid sub command passed...")
             return
 
     @commands.group()
@@ -30,7 +29,7 @@ class BaseCmds(commands.Cog):
         Purpose: Removes something (duh). Check individual subcommands for specifics.
         Notes: Limited to permission level 4 and above"""
         if ctx.invoked_subcommand is None:
-            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
+            await self.bot.reply_to_msg(ctx.message, "Invalid sub command passed...")
             return
 
     @commands.group()
@@ -40,7 +39,7 @@ class BaseCmds(commands.Cog):
         Purpose: Sets something (duh). Check individual subcommands for specifics.
         Notes: Limited to permission level 4 and above"""
         if ctx.invoked_subcommand is None:
-            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
+            await self.bot.reply_to_msg(ctx.message, "Invalid sub command passed...")
             return
 
     @commands.group()
@@ -50,5 +49,5 @@ class BaseCmds(commands.Cog):
         Purpose: Modifies something (duh). Check individual subcommands for specifics.
         Notes: Limited to permission level 4 and above"""
         if ctx.invoked_subcommand is None:
-            await self.bot.reply_to_msg(ctx.message, 'Invalid sub command passed...')
+            await self.bot.reply_to_msg(ctx.message, "Invalid sub command passed...")
             return

@@ -23,10 +23,12 @@ async def regex_with_timeout(*args, **kwargs):
     try:
         return await asyncio.wait_for(asyncio.to_thread(re.search, *args, **kwargs), REGEX_LIMIT)
     except asyncio.TimeoutError:
-        raise TimeoutError(f"A regex timed out after {REGEX_LIMIT} seconds! \n"
-                           f"pattern: ({args[0]}) \n"
-                           f"flags: {kwargs['flags']} \n"
-                           f"on text of length {len(args[1])}")
+        raise TimeoutError(
+            f"A regex timed out after {REGEX_LIMIT} seconds! \n"
+            f"pattern: ({args[0]}) \n"
+            f"flags: {kwargs['flags']} \n"
+            f"on text of length {len(args[1])}"
+        )
 
 
 class Crashes(commands.Cog):
@@ -34,7 +36,7 @@ class Crashes(commands.Cog):
         re.compile(r"Net CL: (?P<game_version>\d+)"),
         re.compile(r"Command Line: (?P<cli>.*)"),
         re.compile(r"Base Directory: (?P<path>.+)"),
-        re.compile(r"Launcher ID: (?P<launcher>\w+)")
+        re.compile(r"Launcher ID: (?P<launcher>\w+)"),
     ]
 
     def __init__(self, bot):
@@ -43,7 +45,7 @@ class Crashes(commands.Cog):
 
     @staticmethod
     def filter_epic_commandline(cli: str) -> str:
-        return ' '.join(filter(lambda opt: "auth" not in opt.lower(), cli.split()))
+        return " ".join(filter(lambda opt: "auth" not in opt.lower(), cli.split()))
 
     async def parse_factory_game_log(self, text: str) -> dict[str, str | int]:
         self.logger.info("Extracting game info")
@@ -76,9 +78,9 @@ class Crashes(commands.Cog):
         return info
 
     @staticmethod
-    def make_version_info_message(smm: str = '', game_version: int = 0,
-                                  sml: str = '', path: str = '',
-                                  cli: str = '', launcher: str = '', **_) -> str:
+    def make_version_info_message(
+        smm: str = "", game_version: int = 0, sml: str = "", path: str = "", cli: str = "", launcher: str = "", **_
+    ) -> str:
         version_info = ""
 
         if smm:
@@ -96,7 +98,7 @@ class Crashes(commands.Cog):
 
         return version_info
 
-    async def make_sml_version_message(self, game_version: int = 0, sml: str = '', **_) -> str:
+    async def make_sml_version_message(self, game_version: int = 0, sml: str = "", **_) -> str:
         if game_version and sml:
             # Check the right SML for that CL
             query = """{
@@ -111,9 +113,10 @@ class Crashes(commands.Cog):
             sml_versions = result["data"]["getSMLVersions"]["sml_versions"]
             is_compatible = lambda s: s["satisfactory_version"] <= game_version
             latest_compatible_sml = next(filter(is_compatible, sml_versions))
-            if (new_version := latest_compatible_sml['version']) != sml:
-                msg: str = "You are not using the most recent SML release for your game. " \
-                           f"Please update to {new_version}."
+            if (new_version := latest_compatible_sml["version"]) != sml:
+                msg: str = (
+                    "You are not using the most recent SML release for your game. " f"Please update to {new_version}."
+                )
                 if latest_compatible_sml != sml_versions[0]:
                     msg += "\nAlso, your game itself may need an update!"
                 return msg
@@ -125,12 +128,16 @@ class Crashes(commands.Cog):
         mod_list = "\n".join(mods)
         if len(mods) == 1:
             header = "You are attempting to use a mod that no longer works! \n```"
-            footer = "```Please attempt to remove/disable that mod, " \
-                     "so that it no longer forces the old SML to be used (this is why your mods don't load)"
+            footer = (
+                "```Please attempt to remove/disable that mod, "
+                "so that it no longer forces the old SML to be used (this is why your mods don't load)"
+            )
         else:
             header = f"You are attempting to use {len(mods)} mods that no longer work! \n```"
-            footer = "```Please attempt to remove/disable these mods, " \
-                     "so that they no longer force the old SML to be used (this is why your mods don't load)"
+            footer = (
+                "```Please attempt to remove/disable these mods, "
+                "so that they no longer force the old SML to be used (this is why your mods don't load)"
+            )
         return header + mod_list + footer
 
     @staticmethod
@@ -145,10 +152,11 @@ class Crashes(commands.Cog):
 
         # This block separates the mods into blocks of 100 because that's
         results = {}
-        for chunk in [enabled_mods[i:i + 100] for i in range(0, len(enabled_mods), 100)]:
+        for chunk in [enabled_mods[i : i + 100] for i in range(0, len(enabled_mods), 100)]:
             query_mods, length = str(chunk).replace("'", '"'), str(len(chunk))
 
             # Replace smlVersionID with the ID of the release of a breaking SML (such as 3.0.0) when another comes
+            # fmt: off
             query = """
             {
                 getMods(
@@ -166,6 +174,7 @@ class Crashes(commands.Cog):
                     date
                 }
             }"""
+            # fmt: on
             result = await self.bot.repository_query(query)
             results.update(result)
 
@@ -174,7 +183,7 @@ class Crashes(commands.Cog):
 
         # Checking mods against SML date
         return [
-            mod['name']
+            mod["name"]
             for mod in mods_with_dates
             if latest_compatible_loader > strptime(mod["last_version_date"], "%Y-%m-%dT%H:%M:%S.%fZ")
         ]
@@ -187,53 +196,49 @@ class Crashes(commands.Cog):
             case "zip":
                 messages: list[dict] = []
 
-                info = dict(
-                    smm="",
-                    sml="",
-                    game_version=0,
-                    path="",
-                    launcher="",
-                    cli="",
-                    outdated_mods=[]
-                )
+                info = dict(smm="", sml="", game_version=0, path="", launcher="", cli="", outdated_mods=[])
 
                 with zipfile.ZipFile(file) as zip_f:
                     zf_contents: list[str] = zip_f.namelist()
-                    self.logger.info("Zip contents: " + ' '.join(zf_contents))
+                    self.logger.info("Zip contents: " + " ".join(zf_contents))
                     for zip_file_name in zf_contents:
                         with zip_f.open(zip_file_name) as zip_file:
                             try:
                                 zip_file_content: str = zip_file.read().decode("utf-8")
                             except zipfile.BadZipFile as e:
                                 self.logger.error(str(e))
-                                return messages + [dict(
-                                    name="Bad Zip File!",
-                                    value="This zipfile is invalid! Its contents may have been changed after zipping.",
-                                    inline=False)]
+                                return messages + [
+                                    dict(
+                                        name="Bad Zip File!",
+                                        value="This zipfile is invalid! Its contents may have been changed after zipping.",
+                                        inline=False,
+                                    )
+                                ]
 
                             self.logger.info(f"Entering mass-regex of {zip_file_name}")
                             results = await self.process_text(zip_file_content)
                             self.logger.info(f"Finished mass-regex of {zip_file_name} - {len(results)} results")
                             messages += results
 
-                    if 'metadata.json' in zf_contents:
+                    if "metadata.json" in zf_contents:
                         self.logger.info("found SMM metadata file")
                         with zip_f.open("metadata.json") as metadataFile:
                             metadata: dict = json.load(metadataFile)
                             if metadata["selectedInstall"]:
-                                info['game_version'] = int(float(metadata["selectedInstall"]["version"]))
-                                info['path'] = metadata["selectedInstall"]["installLocation"]
+                                info["game_version"] = int(float(metadata["selectedInstall"]["version"]))
+                                info["path"] = metadata["selectedInstall"]["installLocation"]
                             if metadata["selectedProfile"]:
                                 if metadata["selectedProfile"]["name"] != "development":
-                                    info['outdated_mods'] = \
-                                        await self.check_for_outdated_mods(metadata["selectedProfile"]["items"])
+                                    info["outdated_mods"] = await self.check_for_outdated_mods(
+                                        metadata["selectedProfile"]["items"]
+                                    )
 
                             if sml := metadata.get("smlVersion"):
-                                info['sml'] = sml
+                                info["sml"] = sml
 
-                            info['smm'] = metadata["smmVersion"]
+                            info["smm"] = metadata["smmVersion"]
 
-                    if 'FactoryGame.log' in zf_contents:
+                    if "FactoryGame.log" in zf_contents:
                         self.logger.info("found FactoryGame.log file")
                         # Try to find CL and SML versions in FactoryGame.log
                         with zip_f.open("FactoryGame.log") as fg_log:
@@ -245,10 +250,14 @@ class Crashes(commands.Cog):
 
                 messages += await self.complex_responses(info)
 
-                if info['outdated_mods']:
-                    messages += [dict(name="Outdated Mods!",
-                                      value=self.make_outdated_mods_message(info['outdated_mods']),
-                                      inline=True)]
+                if info["outdated_mods"]:
+                    messages += [
+                        dict(
+                            name="Outdated Mods!",
+                            value=self.make_outdated_mods_message(info["outdated_mods"]),
+                            inline=True,
+                        )
+                    ]
 
                 return messages
 
@@ -294,7 +303,7 @@ class Crashes(commands.Cog):
             if match := await regex_with_timeout(crash["crash"], text, flags=re.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
-                        command_response = command['content']
+                        command_response = command["content"]
                         if command_response.startswith(self.bot.command_prefix):  # is alias
                             command_response = config.Commands.fetch(command_response.strip(self.bot.command_prefix))
                         yield dict(name=command["name"], value=command_response, inline=True)
@@ -342,7 +351,7 @@ class Crashes(commands.Cog):
 
             extension = name.rpartition(".")[-1]
 
-            if name.startswith("SMMDebug") or extension == 'log':
+            if name.startswith("SMMDebug") or extension == "log":
                 async with message.channel.typing():
                     responses += await self.process_file(file, extension)
             else:

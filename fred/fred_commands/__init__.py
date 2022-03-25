@@ -20,16 +20,7 @@ from .help import HelpCmds, FredHelpEmbed
 from ..libraries import createembed
 
 
-class Commands(
-    BotCmds,
-    ChannelCmds,
-    CommandCmds,
-    CrashCmds,
-    DialogflowCmds,
-    EXPCmds,
-    HelpCmds
-):
-
+class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXPCmds, HelpCmds):
     @BaseCmds.listener()
     async def on_command_error(self, ctx: commands.Context, error):
         # We get an error about commands being found when using "runtime" commands, so we have to ignore that
@@ -69,7 +60,7 @@ class Commands(
                 return
 
         await ctx.send("I encountered an error while trying to call this command. Feyko has been notified")
-        raise (error.original if hasattr(error, 'original') else error)
+        raise (error.original if hasattr(error, "original") else error)
 
     @BaseCmds.listener()
     async def on_message(self, message: nextcord.Message):
@@ -83,9 +74,9 @@ class Commands(
             self.logger.info(f"Processing the command {name}", extra=common.message_info(message))
             if command := config.Commands.fetch(name):
                 if (
-                        (content := command['content'])
-                        and content.startswith(prefix)  # for linked aliases of commands like ff->rp
-                        and (linked_command := config.Commands.fetch(command['content'].lstrip(prefix)))
+                    (content := command["content"])
+                    and content.startswith(prefix)  # for linked aliases of commands like ff->rp
+                    and (linked_command := config.Commands.fetch(command["content"].lstrip(prefix)))
                 ):
                     command = linked_command
 
@@ -102,12 +93,12 @@ class Commands(
                     args.append(view.get_quoted_word())
                 if command["content"] is not None:
                     text = re.sub(
-                        r'{(\d+)}',
+                        r"{(\d+)}",
                         lambda match: args[int(match.group(1))]
                         if int(match.group(1)) < len(args)
-                        else '(missing argument)',
-                        command["content"]
-                    ).replace('{...}', ' '.join(args))
+                        else "(missing argument)",
+                        command["content"],
+                    ).replace("{...}", " ".join(args))
                 else:
                     text = None
 
@@ -130,9 +121,9 @@ class Commands(
     async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
         """Usage: `docsearch (search: str)`
         Response: Equivalent to using the search function on the SMR docs page; links the first search result"""
-        client = SearchClient.create('BH4D9OD16A', '53b3a8362ea7b391f63145996cfe8d82')
-        index = client.init_index('ficsit')
-        query = index.search(search, {'attributesToRetrieve': '*'})
+        client = SearchClient.create("BH4D9OD16A", "53b3a8362ea7b391f63145996cfe8d82")
+        index = client.init_index("ficsit")
+        query = index.search(search, {"attributesToRetrieve": "*"})
         for hit in query["hits"]:
             if hit["hierarchy"]["lvl0"].endswith("latest"):
                 await self.bot.reply_to_msg(ctx.message, f"This is the best result I got from the SMD :\n{hit['url']}")

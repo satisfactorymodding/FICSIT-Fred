@@ -12,7 +12,7 @@ from .. import config
 
 
 def timestamp(iso8601: str) -> str:
-    return format_dt(datetime.fromisoformat(iso8601), 'R')
+    return format_dt(datetime.fromisoformat(iso8601), "R")
 
 
 repo_name, repo_full_name = "", ""
@@ -47,7 +47,7 @@ async def run(data: dict) -> nextcord.Embed | None:
         case "issue":
             embed = issue(data)
         case _:
-            logging.warning("Unsupported GitHub payload", extra={'data': data})
+            logging.warning("Unsupported GitHub payload", extra={"data": data})
     return embed
 
 
@@ -57,8 +57,9 @@ def leaderboard(data: list[dict]) -> nextcord.Embed:
     embed = nextcord.Embed(title="XP Leaderboard", colour=config.ActionColours.fetch("purple"), description=desc)
 
     for user in data:
-        embed.add_field(name=user["name"],
-                        value=f'XP: {user["count_and_rank"]["count"]} | Level: {user["count_and_rank"]["rank"]}')
+        embed.add_field(
+            name=user["name"], value=f'XP: {user["count_and_rank"]["count"]} | Level: {user["count_and_rank"]["rank"]}'
+        )
 
     return embed
 
@@ -66,21 +67,22 @@ def leaderboard(data: list[dict]) -> nextcord.Embed:
 def DM(text: str) -> nextcord.Embed:
     embed = nextcord.Embed(colour=config.ActionColours.fetch("purple"), description=text)
 
-    embed.set_footer(text="To stop getting DM messages from me, type 'stop'. "
-                          "If you ever want to reactivate it, type 'start'")
+    embed.set_footer(
+        text="To stop getting DM messages from me, type 'stop'. " "If you ever want to reactivate it, type 'start'"
+    )
     return embed
 
 
 def format_commit(commit: dict) -> tuple[str, str]:
     hash_id = f'`{commit["id"][:8]}`'
-    commit_message = commit['message'].split('\n')[0].replace("*", r"\*")
+    commit_message = commit["message"].split("\n")[0].replace("*", r"\*")
     author = commit["committer"]
     attribution = f'[{author["name"]}](https://github.com/{author["username"]})'
     ts = timestamp(commit["timestamp"])
-    change_summary_icons = ' '.join([f'{em} {len(commit[k])}'
-                                     for em, k in zip("✅❌📝", ["added", "removed", "modified"])])
-    return (f'{commit_message}\n',
-            f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n')
+    change_summary_icons = " ".join(
+        [f"{em} {len(commit[k])}" for em, k in zip("✅❌📝", ["added", "removed", "modified"])]
+    )
+    return (f"{commit_message}\n", f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n')
 
 
 def push(data: dict) -> nextcord.Embed:
@@ -100,19 +102,19 @@ def push(data: dict) -> nextcord.Embed:
 
     commits = data["commits"]
 
-    embed = nextcord.Embed(title=f'{forced}Pushed {len(commits)} commit(s) to {repo_full_name}',
-                           colour=colour,
-                           url=data["compare"],
-                           description='')
+    embed = nextcord.Embed(
+        title=f"{forced}Pushed {len(commits)} commit(s) to {repo_full_name}",
+        colour=colour,
+        url=data["compare"],
+        description="",
+    )
 
     for commit in commits[:24]:
         title, details = format_commit(commit)
         embed.add_field(name=title, value=details, inline=False)
 
     if not_shown := len(commits[24:]):
-        embed.add_field(name=f"{not_shown} commits not shown",
-                        value="See GitHub for more details!",
-                        inline=False)
+        embed.add_field(name=f"{not_shown} commits not shown", value="See GitHub for more details!", inline=False)
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
     embed.set_footer(text=config.Misc.fetch("prefix") + "legend to understand the emojis")
@@ -120,10 +122,12 @@ def push(data: dict) -> nextcord.Embed:
 
 
 def contributor_added(data: dict) -> nextcord.Embed:
-    embed = nextcord.Embed(title=f'__**{data["member"]["login"]}**__ has been added to the Repository!',
-                           colour=config.ActionColours.fetch("Green"),
-                           url=data["repository"]["html_url"],
-                           description=" ")
+    embed = nextcord.Embed(
+        title=f'__**{data["member"]["login"]}**__ has been added to the Repository!',
+        colour=config.ActionColours.fetch("Green"),
+        url=data["repository"]["html_url"],
+        description=" ",
+    )
 
     embed.set_author(name=repo_full_name)
     return embed
@@ -153,19 +157,21 @@ def pull_request(data: dict) -> nextcord.Embed:
         case _:
             raise ValueError("Pull request has invalid action!")
 
-    embed = nextcord.Embed(title=f'Pull Request {action} in {data["repository"]["full_name"]}',
-                           colour=colour,
-                           url=data["pull_request"]["html_url"],
-                           description=data["pull_request"]["title"])
+    embed = nextcord.Embed(
+        title=f'Pull Request {action} in {data["repository"]["full_name"]}',
+        colour=colour,
+        url=data["pull_request"]["html_url"],
+        description=data["pull_request"]["title"],
+    )
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
-    stats = '\n'.join(
+    stats = "\n".join(
         [
             f'📋 {data["pull_request"]["commits"]}',
             f'✅ {data["pull_request"]["additions"]}',
             f'❌ {data["pull_request"]["deletions"]}',
-            f'📝 {data["pull_request"]["changed_files"]}'
+            f'📝 {data["pull_request"]["changed_files"]}',
         ]
     )
 
@@ -187,9 +193,11 @@ def create(data: dict) -> nextcord.Embed:
         case _:
             ref_type = data["ref"]
 
-    embed = nextcord.Embed(title=f'{ref_type} "{ref_name}" created in {repo_name}',
-                           colour=config.ActionColours.fetch("Green"),
-                           url=data["repository"]["html_url"])
+    embed = nextcord.Embed(
+        title=f'{ref_type} "{ref_name}" created in {repo_name}',
+        colour=config.ActionColours.fetch("Green"),
+        url=data["repository"]["html_url"],
+    )
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
@@ -198,9 +206,11 @@ def create(data: dict) -> nextcord.Embed:
 
 def delete(data: dict) -> nextcord.Embed:
     _, ref_type, ref_name = data["ref"].split("/")
-    embed = nextcord.Embed(title=f'{ref_type} "{ref_name}" deleted in {repo_name}',
-                           colour=config.ActionColours.fetch("Red"),
-                           url=data["repository"]["html_url"])
+    embed = nextcord.Embed(
+        title=f'{ref_type} "{ref_name}" deleted in {repo_name}',
+        colour=config.ActionColours.fetch("Red"),
+        url=data["repository"]["html_url"],
+    )
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
@@ -208,10 +218,12 @@ def delete(data: dict) -> nextcord.Embed:
 
 
 def release(data: dict) -> nextcord.Embed:
-    state = "pre-release" if data['release']['prerelease'] else "release"
-    embed = nextcord.Embed(title=f'A new {state} for {data["repository"]["name"]} is available!',
-                           colour=config.ActionColours.fetch("Green"),
-                           url=data["release"]["html_url"])
+    state = "pre-release" if data["release"]["prerelease"] else "release"
+    embed = nextcord.Embed(
+        title=f'A new {state} for {data["repository"]["name"]} is available!',
+        colour=config.ActionColours.fetch("Green"),
+        url=data["release"]["html_url"],
+    )
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
@@ -230,7 +242,8 @@ def issue(data: dict) -> nextcord.Embed:
     embed = nextcord.Embed(
         title=f'{action.capitalize()} issue #{data["issue"]["number"]} in {data["repository"]["full_name"]}',
         colour=colour,
-        url=data["issue"]["html_url"])
+        url=data["issue"]["html_url"],
+    )
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
@@ -238,17 +251,17 @@ def issue(data: dict) -> nextcord.Embed:
 
 
 def _single_mod_embed(mod: dict) -> nextcord.Embed:
-    if zulu_time := mod.get('last_version_date'):
+    if zulu_time := mod.get("last_version_date"):
         ts = timestamp(f"{zulu_time[:19]}+00:00")
     else:
         ts = "(New)"
 
-    *preceding, last = map(lambda a: a['user']['username'], mod["authors"])
+    *preceding, last = map(lambda a: a["user"]["username"], mod["authors"])
 
     if preceding:
         # gotta get that proper grammar
         joiner = ", and " if len(preceding) > 1 else " and "
-        authors = ', '.join(preceding) + joiner + last
+        authors = ", ".join(preceding) + joiner + last
     else:
         authors = last
 
@@ -262,23 +275,18 @@ def _single_mod_embed(mod: dict) -> nextcord.Embed:
 
 
 def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.Embed:
-    desc = "\n".join(
-        [
-            f'{mod["name"]}[™](https://ficsit.app/mod/{mod["id"]})'
-            for mod in mods[:10]
-        ]
-    ) + (f"\n*And {cut} more...*" if (cut := len(mods[10:])) else '')
+    desc = "\n".join([f'{mod["name"]}[™](https://ficsit.app/mod/{mod["id"]})' for mod in mods[:10]]) + (
+        f"\n*And {cut} more...*" if (cut := len(mods[10:])) else ""
+    )
     return nextcord.Embed(
-        title="Multiple mods found:",
-        description=desc,
-        url=f"https://ficsit.app/mods?q={url_safe(original_query_name)}"
+        title="Multiple mods found:", description=desc, url=f"https://ficsit.app/mods?q={url_safe(original_query_name)}"
     )
 
 
 async def webp_icon_as_png(url: str, bot) -> tuple[nextcord.File, str]:
     with BytesIO(await bot.async_url_get(url, get=bytes)) as virtual_webp, BytesIO() as virtual_png:
         webp_dat = Image.open(virtual_webp).convert("RGB")
-        webp_dat.save(virtual_png, 'png')
+        webp_dat.save(virtual_png, "png")
         virtual_png.seek(0)
         filename = f"{url.split('/')[-2]}.png".strip()
         file = nextcord.File(virtual_png, filename=filename)
@@ -288,6 +296,7 @@ async def webp_icon_as_png(url: str, bot) -> tuple[nextcord.File, str]:
 # SMR Lookup Embed Formats
 async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.File | None]:
     # GraphQL Queries
+    # fmt: off
     query = '''{
           getMods(filter: { search: "''' + name + '''", order_by: search, order:desc, limit:100}) {
             mods {
@@ -304,6 +313,7 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
             }
           }
         }'''
+    # fmt: on
     result = await bot.repository_query(query)
     mods: list[dict] = result["data"]["getMods"]["mods"]
     logging.debug(mods)
@@ -314,7 +324,7 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
         # we have a near-exact match
         embed = _single_mod_embed(mod)
         file, filename = await webp_icon_as_png(mod["logo"], bot)
-        thumb_url = f'attachment://{filename}'
+        thumb_url = f"attachment://{filename}"
         footer = "If this isn't the mod you were looking for, try a different spelling."
     else:
         # we have a bunch of almost matches
@@ -331,17 +341,18 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
 
 def crashes(responses: list[dict]) -> nextcord.Embed:
     embed = nextcord.Embed(
-        title=f"{len(responses)} automated responses found: ",
-        colour=config.ActionColours.fetch("Purple")
+        title=f"{len(responses)} automated responses found: ", colour=config.ActionColours.fetch("Purple")
     )
     # sort the responses by size, so they display in a more efficient order
-    responses = sorted(responses, key=lambda r: len(r['value']), reverse=True)  # smaller = less important, can be cut
+    responses = sorted(responses, key=lambda r: len(r["value"]), reverse=True)  # smaller = less important, can be cut
 
     for response in responses[:24]:
         embed.add_field(**response)
 
     if unsaid := responses[24:]:
-        embed.add_field(name=f"And {len(unsaid)} more that don't fit here...",
-                        value=", ".join(r['name'] for r in unsaid) + "\nuse `help crash [name]` to see what they are")
+        embed.add_field(
+            name=f"And {len(unsaid)} more that don't fit here...",
+            value=", ".join(r["name"] for r in unsaid) + "\nuse `help crash [name]` to see what they are",
+        )
 
     return embed

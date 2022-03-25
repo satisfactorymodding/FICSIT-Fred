@@ -20,7 +20,6 @@ def runServer(self, bot):
 
 
 class Githook(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
 
@@ -33,20 +32,19 @@ class Githook(commands.Cog):
         except Exception:
             type, value, tb = sys.exc_info()
             tbs = "".join(traceback.format_tb(tb))
-            logger.error(f'Failed to run the webserver:\n{tbs}')
+            logger.error(f"Failed to run the webserver:\n{tbs}")
 
 
 # handle POST events from GitHub server
 # We should also make sure to ignore requests from the IRC, which can clutter
 # the output with errors
-CONTENT_TYPE = 'content-type'
-CONTENT_LEN = 'content-length'
-EVENT_TYPE = 'x-github-event'
+CONTENT_TYPE = "content-type"
+CONTENT_LEN = "content-length"
+EVENT_TYPE = "x-github-event"
 
 
 def MakeGithookHandler(bot):
     class MyGithookHandler(BaseHTTPRequestHandler):
-
         def respond(self, code: int, message: str | None = None):
             self.send_response(code, message)
             self.end_headers()
@@ -77,13 +75,13 @@ def MakeGithookHandler(bot):
                 logger.error("Invalid POST request")
                 self.send_response(417)
                 return
-            content_type = self.headers['content-type']
-            content_len = int(self.headers['content-length'])
-            event_type = self.headers['x-github-event']
+            content_type = self.headers["content-type"]
+            content_len = int(self.headers["content-length"])
+            event_type = self.headers["x-github-event"]
 
             # Return error if the payload type is that other weird format instead of a normal json
             if content_type != "application/json":
-                logger.error("POST request has invalid content_type", extra={'content_type': content_type})
+                logger.error("POST request has invalid content_type", extra={"content_type": content_type})
                 self.send_error(400, "Bad Request", "Expected a JSON request")
                 return
 
@@ -96,9 +94,9 @@ def MakeGithookHandler(bot):
 
             # Respond to GitHub saying the payload arrived
             self.send_response(200)
-            self.send_header('content-type', 'text/html')
+            self.send_header("content-type", "text/html")
             self.end_headers()
-            self.wfile.write(bytes('FICSIT-Fred received the payload', 'utf-8'))
+            self.wfile.write(bytes("FICSIT-Fred received the payload", "utf-8"))
             # Send it!
             asyncio.run_coroutine_threadsafe(bot.githook_send(data), bot.loop)
             return

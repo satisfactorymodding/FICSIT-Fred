@@ -18,17 +18,18 @@ class MediaOnly(commands.Cog):
             return
         ctx = await self.bot.get_context(message)
         if await common.l4_only(ctx):
-            self.logger.info("Message doesn't contain media but the author is a T3",
-                             extra=common.message_info(message))
+            self.logger.info("Message doesn't contain media but the author is a T3", extra=common.message_info(message))
             return False
         if config.MediaOnlyChannels.fetch(message.channel.id):
             self.logger.info("Removing a message", extra=common.message_info(message))
             await message.delete()
-            await self.bot.send_DM(message.author,
-                                   f"Hi {message.author.name}, the channel you just tried to message in, "
-                                   f"{self.bot.get_channel(message.channel.id).name} is a 'Media Only' channel. "
-                                   f"This means you must attach a file in order to post there. "
-                                   f"Here is your message if you want to paste it again after the adequate changes: "
-                                   f"```\n{message.content}\n```")
+            await self.bot.send_DM(
+                message.author,
+                f"Hi {message.author.name}, the channel you just tried to message in, "
+                f"{self.bot.get_channel(message.channel.id).name} is a 'Media Only' channel. "
+                f"This means you must attach a file in order to post there. "
+                f"Here is your message if you want to paste it again after the adequate changes: "
+                f"```\n{message.content}\n```",
+            )
             return True
         return False

@@ -11,7 +11,6 @@ def _extract_prefix(string: str, prefix: str):
 
 
 class CommandCmds(BaseCmds):
-
     @BaseCmds.add.command(name="command")
     async def add_command(self, ctx: commands.Context, command_name: str.lower, *, response: str = None):
         """Usage: `add command (name) [response]`
@@ -48,7 +47,7 @@ class CommandCmds(BaseCmds):
             await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
             return
 
-        is_alias, name = _extract_prefix(cmd['content'], self.bot.command_prefix)
+        is_alias, name = _extract_prefix(cmd["content"], self.bot.command_prefix)
 
         if is_alias:
             delete = await self.bot.reply_yes_or_no(ctx.message, f"This command is an alias of `{name}`! Delete?")
@@ -101,42 +100,42 @@ class CommandCmds(BaseCmds):
 
     @staticmethod
     def _valid_aliases(target: str, aliases: list[str]) -> dict[str, list[str | tuple[str, str]]]:
-        rtn = {'valid': [], 'overwrite': [], 'failure': []}
+        rtn = {"valid": [], "overwrite": [], "failure": []}
         for alias in aliases:
             if config.ReservedCommands.fetch(alias):
-                rtn['failure'] += (alias, "reserved")
+                rtn["failure"] += (alias, "reserved")
 
             elif cmd := config.Commands.fetch(name=alias):
-                if cmd['content'] == target:  # contents are identical
-                    rtn['failure'].append((alias, 'exists'))
+                if cmd["content"] == target:  # contents are identical
+                    rtn["failure"].append((alias, "exists"))
                 else:
-                    rtn['overwrite'].append(alias)
+                    rtn["overwrite"].append(alias)
             else:
-                rtn['valid'].append(alias)
+                rtn["valid"].append(alias)
         return rtn
 
     async def _add_alias(self, ctx: commands.Context, target: str, aliases: list[str]) -> str:
         link = self.bot.command_prefix + target
         alias_checks = self._valid_aliases(link, aliases)
 
-        for alias in alias_checks['overwrite']:
+        for alias in alias_checks["overwrite"]:
             if await self.bot.reply_yes_or_no(ctx.message, f"`{alias}` is already something else. Replace definition?"):
                 config.Commands.deleteBy(name=alias)
-                alias_checks['valid'].append(alias)
+                alias_checks["valid"].append(alias)
             else:
-                alias_checks['failure'].append((alias, 'overwrite'))
+                alias_checks["failure"].append((alias, "overwrite"))
 
-        for alias in alias_checks['valid']:
+        for alias in alias_checks["valid"]:
             config.Commands(name=alias, content=link, attachment=None)
 
-        if (num_aliases := len(alias_checks['valid'])) > 1:
+        if (num_aliases := len(alias_checks["valid"])) > 1:
             user_info = f"{num_aliases} aliases added for {target}: `{'`, `'.join(alias_checks['valid'])}`"
         elif num_aliases == 1:
             user_info = f"Alias added for `{target}`: `{alias_checks['valid'][0]}`"
         else:
             user_info = "No aliases could be added"
 
-        if unable := alias_checks['failure']:
+        if unable := alias_checks["failure"]:
             user_info += "\nUnable to add the following aliases: \n"
             for name, reason in unable:
                 match reason:
@@ -164,11 +163,13 @@ class CommandCmds(BaseCmds):
             await self.bot.reply_to_msg(ctx.message, f"`{target}` doesn't exist!")
             return
 
-        is_alias, name = _extract_prefix(cmd['content'], self.bot.command_prefix)
+        is_alias, name = _extract_prefix(cmd["content"], self.bot.command_prefix)
         if is_alias:
             try:
-                msg = f"`{target}` is an alias for `{name}`. Links to links are not supported. \n" \
-                      f"Do you want to redirect your alias target to `{name}`?"
+                msg = (
+                    f"`{target}` is an alias for `{name}`. Links to links are not supported. \n"
+                    f"Do you want to redirect your alias target to `{name}`?"
+                )
                 if not await self.bot.reply_question(ctx.message, msg):
                     await self.bot.reply_to_msg(ctx.message, "Aborting alias addition.")
                     return
@@ -178,7 +179,7 @@ class CommandCmds(BaseCmds):
 
         if not aliases:
             response, _ = await self.bot.reply_question(ctx.message, "Please input aliases, separated by spaces.")
-            aliases = response.split(' ')
+            aliases = response.split(" ")
 
         response = await self._add_alias(ctx, target, aliases)
 
@@ -193,7 +194,7 @@ class CommandCmds(BaseCmds):
         if not (cmd := config.Commands.fetch(command_name)):
             await self.bot.reply_to_msg(ctx.message, "Alias could not be found!")
             return
-        elif not cmd['content'].startswith(self.bot.command_prefix):
+        elif not cmd["content"].startswith(self.bot.command_prefix):
             await self.bot.reply_to_msg(ctx.message, "This command is not an alias!")
             return
         else:
