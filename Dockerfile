@@ -1,8 +1,6 @@
-FROM python:3.10
+FROM python:3.10-slim
 
-RUN apt-get update -y
-RUN apt-get install -y apt-utils
-RUN apt-get install -y tesseract-ocr
+RUN apt-get update -y && apt-get install -y apt-utils tesseract-ocr curl
 
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local python3 -
 
