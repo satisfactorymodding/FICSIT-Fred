@@ -110,21 +110,23 @@ class Bot(commands.Bot):
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
         if event == "on_message":
-            channel = args[0].channel
+            channel: nextcord.TextChannel | nextcord.DMChannel = args[0].channel
             if isinstance(channel, nextcord.DMChannel):
-                channel_str = f" in {channel.recipient.name}#{channel.recipient.discriminator}'s DMs"
+                channel_str = f" in {channel.recipient}'s DMs"
             else:
-                channel_str = f" in #{channel.name}"
+                channel_str = f" in {channel.mention}"
         else:
             channel_str = ""
-        tbs = textwrap.dedent(f"""
-            Fred v{self.version}
-            {'~'*40}
-            {type.__name__} exception handled in {event}{channel_str}: {value}
-            {'~'*40}
-            """) + ''.join(traceback.format_tb(tb))
-        logging.error(tbs)
-        await self.get_channel(self._error_channel).send(f"```py\n{tbs}```")
+
+        fred_str = f"Fred v{self.version}"
+        error_meta = f"{type.__name__} exception handled in {event}{channel_str}"
+        full_error = f"\n{value}\n\n{''.join(traceback.format_tb(tb))}"
+        logging.error(f"{fred_str}\n{error_meta}\n{full_error}")
+
+        # error_embed = nextcord.Embed(colour=nextcord.Colour.red(), title=error_meta, description=full_error)
+        # error_embed.set_author(name=fred_str)
+
+        await self.get_channel(self._error_channel).send(f"**{fred_str}**\n{error_meta}\n```py\n{full_error}```")
 
     async def githook_send(self, data):
         self.logger.info("Handling GitHub payload", extra={'data': data})
