@@ -1,5 +1,7 @@
 from ._baseclass import BaseCmds, commands, config
-import re
+from regex import search, error as RegexError
+from typing import Literal
+from ._command_utils import get_search
 
 
 class CrashCmds(BaseCmds):
@@ -20,8 +22,8 @@ class CrashCmds(BaseCmds):
         if not match:
             match, _ = await self.bot.reply_question(ctx.message, "What should the logs match (regex)?")
         try:
-            re.search(match, "test")
-        except re.error:
+            search(match, "test")
+        except RegexError:
             await self.bot.reply_to_msg(
                 ctx.message,
                 "The regex isn't valid. Please refer to "
@@ -88,3 +90,13 @@ class CrashCmds(BaseCmds):
         if change_response:
             results[0].response = response
         await self.bot.reply_to_msg(ctx.message, f"Crash '{name}' modified!")
+
+    @BaseCmds.search.command(name="crashes")
+    async def search_crashes(
+        self, ctx: commands.Context, pattern: str, *, force_fuzzy: Literal["F"] | None = None
+    ) -> None:
+        """Usage: `search crashes (name) [optional F]`
+        Purpose: Searches crashes for the stuff requested.
+        Notes: Uses fuzzy matching!"""
+        response = get_search(config.Crashes, pattern, force_fuzzy == "F")
+        await self.bot.reply_to_msg(ctx.message, response)

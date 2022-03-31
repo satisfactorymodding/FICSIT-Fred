@@ -53,3 +53,11 @@ class BotCmds(BaseCmds):
         config.Misc.change("prefix", prefix)
         self.bot.command_prefix = prefix
         await self.bot.reply_to_msg(ctx.message, f"Prefix changed to {prefix}.")
+
+    @BaseCmds.set.command(name="owo")
+    async def owo(self, ctx: commands.Context):
+        """Usage: `set owo`
+        Purpose: toggle owo
+        Notes: owo what's this? you need to be engineer or above to use this"""
+        self.bot.owo = not self.bot.owo
+        await ctx.reply("OwO" if self.bot.owo else "no owo :(")

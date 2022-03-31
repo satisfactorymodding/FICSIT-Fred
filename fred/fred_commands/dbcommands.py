@@ -1,4 +1,7 @@
+from typing import Literal
+
 from ._baseclass import BaseCmds, commands
+from ._command_utils import get_search
 from .. import config
 
 
@@ -201,3 +204,42 @@ class CommandCmds(BaseCmds):
             config.Commands.deleteBy(name=command_name)
 
         await self.bot.reply_to_msg(ctx.message, "Alias removed!")
+
+    @BaseCmds.rename.command(name="command")
+    async def rename_command(self, ctx: commands.Context, name: str.lower, *, new_name: str.lower = None) -> None:
+        """Usage: `rename command (name) (new_name)`
+        Purpose: Renames a command.
+        Notes: If response is not supplied you will be prompted for one with a timeout"""
+        if config.ReservedCommands.fetch(name):
+            await self.bot.reply_to_msg(ctx.message, "This command is special and cannot be modified.")
+            return
+
+        results: list[config.Commands]
+        if not (results := list(config.Commands.selectBy(name=name))):  # this command hasn't been created yet
+            await self.bot.reply_to_msg("Command could not be found!")
+            return
+
+        if new_name is None:
+            new_name, _ = await self.bot.reply_question(ctx.message, "What should the new name be?")
+
+        # this just works, don't touch it. trying to use config.Commands.fetch makes a duplicate command.
+        results[0].name = new_name
+
+        await self.bot.reply_to_msg(ctx.message, f"Command `{name}` is now `{new_name}`!")
+
+    @BaseCmds.rename.command(name="alias")
+    async def rename_alias(self, ctx: commands.Context, name: str.lower, *, new_name: str.lower = None) -> None:
+        """Usage: `rename alias (name) (new name)`
+        Purpose: Renames an alias.
+        Notes: If response is not supplied you will be prompted for one with a timeout"""
+        await self.rename_command(ctx, name, new_name)
+
+    @BaseCmds.search.command(name="commands")
+    async def search_commands(
+        self, ctx: commands.Context, pattern: str, *, force_fuzzy: Literal["F"] | None = None
+    ) -> None:
+        """Usage: `search commands (name) [optional F]`
+        Purpose: Searches commands for the stuff requested.
+        Notes: Uses fuzzy matching!"""
+        response = get_search(config.Commands, pattern, force_fuzzy == "F")
+        await self.bot.reply_to_msg(ctx.message, response)
