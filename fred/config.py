@@ -90,7 +90,7 @@ class Users(SQLObject):
         if results:
             return results[0]
         else:
-            return Users(user_id=user.id, full_name=user.name + "#" + user.discriminator)
+            return Users(user_id=user.id, full_name=f"{user.name}#{user.discriminator}")
 
 
 class ActionColours(SQLObject):
@@ -186,6 +186,12 @@ class Commands(SQLObject):
         query = Commands.selectBy(name=name.lower())
         results = list(query)
         return results[0].as_dict() if results else None
+
+    @staticmethod
+    def fetch_all() -> list[dict]:
+        query = Commands.selectBy()
+        results = list(query)
+        return [cmd.as_dict() for cmd in results]
 
 
 class Crashes(SQLObject):
