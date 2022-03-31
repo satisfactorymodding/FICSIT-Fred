@@ -31,7 +31,7 @@ services:
     pgadmin:
         depends_on:
             - postgres
-        image: dpage/pgadmin4:6.1
+        image: dpage/pgadmin4:6
         environment:
             PGADMIN_DEFAULT_EMAIL: 'fred@fred.com'
             PGADMIN_DEFAULT_PASSWORD: 'fred'
