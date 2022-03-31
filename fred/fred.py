@@ -38,6 +38,7 @@ class Bot(commands.Bot):
         self.setup_cogs()
         self.version = "2.18.4"
         FredHelpEmbed.setup()
+        self.owo = False
 
         self.loop = asyncio.new_event_loop()
         self._error_channel = int(env_val) if (env_val := os.getenv("ERROR_CHANNEL")) else 748229790825185311
@@ -188,7 +189,8 @@ class Bot(commands.Bot):
         # use this line if you're trying to debug discord throwing code 400s
         # self.logger.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
         reference = (message.reference if propagate_reply else None) or message
-        content = owoize(content)
+        if self.owo:
+            content = owoize(content)
         if isinstance(reference, nextcord.MessageReference):
             reference.fail_if_not_exists = False
 

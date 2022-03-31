@@ -12,6 +12,7 @@ owo_table = {
     r"(?<![aeiou])N([aeiou])": r"Ny\1",
     r"you": "u",
     r"You": "U",
+    r"fuzzy": r"fuzzy-wuzzy"
 }
 
 
@@ -20,7 +21,7 @@ def owoize(string: str) -> str:
     for line in string.split("\n"):
         new_line: list[str] = []
         for word in line.split():
-            if "http" not in word:
+            if re.match(r"://|`", word) is None:
                 for match, sub in owo_table.items():
                     word = re.sub(match, sub, word)
             new_line.append(word)
