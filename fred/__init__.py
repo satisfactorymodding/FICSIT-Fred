@@ -19,9 +19,17 @@ from .libraries import createembed, common
 
 load_dotenv()
 
-ENVVARS = ["FRED_IP",       "FRED_PORT",     "FRED_TOKEN",
-           "FRED_SQL_DB",   "FRED_SQL_USER", "FRED_SQL_PASSWORD",
-           "FRED_SQL_HOST", "FRED_SQL_PORT", "DIALOGFLOW_AUTH"]
+ENVVARS = [
+    "FRED_IP",
+    "FRED_PORT",
+    "FRED_TOKEN",
+    "FRED_SQL_DB",
+    "FRED_SQL_USER",
+    "FRED_SQL_PASSWORD",
+    "FRED_SQL_HOST",
+    "FRED_SQL_PORT",
+    "DIALOGFLOW_AUTH",
+]
 
 for var in ENVVARS:
     if not os.getenv(var):
@@ -29,7 +37,6 @@ for var in ENVVARS:
 
 
 class Bot(commands.Bot):
-
     async def isAlive(self):
         try:
             _ = config.Misc.get(1)
@@ -63,9 +70,9 @@ class Bot(commands.Bot):
         return config.Misc.fetch("is_running")
 
     async def on_ready(self):
-        await self.change_presence(activity=nextcord.Game(f'v{self.version}'))
+        await self.change_presence(activity=nextcord.Game(f"v{self.version}"))
         self.isReady = True
-        logging.info(f'We have logged in as {self.user} with prefix {self.command_prefix}')
+        logging.info(f"We have logged in as {self.user} with prefix {self.command_prefix}")
 
     @staticmethod
     async def on_reaction_add(reaction: nextcord.Reaction, user: nextcord.User) -> None:
@@ -100,7 +107,7 @@ class Bot(commands.Bot):
         self.logger = logging.root
 
         self.logger.info("Successfully set up the logger")
-        self.logger.info(f'Prefix: {self.command_prefix}')
+        self.logger.info(f"Prefix: {self.command_prefix}")
 
     def setup_cogs(self):
         logging.info("Setting up cogs")
@@ -126,17 +133,22 @@ class Bot(commands.Bot):
                 channel_str = f" in #{channel.name}"
         else:
             channel_str = ""
-        tbs = textwrap.dedent(f"""
+        tbs = (
+            textwrap.dedent(
+                f"""
             Fred v{self.version}
             {'~'*40}
             {type.__name__} exception handled in {event}{channel_str}: {value}
             {'~'*40}
-            """) + ''.join(traceback.format_tb(tb))
+            """
+            )
+            + "".join(traceback.format_tb(tb))
+        )
         logging.error(tbs)
         await self.get_channel(self._error_channel).send(f"```py\n{tbs}```")
 
     async def githook_send(self, data):
-        self.logger.info("Handling GitHub payload", extra={'data': data})
+        self.logger.info("Handling GitHub payload", extra={"data": data})
 
         embed: nextcord.Embed | None = await createembed.run(data)
         if embed is None:
@@ -146,8 +158,14 @@ class Bot(commands.Bot):
             channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
 
-    async def send_DM(self, user: nextcord.User, content: str = None,
-                      embed: nextcord.Embed = None, user_meta: config.Users = None, **kwargs) -> None:
+    async def send_DM(
+        self,
+        user: nextcord.User,
+        content: str = None,
+        embed: nextcord.Embed = None,
+        user_meta: config.Users = None,
+        **kwargs,
+    ) -> None:
 
         self.logger.info("Sending a DM", extra=common.user_info(user))
         if not user_meta:
@@ -195,7 +213,7 @@ class Bot(commands.Bot):
             return message2.author == message.author
 
         try:
-            response = await self.wait_for('message', timeout=60.0, check=check)
+            response = await self.wait_for("message", timeout=60.0, check=check)
         except asyncio.TimeoutError:
             await self.reply_to_msg(message, "Timed out and aborted after 60 seconds.")
             raise asyncio.TimeoutError
@@ -216,8 +234,9 @@ class Bot(commands.Bot):
     async def on_message(self, message):
         self.logger.info("Processing a message", extra=common.message_info(message))
         if (is_bot := message.author.bot) or not self.is_running():
-            self.logger.info("OnMessage: Didn't read message because "
-                             f"{'the sender was a bot' if is_bot else 'I am dead'}.")
+            self.logger.info(
+                "OnMessage: Didn't read message because " f"{'the sender was a bot' if is_bot else 'I am dead'}."
+            )
             return
 
         if isinstance(message.channel, nextcord.DMChannel):
@@ -260,7 +279,7 @@ class Bot(commands.Bot):
                 rtn = await response.json()
             else:
                 content = await response.read()
-                rtn = content.decode('utf-8') if get == str else content
+                rtn = content.decode("utf-8") if get == str else content
 
         self.logger.info(f"Data has length of {len(rtn)}")
         return rtn
