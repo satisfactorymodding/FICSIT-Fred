@@ -1,4 +1,4 @@
-from ._baseclass import BaseCmds, commands, config
+from ._baseclass import BaseCmds, commands, config, SearchFlags
 from regex import search, error as RegexError
 from typing import Literal
 from ._command_utils import get_search
@@ -92,11 +92,15 @@ class CrashCmds(BaseCmds):
         await self.bot.reply_to_msg(ctx.message, f"Crash '{name}' modified!")
 
     @BaseCmds.search.command(name="crashes")
-    async def search_crashes(
-        self, ctx: commands.Context, pattern: str, *, force_fuzzy: Literal["F"] | None = None
-    ) -> None:
-        """Usage: `search crashes (name) [optional F]`
+    async def search_crashes(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
+        """Usage: `search crashes (name) [options]`
         Purpose: Searches crashes for the stuff requested.
+        Optional args:
+            -fuzzy=(true/false) Forces fuzzy matching. Defaults to false, but fuzzy happens if exact matches aren't found.
+            -column=(name/crash/response) The column of the database to search along. Defaults to name
         Notes: Uses fuzzy matching!"""
-        response = get_search(config.Crashes, pattern, force_fuzzy == "F")
+        try:
+            response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
+        except KeyError as e:
+            response = e.args[0].replace("This", f'"{flags.column}"')
         await self.bot.reply_to_msg(ctx.message, response)

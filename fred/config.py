@@ -187,6 +187,16 @@ class Commands(SQLObject):
         results = list(query)
         return results[0].as_dict() if results else None
 
+    @classmethod
+    def fetch_by(cls, col: str, val: str) -> dict | None:
+        col, val = col.lower(), val.lower()
+        if not isinstance(getattr(cls, col), property):
+            raise KeyError("This is not a valid column!")
+
+        query = cls.selectBy(**{col: val})
+        results: list[Commands] = list(query)
+        return results[0].as_dict() if results else None
+
     @staticmethod
     def fetch_all() -> list[dict]:
         query = Commands.selectBy()
@@ -206,6 +216,16 @@ class Crashes(SQLObject):
     def fetch(name) -> dict | None:
         query = Crashes.selectBy(name=name.lower())
         results = list(query)
+        return results[0].as_dict() if results else None
+
+    @classmethod
+    def fetch_by(cls, col: str, val: str) -> dict | None:
+        col, val = col.lower(), val.lower()
+        if not isinstance(getattr(cls, col), property):
+            raise KeyError("This is not a valid column!")
+
+        query = cls.selectBy(**{col: val})
+        results: list[Commands] = list(query)
         return results[0].as_dict() if results else None
 
     @staticmethod
