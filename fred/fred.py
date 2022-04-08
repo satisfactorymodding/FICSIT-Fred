@@ -11,7 +11,6 @@ import nextcord
 from nextcord.ext import commands
 import sqlobject as sql
 
-from .owo import owoize
 from . import config
 from .fred_commands import Commands, FredHelpEmbed
 from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
@@ -147,13 +146,14 @@ class Bot(commands.Bot):
         **kwargs,
     ) -> None:
 
-        if content is not None:
-            content = owoize(content)
+        if self.owo:
+            if content is not None:
+                content = common.owoize(content)
 
-        if embed is not None:
-            embed.title = owoize(embed.title)
-            embed.description = owoize(embed.description)
-            # don't do the fields because those are most often literal command names, like in help
+            if embed is not None:
+                embed.title = common.owoize(embed.title)
+                embed.description = common.owoize(embed.description)
+                # don't do the fields because those are most often literal command names, like in help
 
         self.logger.info("Sending a DM", extra=common.user_info(user))
         if not user_meta:
@@ -190,7 +190,7 @@ class Bot(commands.Bot):
         # self.logger.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
         reference = (message.reference if propagate_reply else None) or message
         if self.owo and content is not None:
-            content = owoize(content)
+            content = common.owoize(content)
         if isinstance(reference, nextcord.MessageReference):
             reference.fail_if_not_exists = False
 
