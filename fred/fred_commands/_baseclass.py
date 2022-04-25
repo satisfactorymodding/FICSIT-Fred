@@ -8,9 +8,11 @@ assert config  # shut up linter, things that import this need this for convenien
 
 
 class BaseCmds(commands.Cog):
+
+    logger = logging.Logger("COMMANDS")
+
     def __init__(self, bot):
         self.bot = bot
-        self.logger = logging.Logger("COMMANDS")
 
     @commands.group()
     @commands.check(common.l4_only)
@@ -44,7 +46,7 @@ class BaseCmds(commands.Cog):
 
     @commands.group()  # no checks needed because it doesn't change anything
     async def search(self, ctx):
-        """Usage: `search (category) (name)`
+        """Usage: `search (category) (pattern) [options]`
         Purpose: Searches things like crashes and commands for the stuff requested.
         Notes: Uses fuzzy matching!"""
         if ctx.invoked_subcommand is None:
@@ -70,3 +72,8 @@ class BaseCmds(commands.Cog):
         if ctx.invoked_subcommand is None:
             await self.bot.reply_to_msg(ctx.message, "Invalid sub command passed...")
             return
+
+
+class SearchFlags(commands.FlagConverter, delimiter="=", prefix="-"):
+    column: str = "name"
+    fuzzy: bool = False

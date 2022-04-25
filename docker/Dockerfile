@@ -3,7 +3,7 @@ FROM python:3.10-slim as runtime
 VOLUME /config
 WORKDIR /app
 
-COPY runtime-deps.sh .
+COPY docker/runtime-deps.sh .
 RUN bash runtime-deps.sh 1> /dev/null && rm runtime-deps.sh
 
 FROM python:3.10-slim as build

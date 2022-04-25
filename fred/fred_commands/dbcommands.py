@@ -1,6 +1,6 @@
 from typing import Literal
 
-from ._baseclass import BaseCmds, commands
+from ._baseclass import BaseCmds, commands, SearchFlags
 from ._command_utils import get_search
 from .. import config
 
@@ -235,11 +235,13 @@ class CommandCmds(BaseCmds):
         await self.rename_command(ctx, name, new_name)
 
     @BaseCmds.search.command(name="commands")
-    async def search_commands(
-        self, ctx: commands.Context, pattern: str, *, force_fuzzy: Literal["F"] | None = None
-    ) -> None:
-        """Usage: `search commands (name) [optional F]`
+    async def search_commands(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
+        """Usage: `search commands (pattern) [options]`
         Purpose: Searches commands for the stuff requested.
+        Optional args:
+            -fuzzy=(true/false) Forces fuzzy matching. Defaults to false, but fuzzy happens if exact matches aren't found.
+            -column=(name/content/attachment) The column of the database to search along. Defaults to name
         Notes: Uses fuzzy matching!"""
-        response = get_search(config.Commands, pattern, force_fuzzy == "F")
+
+        response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)

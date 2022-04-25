@@ -16,9 +16,34 @@ apt-get update
 echo "Installing runtime dependencies..." 1>&2
 apt-get install -y libpq5 tesseract-ocr
 
+
+isDocker(){
+    local cgroup=/proc/1/cgroup
+    test -f $cgroup && [[ "$(<$cgroup)" = *:cpuset:/docker/* ]]
+}
+
+isDockerBuildkit(){
+    local cgroup=/proc/1/cgroup
+    test -f $cgroup && [[ "$(<$cgroup)" = *:cpuset:/docker/buildkit/* ]]
+}
+
+isDockerContainer(){
+    [ -e /.dockerenv ]
+}
+
 # we don't need this crap anymore
 echo "Cleaning up..." 1>&2
-apt-get remove -y software-properties-common gnupg curl
-apt-get autopurge -y
-rm -rf /var/lib/apt/lists/*
-echo "All runtime dependencies handled!"
+
+if isDockerBuildkit || (isDocker && ! isDockerContainer)
+then
+  echo "Detected run within docker RUN. Removing apt cache for image size." 1>&2
+  apt-get remove -y software-properties-common gnupg curl
+  apt-get autopurge -y
+  apt-get autoclean -y
+  du -sh /*
+  rm -rf /var/lib/apt/lists/*
+else
+  echo "Opting to not remove stuff so running on real hardware does not break things." 1>&2
+fi
+
+echo "All runtime dependencies handled!" 1>&2
