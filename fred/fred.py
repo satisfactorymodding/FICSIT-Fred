@@ -17,6 +17,9 @@ from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, leve
 from .libraries import createembed, common
 
 
+__version__ = "2.18.5"
+
+
 class Bot(commands.Bot):
     async def isAlive(self):
         try:
@@ -35,7 +38,7 @@ class Bot(commands.Bot):
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = "2.18.4"
+        self.version = __version__
         FredHelpEmbed.setup()
         self.owo = False
 
