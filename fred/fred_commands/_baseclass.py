@@ -8,9 +8,11 @@ assert config  # shut up linter, things that import this need this for convenien
 
 
 class BaseCmds(commands.Cog):
+
+    logger = logging.Logger("COMMANDS")
+
     def __init__(self, bot):
         self.bot = bot
-        self.logger = logging.Logger("COMMANDS")
 
     @commands.group()
     @commands.check(common.l4_only)

@@ -242,8 +242,6 @@ class CommandCmds(BaseCmds):
             -fuzzy=(true/false) Forces fuzzy matching. Defaults to false, but fuzzy happens if exact matches aren't found.
             -column=(name/content/attachment) The column of the database to search along. Defaults to name
         Notes: Uses fuzzy matching!"""
-        try:
-            response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
-        except KeyError as e:
-            response = e.args[0].replace("This", f'"{flags.column}"')
+
+        response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
