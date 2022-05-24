@@ -323,7 +323,8 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
     if common.mod_name_eq((mod := mods[0])["name"], name) or len(mods) == 1:
         # we have a near-exact match
         embed = _single_mod_embed(mod)
-        file, filename = await webp_icon_as_png(mod["logo"], bot)
+        logo = l if (l := mod["logo"]) else "https://ficsit.app/images/no_image.webp"
+        file, filename = await webp_icon_as_png(logo, bot)
         thumb_url = f"attachment://{filename}"
         footer = "If this isn't the mod you were looking for, try a different spelling."
     else:
