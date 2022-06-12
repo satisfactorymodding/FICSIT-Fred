@@ -1,5 +1,6 @@
 FROM python:3.10-slim as runtime
 
+ENV DEBIAN_FRONTEND=noninteractive
 VOLUME /config
 WORKDIR /app
 
