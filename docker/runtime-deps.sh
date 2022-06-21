@@ -40,7 +40,6 @@ then
   apt-get remove -y software-properties-common gnupg curl
   apt-get autopurge -y
   apt-get autoclean -y
-  du -sh /*
   rm -rf /var/lib/apt/lists/*
 else
   echo "Opting to not remove stuff so running on real hardware does not break things." 1>&2

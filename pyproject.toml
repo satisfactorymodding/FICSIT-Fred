@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "FICSIT-Fred"
-version = "2.18.6"
+version = "2.18.7"
 description = "A Discord bot for the Satisfactory Modding Discord "
 authors = ["Feyko <feykook@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>", "Astro Floof <does.not.kompute@gmail.com>"]
 license = "MIT License"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-nextcord = "^2.0.0-alpha.6"
+nextcord = "^2.0.0b4"
 Pillow = "^9.0.0"
 pytesseract = "^0.3.8"
 psycopg2 = "^2.9.3"
