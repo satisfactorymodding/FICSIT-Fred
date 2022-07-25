@@ -93,11 +93,11 @@ class CommandCmds(BaseCmds):
         if not new_response:
             new_response, attachment = await self.bot.reply_question(ctx.message, "What should the response be?")
         else:
-            attachment = ctx.message.attachments[0].url if ctx.message.attachments else None
+            attachment = ctx.message.attachments[0] if ctx.message.attachments else None
 
         # this just works, don't touch it. trying to use config.Commands.fetch makes a duplicate command.
         results[0].content = new_response
-        results[0].attachment = attachment
+        results[0].attachment = attachment.url
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' modified!")
 
