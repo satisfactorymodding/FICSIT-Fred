@@ -323,6 +323,7 @@ class Crashes(commands.Cog):
         return [msg async for msg in self.mass_regex(text)]
 
     async def process_message(self, message) -> bool:
+        self.bot.logger.info("Processing crashes")
         responses: list[dict] = []
         # attachments
         cdn_link = re.search(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
