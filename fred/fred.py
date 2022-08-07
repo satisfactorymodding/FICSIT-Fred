@@ -166,6 +166,9 @@ class Bot(commands.Bot):
             self.logger.info("The user refuses to have DMs sent to them")
             return False
 
+        if not user.dm_channel:
+            await user.create_dm()
+
         try:
             if not embed:
                 embed = createembed.DM(content)
