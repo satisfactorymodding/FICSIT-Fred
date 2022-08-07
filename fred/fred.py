@@ -17,7 +17,7 @@ from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, leve
 from .libraries import createembed, common
 
 
-__version__ = "2.18.8"
+__version__ = "2.18.9"
 
 
 class Bot(commands.Bot):
@@ -146,9 +146,9 @@ class Bot(commands.Bot):
         content: str = None,
         embed: nextcord.Embed = None,
         user_meta: config.Users = None,
+        in_dm: bool = False,
         **kwargs,
-    ) -> None:
-
+    ) -> bool:
         if self.owo:
             if content is not None:
                 content = common.owoize(content)
@@ -162,27 +162,24 @@ class Bot(commands.Bot):
         if not user_meta:
             user_meta = config.Users.create_if_missing(user)
 
-        if not user_meta.accepts_dms:
+        if not user_meta.accepts_dms and not in_dm:
             self.logger.info("The user refuses to have DMs sent to them")
-            return
-
-        if not user.dm_channel:
-            self.logger.info("We did not have a DM channel with someone, creating one", extra=common.user_info(user))
-            await user.create_dm()
+            return False
 
         try:
             if not embed:
                 embed = createembed.DM(content)
                 content = None
             await user.dm_channel.send(content=content, embed=embed, **kwargs)
+            return True
         except Exception:
             self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
+        return False
 
     async def checked_DM(self, user: nextcord.User, **kwargs) -> bool:
         user_meta = config.Users.create_if_missing(user)
         try:
-            await self.send_DM(user, user_meta=user_meta, **kwargs)
-            return True
+            return await self.send_DM(user, user_meta=user_meta, **kwargs)
         except (nextcord.HTTPException, nextcord.Forbidden):
             # user has blocked bot or does not take mutual-server DMs
             return False

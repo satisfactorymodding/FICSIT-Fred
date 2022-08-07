@@ -17,22 +17,24 @@ class HelpCmds(BaseCmds):
         """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
         Usage: `help [commands/crash(es)/special/media_only/webhooks] [page: int/name: str]`
         Response: Information about what you requested"""
-        try:
-            await ctx.message.delete()
-        except nextcord.Forbidden:
-            pass  # doesn't have delete perms, f.e. in a DM channel
-
         if ctx.invoked_subcommand is None:
             await self.help_special(ctx, name="help")
             return
 
     async def _send_help(self, ctx: commands.Context, **kwargs):
-        if not await self.bot.checked_DM(ctx.author, **kwargs):
+        if not ctx.author.dm_channel:
+            await ctx.author.create_dm()
+        if not await self.bot.checked_DM(ctx.author, in_dm=ctx.channel == ctx.author.dm_channel,**kwargs):
             await ctx.reply(
                 "Help commands only work in DMs to avoid clutter. "
-                "You have either disabled server DMs or indicated that you do not wish for Fred to DM you."
+                "You have either disabled server DMs or indicated that you do not wish for Fred to DM you. "
                 "Please enable both of these if you want to receive messages."
             )
+        else:
+            try:
+                await ctx.message.delete()
+            except nextcord.Forbidden:
+                pass  # doesn't have delete perms, f.e. in a DM channel
 
     @help.command(name="commands")
     async def help_commands(self, ctx: commands.Context, page: int = None) -> None:

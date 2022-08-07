@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "FICSIT-Fred"
-version = "2.18.7"
+version = "2.18.9"
 description = "A Discord bot for the Satisfactory Modding Discord "
 authors = ["Feyko <feykook@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>", "Astro Floof <does.not.kompute@gmail.com>"]
 license = "MIT License"
