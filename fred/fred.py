@@ -17,7 +17,7 @@ from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, leve
 from .libraries import createembed, common
 
 
-__version__ = "2.18.9"
+__version__ = "2.18.10"
 
 
 class Bot(commands.Bot):
@@ -248,6 +248,7 @@ class Bot(commands.Bot):
         removed = await self.MediaOnly.process_message(message)
         if not removed:
             if message.content.startswith(self.command_prefix):
+                self.logger.info("Processing commands")
                 await self.process_commands(message)
             else:
                 reacted = await self.Crashes.process_message(message)

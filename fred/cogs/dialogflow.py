@@ -27,6 +27,7 @@ class DialogFlow(commands.Cog):
         self.logger = logging.Logger("DIALOGFLOW")
 
     async def process_message(self, message):
+        self.bot.logger.info("Processing NLP")
         if message.content.startswith(self.bot.command_prefix):
             return
         if not message.content:
