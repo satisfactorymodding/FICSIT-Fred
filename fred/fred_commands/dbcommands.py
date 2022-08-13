@@ -6,6 +6,8 @@ from .. import config
 
 
 def _extract_prefix(string: str, prefix: str):
+    if not string:
+        return False, ""
     a, prefix, b = string.partition(prefix)
     if prefix and not a and not (words := b.split())[1:]:
         return True, words[0]
@@ -90,14 +92,14 @@ class CommandCmds(BaseCmds):
             except ValueError:
                 return
 
-        if not new_response:
+        if not new_response and not ctx.message.attachments:
             new_response, attachment = await self.bot.reply_question(ctx.message, "What should the response be?")
         else:
             attachment = ctx.message.attachments[0] if ctx.message.attachments else None
 
         # this just works, don't touch it. trying to use config.Commands.fetch makes a duplicate command.
         results[0].content = new_response
-        results[0].attachment = attachment.url
+        results[0].attachment = attachment.url if attachment else None
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' modified!")
 
