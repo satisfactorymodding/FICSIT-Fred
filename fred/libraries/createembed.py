@@ -245,8 +245,22 @@ def issue(data: dict) -> nextcord.Embed:
         url=data["issue"]["html_url"],
     )
 
-    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
+    author = data["sender"]
+    embed.set_author(name=author["login"], icon_url=author["avatar_url"])
 
+    return embed
+
+
+def issue_comment(data: dict) -> nextcord.Embed:
+    author = data["comment"]["user"]
+    embed = nextcord.Embed(
+        title=f'{author["login"]} commented on issue #{data["issue"]["number"]}',
+        description=f'{data["comment"]["body"]}',
+        url=data["comment"]["url"],
+        colour=config.ActionColours.fetch("yellow"),
+    )
+
+    embed.set_thumbnail(author["avatar_url"])
     return embed
 
 
@@ -265,13 +279,35 @@ def _single_mod_embed(mod: dict) -> nextcord.Embed:
     else:
         authors = last
 
-    desc = f'{mod["short_description"]}\n\nLast Updated {ts}\nCreated by {authors}'
+    desc = mod["short_description"] + "\n"
+
+    if compatibility := mod["compatibility"]:
+        ea = compatibility["EA"]
+        exp = compatibility["EXP"]
+        desc += f"\nEA: {compatibility_to_emoji(ea['state'])}\n"
+        if note := ea["note"]:
+            desc += f"Note: {note}\n"
+        desc += f"EXP: {compatibility_to_emoji(exp['state'])}\n"
+        if note := exp["note"]:
+            desc += f"Note: {note}\n"
+
+    desc += f"\nLast Updated {ts}\nCreated by {authors}"
 
     return nextcord.Embed(
         title=mod["name"],
         description=desc,
         url=f'https://ficsit.app/mod/{mod["id"]}',
     )
+
+
+def compatibility_to_emoji(compatibility_state: str) -> str:
+    match compatibility_state:
+        case "Works":
+            return ":white_check_mark:"
+        case "Damaged":
+            return ":warning:"
+        case "Broken":
+            return ":no_entry_sign:"
 
 
 def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.Embed:
@@ -294,7 +330,7 @@ async def webp_icon_as_png(url: str, bot) -> tuple[nextcord.File, str]:
 
 
 # SMR Lookup Embed Formats
-async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.File | None]:
+async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.File | None, list[dict] | None]:
     # GraphQL Queries
     # fmt: off
     query = '''{
@@ -310,6 +346,16 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
               short_description
               last_version_date
               id
+              compatibility {
+                EA {
+                  state
+                  note
+                }
+                EXP {
+                  state
+                  note
+                }
+              }
             }
           }
         }'''
@@ -318,14 +364,16 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
     mods: list[dict] = result["data"]["getMods"]["mods"]
     logging.debug(mods)
     if not mods:
-        return None, None
+        return None, None, None
 
-    if common.mod_name_eq((mod := mods[0])["name"], name) or len(mods) == 1:
+    single_mod = common.mod_name_eq((mod := mods[0])["name"], name) or len(mods) == 1
+    if single_mod:
         # we have a near-exact match
         embed = _single_mod_embed(mod)
         logo = l if (l := mod["logo"]) else "https://ficsit.app/images/no_image.webp"
         file, filename = await webp_icon_as_png(logo, bot)
         thumb_url = f"attachment://{filename}"
+        # thumb_url = logo
         footer = "If this isn't the mod you were looking for, try a different spelling."
     else:
         # we have a bunch of almost matches
@@ -336,8 +384,9 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
 
     embed.set_thumbnail(url=thumb_url)
     embed.set_footer(text=footer)
-    embed.set_author(name="Fred mod Searching™")
-    return embed, file
+    embed.set_author(name="Fred Mod Search™")
+    multiple_mods = mods[:10] if not single_mod else None
+    return embed, file, multiple_mods
 
 
 def crashes(responses: list[dict]) -> nextcord.Embed:
