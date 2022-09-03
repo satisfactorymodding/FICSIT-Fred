@@ -7,7 +7,7 @@ license = "MIT License"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-nextcord = "^2.0.0b4"
+nextcord = "^2.1.0"
 Pillow = "^9.0.0"
 pytesseract = "^0.3.8"
 psycopg2 = "^2.9.3"

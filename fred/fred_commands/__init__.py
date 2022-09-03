@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import asyncio
 import inspect
 import io
@@ -18,6 +20,7 @@ from .dialogflow import DialogflowCmds
 from .experience import EXPCmds
 from .help import HelpCmds, FredHelpEmbed
 from ..libraries import createembed
+from ..libraries.view.mod_picker import ModPicker
 
 
 class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXPCmds, HelpCmds):
@@ -111,11 +114,27 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
         Response: If a near-exact match is found, gives you info about that mod.
         If close matches are found, up to 10 of those will be listed.
         If nothing even comes close, I'll let you know ;)"""
-        embed, attachment = await createembed.mod_embed(mod_name, self.bot)
+        embed, attachment, multiple_mods = await createembed.mod_embed(mod_name, self.bot)
         if embed is None:
             await self.bot.reply_to_msg(ctx.message, "No mods found!")
         else:
-            await self.bot.reply_to_msg(ctx.message, embed=embed, file=attachment)
+            if multiple_mods:
+                view = ModPicker(multiple_mods)
+            else:
+                view = None
+            msg = await self.bot.reply_to_msg(ctx.message, embed=embed, view=view, file=attachment)
+            if view:
+                async def callback(interaction: nextcord.Interaction):
+                    logging.info(interaction.data.values)
+                    new_embed, new_attachment, _ = await createembed.mod_embed(interaction.data["values"][0], self.bot)
+                    # Two edits because the view doesn't go away with one... go figure why
+                    await msg.edit(view=None)
+                    await msg.edit(embed=new_embed, file=new_attachment)
+                    view.stop()
+
+                view.set_callback(callback)
+
+                await view.wait()
 
     @commands.command()
     async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
