@@ -132,7 +132,11 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
                     await msg.edit(embed=new_embed, file=new_attachment)
                     view.stop()
 
+                async def timeout():
+                    await msg.edit(view=None)
+
                 view.set_callback(callback)
+                view.on_timeout = timeout
 
                 await view.wait()
 
