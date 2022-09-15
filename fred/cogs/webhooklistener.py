@@ -50,15 +50,21 @@ def MakeGithookHandler(bot):
             self.end_headers()
 
         def handle_check(self):
-            match self.path:
-                case "/ready":
-                    self.respond(200 if bot.isReady else 503)
-                case "/healthy":
-                    fut = asyncio.run_coroutine_threadsafe(bot.isAlive(), bot.loop)
-                    healthy = fut.result(5)
-                    self.respond(200 if healthy else 503)
-                case _:
-                    self.respond(200)
+            try:
+                match self.path:
+                    case "/ready":
+                        self.respond(200 if bot.isReady else 503)
+                    case "/healthy":
+                        logging.info("handling /healthy")
+                        fut = asyncio.run_coroutine_threadsafe(bot.isAlive(), bot.loop)
+                        logging.info("waiting for result from healthcheck")
+                        healthy = fut.result(5)
+                        logging.info("responding")
+                        self.respond(200 if healthy else 503)
+                    case _:
+                        self.respond(200)
+            except Exception as e:
+                    logging.info(f"Errored during check: {e}")
 
         def do_HEAD(self):
             self.handle_check()
