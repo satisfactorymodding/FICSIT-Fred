@@ -17,14 +17,17 @@ from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, leve
 from .libraries import createembed, common
 
 
-__version__ = "2.20.0"
+__version__ = "2.20.1"
 
 
 class Bot(commands.Bot):
     async def isAlive(self):
         try:
+            logging.info("getting from config")
             _ = config.Misc.get(1)
+            logging.info("creating user fetch")
             coro = self.fetch_user(227473074616795137)
+            logging.info("fetching user")
             await asyncio.wait_for(coro, timeout=5)
         except Exception as e:
             self.logger.error(f"Healthiness check failed: {e}")
