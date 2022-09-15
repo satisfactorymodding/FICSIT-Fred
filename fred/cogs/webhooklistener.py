@@ -64,7 +64,8 @@ def MakeGithookHandler(bot):
                     case _:
                         self.respond(200)
             except Exception as e:
-                    logging.info(f"Errored during check: {e}")
+                logging.error(f"Errored during check")
+                logging.exception(e)
 
         def do_HEAD(self):
             self.handle_check()
