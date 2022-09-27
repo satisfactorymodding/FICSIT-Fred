@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from time import strptime
 from typing import AsyncIterator
 
+import nextcord
 import nextcord.ext.commands as commands
 from PIL import Image, ImageEnhance, UnidentifiedImageError
 from pytesseract import image_to_string, TesseractError
@@ -305,8 +306,8 @@ class Crashes(commands.Cog):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
                         command_response = command["content"]
                         if command_response.startswith(self.bot.command_prefix):  # is alias
-                            command_response = config.Commands.fetch(command_response.strip(self.bot.command_prefix))
-                        yield dict(name=command["name"], value=command_response, inline=True)
+                            command = config.Commands.fetch(command_response.strip(self.bot.command_prefix))
+                        yield dict(name=command["name"], value=command["content"], attachment=command["attachment"], inline=True)
                 else:
                     response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
                     yield dict(name=crash["name"], value=response, inline=True)
@@ -377,5 +378,10 @@ class Crashes(commands.Cog):
             await self.bot.reply_to_msg(message, embed=createembed.crashes(responses))
         else:
             for response in responses:
-                await self.bot.reply_to_msg(message, response["value"], propagate_reply=False)
+                attachment = response.get("attachment")
+                if attachment is not None:
+                    async with self.bot.web_session.get(attachment) as resp:
+                        buff = io.BytesIO(await resp.read())
+                        attachment = nextcord.File(filename=attachment.split("/")[-1], fp=buff)
+                await self.bot.reply_to_msg(message, response["value"], file=attachment, propagate_reply=False)
         return len(responses) > 0
