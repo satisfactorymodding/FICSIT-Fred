@@ -38,7 +38,7 @@ def get_search(table: Type[Commands | Crashes], pattern: str, column: str, force
                 response += (
                     f"\n`{prefix}{searched}`\n "
                     "If this isn't what you are looking for, try "
-                    f"`{prefix}search {pattern} -fuzzy=true` to force fuzzy matching!"
+                    f"`{prefix}search {table} {pattern} -fuzzy=true` to force fuzzy matching!"
                 )
             else:
                 response += (
