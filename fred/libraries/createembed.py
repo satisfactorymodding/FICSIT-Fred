@@ -117,7 +117,7 @@ def push(data: dict) -> nextcord.Embed:
         embed.add_field(name=f"{not_shown} commits not shown", value="See GitHub for more details!", inline=False)
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
-    embed.set_footer(text=config.Misc.fetch("prefix") + "legend to understand the emojis")
+    embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
     return embed
 
 
@@ -178,7 +178,7 @@ def pull_request(data: dict) -> nextcord.Embed:
     direction = f'{data["pull_request"]["head"]["ref"]} -> {data["pull_request"]["base"]["ref"]}'
     embed.add_field(name=direction, value=stats)
 
-    embed.set_footer(text=config.Misc.fetch("prefix") + "legend to understand the emojis")
+    embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
 
     return embed
 
