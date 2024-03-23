@@ -17,7 +17,7 @@ from cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, level
 from libraries import createembed, common
 
 
-__version__ = "2.20.3"
+__version__ = "2.20.4"
 
 
 class Bot(commands.Bot):

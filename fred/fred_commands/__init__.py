@@ -140,7 +140,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
 
                 await view.wait()
 
-    @commands.command()
+    @commands.command(aliases=['docssearch'])
     async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
         """Usage: `docsearch (search: str)`
         Response: Equivalent to using the search function on the SMR docs page; links the first search result"""
