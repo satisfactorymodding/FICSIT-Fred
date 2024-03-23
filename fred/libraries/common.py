@@ -5,7 +5,7 @@ from functools import lru_cache
 from nextcord import User, Message
 from nextcord.ext.commands import Context
 
-from .. import config
+import config
 
 logger = logging.Logger("PERMISSIONS")
 

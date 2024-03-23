@@ -19,8 +19,8 @@ from .crashes import CrashCmds
 from .dialogflow import DialogflowCmds
 from .experience import EXPCmds
 from .help import HelpCmds, FredHelpEmbed
-from ..libraries import createembed
-from ..libraries.view.mod_picker import ModPicker
+from libraries import createembed
+from libraries.view.mod_picker import ModPicker
 
 
 class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXPCmds, HelpCmds):

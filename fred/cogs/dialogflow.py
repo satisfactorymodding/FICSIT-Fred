@@ -9,15 +9,17 @@ from nextcord.ext import commands
 from google.cloud import dialogflow
 from google.oauth2 import service_account
 
-from .. import config
-from ..libraries import common
+import config
+from libraries import common
 
-DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
-session_client = dialogflow.SessionsClient(
-    credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH)
-)
-DIALOGFLOW_PROJECT_ID = DIALOGFLOW_AUTH["project_id"]
-SESSION_LIFETIME = 10 * 60  # 10 minutes to avoid repeated false positives
+
+if os.environ.get('DIALOGFLOW_AUTH'):
+    DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
+    session_client = dialogflow.SessionsClient(
+        credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH)
+    )
+    DIALOGFLOW_PROJECT_ID = DIALOGFLOW_AUTH["project_id"]
+    SESSION_LIFETIME = 10 * 60  # 10 minutes to avoid repeated false positives
 
 
 class DialogFlow(commands.Cog):

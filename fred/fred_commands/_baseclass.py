@@ -1,8 +1,8 @@
 import logging
 
 from nextcord.ext import commands
-from .. import config
-from ..libraries import common
+import config
+import libraries.common as common
 
 assert config  # shut up linter, things that import this need this for convenience
 

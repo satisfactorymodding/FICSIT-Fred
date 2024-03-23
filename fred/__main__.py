@@ -12,14 +12,14 @@ ENVVARS = [
     "FRED_SQL_PASSWORD",
     "FRED_SQL_HOST",
     "FRED_SQL_PORT",
-    "DIALOGFLOW_AUTH",
+    # "DIALOGFLOW_AUTH",
 ]
 
 for var in ENVVARS:
     if getenv(var) is None:
         raise EnvironmentError(f"The ENV variable '{var}' isn't set")
 
-from .fred import Bot, nextcord, __version__
+from fred import Bot, nextcord, __version__
 
 
 intents = nextcord.Intents.all()

@@ -1,1 +1,1 @@
-from .fred import __version__
+from fred import __version__

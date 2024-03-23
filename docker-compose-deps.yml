@@ -1,0 +1,26 @@
+version: '3'
+services:
+    postgres:
+        image: postgres:14.0-alpine
+        environment:
+            POSTGRES_PASSWORD: fred
+            POSTGRES_USER: fred
+            PGDATA: /var/lib/postgresql/data/pgdata
+        ports:
+            - "5432:5432"
+        volumes:
+            - pgdata:/var/lib/postgresql/data/pgdata:z
+            - ./docker/exampledb.sql:/docker-entrypoint-initdb.d/exampledb.sql
+
+    pgadmin:
+        depends_on:
+            - postgres
+        image: dpage/pgadmin4:6
+        environment:
+            PGADMIN_DEFAULT_EMAIL: 'fred@fred.com'
+            PGADMIN_DEFAULT_PASSWORD: 'fred'
+        ports:
+            - "8080:80"
+
+volumes:
+    pgdata:

@@ -11,10 +11,10 @@ import nextcord
 from nextcord.ext import commands
 import sqlobject as sql
 
-from . import config
-from .fred_commands import Commands, FredHelpEmbed
-from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
-from .libraries import createembed, common
+import config
+from fred_commands import Commands, FredHelpEmbed
+from cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
+from libraries import createembed, common
 
 
 __version__ = "2.20.3"

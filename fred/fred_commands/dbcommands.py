@@ -2,7 +2,7 @@ from typing import Literal
 
 from ._baseclass import BaseCmds, commands, SearchFlags
 from ._command_utils import get_search
-from .. import config
+import config
 
 
 def _extract_prefix(string: str, prefix: str):

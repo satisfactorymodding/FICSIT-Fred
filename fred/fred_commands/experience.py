@@ -1,6 +1,6 @@
 from ._baseclass import BaseCmds, commands, common, config
-from ..cogs import levelling
-from ..libraries import createembed
+from cogs import levelling
+from libraries import createembed
 
 
 class EXPCmds(BaseCmds):

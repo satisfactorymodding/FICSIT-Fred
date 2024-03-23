@@ -1,7 +1,7 @@
 from nextcord.ext import commands
 
-from .. import config
-from ..libraries import common
+import config
+from libraries import common
 
 
 class Welcome(commands.Cog):

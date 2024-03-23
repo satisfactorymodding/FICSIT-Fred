@@ -4,7 +4,7 @@ import logging
 from regex import E, match, escape
 
 from ._baseclass import BaseCmds
-from ..config import Commands, Crashes, Misc
+from config import Commands, Crashes, Misc
 
 
 def search(table: Type[Commands | Crashes], pattern: str, column: str, force_fuzzy: bool) -> (str | list[str], bool):
