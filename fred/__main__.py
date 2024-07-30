@@ -19,7 +19,7 @@ for var in ENVVARS:
     if getenv(var) is None:
         raise EnvironmentError(f"The ENV variable '{var}' isn't set")
 
-from fred import Bot, nextcord, __version__
+from .fred import Bot, nextcord, __version__
 
 
 intents = nextcord.Intents.all()

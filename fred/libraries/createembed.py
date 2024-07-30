@@ -7,8 +7,8 @@ import nextcord
 from PIL import Image
 from nextcord.utils import format_dt
 
-import libraries.common
-import config
+from .. import config
+from ..libraries import common
 
 
 def timestamp(iso8601: str) -> str:

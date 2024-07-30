@@ -7,8 +7,8 @@ from datetime import *
 import nextcord.ext.commands as commands
 from nextcord import DMChannel
 
-import config
-from libraries import common
+from .. import config
+from ..libraries import common
 
 
 class UserProfile:

@@ -1,6 +1,6 @@
-from ._baseclass import BaseCmds, commands, config, SearchFlags
 from regex import search, error as RegexError
-from typing import Literal
+
+from ._baseclass import BaseCmds, commands, config, SearchFlags
 from ._command_utils import get_search
 
 

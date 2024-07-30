@@ -2,20 +2,18 @@ import asyncio
 import logging
 import os
 import sys
-import textwrap
 import time
 import traceback
 
 import aiohttp
 import nextcord
-from nextcord.ext import commands
 import sqlobject as sql
+from nextcord.ext import commands
 
-import config
-from fred_commands import Commands, FredHelpEmbed
-from cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
-from libraries import createembed, common
-
+from . import config
+from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
+from .fred_commands import Commands, FredHelpEmbed
+from .libraries import createembed, common
 
 __version__ = "2.20.4"
 

@@ -9,8 +9,8 @@ from nextcord.ext import commands
 from google.cloud import dialogflow
 from google.oauth2 import service_account
 
-import config
-from libraries import common
+from .. import config
+from ..libraries import common
 
 
 if os.environ.get('DIALOGFLOW_AUTH'):
