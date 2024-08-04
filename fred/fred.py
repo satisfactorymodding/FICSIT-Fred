@@ -44,7 +44,7 @@ class Bot(commands.Bot):
         self.owo = False
 
         self.loop = asyncio.new_event_loop()
-        self._error_channel = int(env_val) if (env_val := os.getenv("ERROR_CHANNEL")) else 748229790825185311
+        self._error_channel = int(chan) if (chan := config.Misc.fetch("error_channel")) else 748229790825185311
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
