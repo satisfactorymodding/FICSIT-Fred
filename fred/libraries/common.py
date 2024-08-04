@@ -28,9 +28,15 @@ async def mod_only(ctx: Context) -> bool:
 def permission_check(ctx: Context, level: int) -> bool:
     logpayload = user_info(ctx.author)
     logpayload["level"] = level
+
     logger.info("Checking permissions for someone", extra=logpayload)
     perms = config.PermissionRoles.fetch_by_lvl(level)
-    main_guild = ctx.bot.get_guild(config.Misc.fetch("main_guild_id"))
+
+    main_guild_id = int(config.Misc.fetch("main_guild_id"))
+    main_guild = ctx.bot.get_guild(main_guild_id)
+    if main_guild is None:
+        raise LookupError(f"Unable to retrieve the guild {main_guild_id}. Is this the guild you meant?")
+
     if (main_guild_member := main_guild.get_member(ctx.author.id)) is None:
         logger.warning("Checked permissions for someone but they weren't in the main guild", extra=logpayload)
         return False
