@@ -114,6 +114,10 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
         Response: If a near-exact match is found, gives you info about that mod.
         If close matches are found, up to 10 of those will be listed.
         If nothing even comes close, I'll let you know ;)"""
+        if len(mod_name) < 3:
+            await self.bot.reply_to_msg(ctx.message, "Searching needs at least three characters!")
+            return
+
         embed, attachment, multiple_mods = await createembed.mod_embed(mod_name, self.bot)
         if embed is None:
             await self.bot.reply_to_msg(ctx.message, "No mods found!")
