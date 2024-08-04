@@ -1,3 +1,5 @@
+from nextcord import Role, User
+
 from ._baseclass import BaseCmds, commands, common, config
 from ..cogs import levelling
 from ..libraries import createembed
@@ -19,6 +21,7 @@ class EXPCmds(BaseCmds):
         """Usage: `xp give (user) (amount)`
         Purpose: gives the indicated user the specified xp
         Notes: don't give negative xp, use take"""
+        target: User
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
         if amount < 0:
             await self.bot.reply_to_msg(
@@ -38,6 +41,7 @@ class EXPCmds(BaseCmds):
         """Usage: `xp give (user) (amount)`
         Purpose: takes the specified xp from the indicated user
         Notes: don't take negative xp, use give"""
+        target: User
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
         if amount < 0:
             await self.bot.reply_to_msg(
@@ -60,6 +64,7 @@ class EXPCmds(BaseCmds):
         """Usage: `xp multiplier (user) (multiplier)`
         Purpose: sets the user's personalised xp gain multiplier from the base value
         Notes: a negative value will be converted to 0"""
+        target: User
         user_meta = config.Users.create_if_missing(target)
         amount = max(multiplier, 0)  # no negative gain allowed
         user_meta.xp_multiplier = amount
@@ -74,6 +79,7 @@ class EXPCmds(BaseCmds):
         """Usage: `xp set (user) (amount)`
         Purpose: sets the user's xp amount to the specified amount
         Notes: don't try negative values, it won't work"""
+        target: User
         profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
 
         if amount < 0:
@@ -153,6 +159,7 @@ class EXPCmds(BaseCmds):
         """Usage: `level` [user]
         Response: Either your level or the level of the user specified
         Notes: the user parameter can be the user's @ mention or their UID, like 506192269557366805"""
+        target_user: User
         if target_user:
             user_id = target_user.id
             user = self.bot.get_user(user_id)
@@ -169,6 +176,7 @@ class EXPCmds(BaseCmds):
         """Usage: `add level_role (role)`
         Purpose: adds a levelling role
         Notes: NOT IMPLEMENTED"""
+        role: Role
         role_id = role.id
 
         if config.DialogflowExceptionRoles.fetch(role_id):
@@ -183,6 +191,7 @@ class EXPCmds(BaseCmds):
         """Usage: `remove level_role (role)`
         Purpose: removes a levelling role
         Notes: NOT IMPLEMENTED"""
+        role: Role
         role_id = role.id
 
         if config.RankRoles.fetch_by_role(role_id):
