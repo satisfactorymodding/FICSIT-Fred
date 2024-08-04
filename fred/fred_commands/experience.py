@@ -148,7 +148,7 @@ class EXPCmds(BaseCmds):
         query = config.Users.select().orderBy("-xp_count").limit(10)
         results = list(query)
         if not results:
-            self.bot.reply_to_msg(ctx.message, "The database was empty. This should NEVER happen")
+            await self.bot.reply_to_msg(ctx.message, "The database was empty. This should NEVER happen")
             return
         data = [dict(name=user.full_name, count_and_rank=dict(count=user.xp_count, rank=user.rank)) for user in results]
         embed = createembed.leaderboard(data)
@@ -164,7 +164,7 @@ class EXPCmds(BaseCmds):
             user_id = target_user.id
             user = self.bot.get_user(user_id)
             if not user:
-                self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to find the user with id {user_id}")
+                await self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to find the user with id {user_id}")
                 return
         else:
             user = ctx.author
