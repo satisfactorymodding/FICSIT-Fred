@@ -13,7 +13,7 @@ from .. import config
 from ..libraries import common
 
 
-if os.environ.get('DIALOGFLOW_AUTH'):
+if os.environ.get("DIALOGFLOW_AUTH"):
     DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
     session_client = dialogflow.SessionsClient(
         credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH)

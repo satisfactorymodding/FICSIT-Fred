@@ -307,7 +307,12 @@ class Crashes(commands.Cog):
                         command_response = command["content"]
                         if command_response.startswith(self.bot.command_prefix):  # is alias
                             command = config.Commands.fetch(command_response.strip(self.bot.command_prefix))
-                        yield dict(name=command["name"], value=command["content"], attachment=command["attachment"], inline=True)
+                        yield dict(
+                            name=command["name"],
+                            value=command["content"],
+                            attachment=command["attachment"],
+                            inline=True,
+                        )
                 else:
                     response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
                     yield dict(name=crash["name"], value=response, inline=True)

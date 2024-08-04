@@ -124,6 +124,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
                 view = None
             msg = await self.bot.reply_to_msg(ctx.message, embed=embed, view=view, file=attachment)
             if view:
+
                 async def callback(interaction: nextcord.Interaction):
                     logging.info(interaction.data.values)
                     new_embed, new_attachment, _ = await createembed.mod_embed(interaction.data["values"][0], self.bot)
@@ -140,7 +141,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
 
                 await view.wait()
 
-    @commands.command(aliases=['docssearch'])
+    @commands.command(aliases=["docssearch"])
     async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
         """Usage: `docsearch (search: str)`
         Response: Equivalent to using the search function on the SMR docs page; links the first search result"""

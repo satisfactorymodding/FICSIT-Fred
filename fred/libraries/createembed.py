@@ -57,9 +57,7 @@ def leaderboard(data: list[dict]) -> nextcord.Embed:
     embed = nextcord.Embed(title="XP Leaderboard", colour=config.ActionColours.fetch("purple"), description=desc)
 
     for user in data:
-        embed.add_field(
-            name=user["name"], value=f'XP: {user["count_and_rank"]["count"]} | Level: {user["count_and_rank"]["rank"]}'
-        )
+        embed.add_field(name=user["name"], value=f'XP: {user["xp"]} | Level: {user["rank"]}')
 
     return embed
 
