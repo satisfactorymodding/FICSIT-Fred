@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from numbers import Number
 from typing import Optional, Any
+import os
+import pathlib
 
 import nextcord
 from sqlobject import *
@@ -255,3 +257,34 @@ class Misc(SQLObject):
         query = Misc.selectBy(key=key).getOne(None)
         if query is not None:
             query.value = value
+
+    @staticmethod
+    def create_or_change(key, value):
+        query = Misc.selectBy(key=key)
+        results = list(query)
+        if results:
+            results[0].value = value
+            return
+
+        Misc(key=key, value=value)
+
+
+def migrate():
+    current_migration_rev = Misc.fetch("migration_rev")
+    if current_migration_rev is None:
+        current_migration_rev = 0
+
+    migrations_dir = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
+    migrations_filenames = list(migrations_dir.glob("migrations/*-*.up.sql"))
+    valid_migrations = [
+        migration for migration in migrations_filenames if _migration_rev(migration) > current_migration_rev
+    ]
+
+    for migration in valid_migrations:
+        sqlhub.processConnection.query(migration.read_text())
+
+    Misc.create_or_change("migration_rev", _migration_rev(migrations_filenames[0]))
+
+
+def _migration_rev(filepath: pathlib.Path) -> int:
+    return int(filepath.name.split("-")[0])
