@@ -280,7 +280,7 @@ class Crashes(commands.Cog):
                     image = Image.open(file)
                     ratio = 2160 / image.height
                     if ratio > 1:
-                        image = image.resize((round(image.width * ratio), round(image.height * ratio)), Image.LANCZOS)
+                        image = image.resize((round(image.width * ratio), round(image.height * ratio)), Image.Resampling.LANCZOS)
 
                     enhancer_contrast = ImageEnhance.Contrast(image)
 
