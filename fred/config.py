@@ -157,7 +157,7 @@ class Dialogflow(SQLObject):
         return Dialogflow.selectBy(intent_id=intent_id, data=data).getOne(None)
 
 
-CommandsOrCrashesDict = dict[str, str | StringCol]
+type CommandsOrCrashesDict = dict[str, str | StringCol]
 
 
 class Commands(SQLObject):
@@ -237,7 +237,7 @@ class ReservedCommands(SQLObject):
         return bool(query)
 
 
-JSONValue = Number | bool | str | list | dict
+type JSONValue = Number | bool | str | list | dict
 
 
 class Misc(SQLObject):
@@ -259,14 +259,12 @@ class Misc(SQLObject):
             query.value = value
 
     @staticmethod
-    def create_or_change(key, value):
-        query = Misc.selectBy(key=key)
-        results = list(query)
-        if results:
-            results[0].value = value
-            return
-
-        Misc(key=key, value=value)
+    def create_or_change(key: str, value: JSONValue):
+        query: Optional[Misc] = Misc.selectBy(key=key).getOne(None)
+        if query is None:
+            Misc(key=key, value=value)
+        else:
+            query.value = value
 
 
 def migrate():

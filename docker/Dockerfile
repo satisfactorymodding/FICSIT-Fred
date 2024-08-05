@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 VOLUME /config
@@ -7,7 +7,7 @@ WORKDIR /app
 COPY docker/runtime-deps.sh .
 RUN bash runtime-deps.sh 1> /dev/null && rm runtime-deps.sh
 
-FROM python:3.11-slim AS build
+FROM python:3.12-slim AS build
 
 WORKDIR /app
 
