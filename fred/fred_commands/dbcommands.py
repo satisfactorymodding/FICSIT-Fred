@@ -19,10 +19,10 @@ class CommandCmds(BaseCmds):
         """Usage: `add command (name) [response]`
         Purpose: Adds a simple command to the list of commands
         Notes: If response is not supplied you will be prompted for one with a timeout"""
-        if config.Commands.fetch(command_name):
+        if config.Commands.fetch(command_name) is not None:
             await self.bot.reply_to_msg(ctx.message, "This command already exists!")
             return
-        if config.ReservedCommands.fetch(command_name):
+        if config.ReservedCommands.check(command_name):
             await self.bot.reply_to_msg(ctx.message, "This command name is reserved")
             return
 
@@ -65,7 +65,7 @@ class CommandCmds(BaseCmds):
         """Usage: `modify command (name) [response]`
         Purpose: Modifies a command
         Notes: If response is not supplied you will be prompted for one with a timeout"""
-        if config.ReservedCommands.fetch(command_name):
+        if config.ReservedCommands.check(command_name):
             await self.bot.reply_to_msg(ctx.message, "This command is special and cannot be modified.")
             return
 
@@ -105,7 +105,7 @@ class CommandCmds(BaseCmds):
     def _valid_aliases(target: str, aliases: list[str]) -> dict[str, list[str | tuple[str, str]]]:
         rtn = {"valid": [], "overwrite": [], "failure": []}
         for alias in aliases:
-            if config.ReservedCommands.fetch(alias):
+            if config.ReservedCommands.check(alias):
                 rtn["failure"] += (alias, "reserved")
 
             elif cmd := config.Commands.fetch(name=alias):
@@ -210,7 +210,7 @@ class CommandCmds(BaseCmds):
         """Usage: `rename command (name) (new_name)`
         Purpose: Renames a command.
         Notes: If response is not supplied you will be prompted for one with a timeout"""
-        if config.ReservedCommands.fetch(name):
+        if config.ReservedCommands.check(name):
             await self.bot.reply_to_msg(ctx.message, "This command is special and cannot be modified.")
             return
 

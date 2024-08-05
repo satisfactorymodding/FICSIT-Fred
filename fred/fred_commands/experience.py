@@ -150,7 +150,14 @@ class EXPCmds(BaseCmds):
         if not results:
             await self.bot.reply_to_msg(ctx.message, "The database was empty. This should NEVER happen")
             return
-        data = [dict(name=user.full_name, count_and_rank=dict(count=user.xp_count, rank=user.rank)) for user in results]
+
+        data = []
+        for db_user in results:
+            fetched_user = self.bot.get_user(db_user.user_id)
+            if fetched_user is None:
+                raise LookupError(f"Unable to find user with ID {db_user.user_id}")
+            data.append({"name": fetched_user.global_name, "xp": db_user.xp_count, "rank": db_user.rank})
+
         embed = createembed.leaderboard(data)
         await self.bot.reply_to_msg(ctx.message, embed=embed)
 
@@ -179,7 +186,7 @@ class EXPCmds(BaseCmds):
         role: Role
         role_id = role.id
 
-        if config.DialogflowExceptionRoles.fetch(role_id):
+        if config.DialogflowExceptionRoles.check(role_id):
             await self.bot.reply_to_msg(ctx.message, "This role is already a level role")
             return
 

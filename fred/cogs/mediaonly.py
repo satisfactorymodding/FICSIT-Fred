@@ -20,7 +20,7 @@ class MediaOnly(commands.Cog):
         if await common.l4_only(ctx):
             self.logger.info("Message doesn't contain media but the author is a T3", extra=common.message_info(message))
             return False
-        if config.MediaOnlyChannels.fetch(message.channel.id):
+        if config.MediaOnlyChannels.check(message.channel.id):
             self.logger.info("Removing a message", extra=common.message_info(message))
             await message.delete()
             await self.bot.send_DM(

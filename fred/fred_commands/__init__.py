@@ -30,7 +30,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
         self.logger.error(f"Caught {error!r}, {dir(error)}")
         if isinstance(error, commands.CommandNotFound):
             command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
-            if config.Commands.fetch(command):
+            if config.Commands.fetch(command) is not None:
                 return
             self.logger.warning("Invalid command attempted")
             return
@@ -75,32 +75,33 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
         if message.content.startswith(prefix):
             name = message.content.lower().lstrip(prefix).split(" ")[0]
             self.logger.info(f"Processing the command {name}", extra=common.message_info(message))
-            if command := config.Commands.fetch(name):
+            if (command := config.Commands.fetch(name)) is not None:
                 if (
                     (content := command["content"])
                     and content.startswith(prefix)  # for linked aliases of commands like ff->rp
-                    and (linked_command := config.Commands.fetch(command["content"].lstrip(prefix)))
+                    and (linked_command := config.Commands.fetch(content.lstrip(prefix)))
                 ):
                     command = linked_command
 
-                attachment = None
-                if command["attachment"]:
-                    async with self.bot.web_session.get(command["attachment"]) as resp:
+                if (attachment := command["attachment"]) is not None:
+                    async with self.bot.web_session.get(attachment) as resp:
                         buff = io.BytesIO(await resp.read())
-                        attachment = nextcord.File(filename=command["attachment"].split("/")[-1], fp=buff)
+                        attachment = nextcord.File(filename=attachment.split("/")[-1], fp=buff)
                 args = []
                 view = StringView(message.content.lstrip(prefix))
                 view.get_word()  # command name
                 while not view.eof:
                     view.skip_ws()
                     args.append(view.get_quoted_word())
-                if command["content"] is not None:
+                if content:
+                    # ok who wrote this unreadable garbage? oh wait, it was me - Borketh
+                    # this should probably be simplified...
                     text = re.sub(
                         r"{(\d+)}",
-                        lambda match: args[int(match.group(1))]
-                        if int(match.group(1)) < len(args)
-                        else "(missing argument)",
-                        command["content"],
+                        lambda match: (
+                            args[int(match.group(1))] if int(match.group(1)) < len(args) else "(missing argument)"
+                        ),
+                        content,
                     ).replace("{...}", " ".join(args))
                 else:
                     text = None

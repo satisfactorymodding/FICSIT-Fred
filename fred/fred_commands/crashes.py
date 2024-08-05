@@ -15,7 +15,7 @@ class CrashCmds(BaseCmds):
             - `response` can be my command prefix and the name of a command, which will result in
             the response mirroring that of the command indicated."""
 
-        if config.Crashes.fetch(crash_name):
+        if config.Crashes.fetch(crash_name) is not None:
             await self.bot.reply_to_msg(ctx.message, "A crash with this name already exists")
             return
 
@@ -42,7 +42,7 @@ class CrashCmds(BaseCmds):
         """Usage: `remove crash (name)
         Purpose: Removes a crash from the list of known crashes.
         Notes: hi"""
-        if not config.Crashes.fetch(crash_name):
+        if config.Crashes.fetch(crash_name) is None:
             await self.bot.reply_to_msg(ctx.message, "Crash could not be found!")
             return
 

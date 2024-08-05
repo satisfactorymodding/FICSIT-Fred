@@ -2,7 +2,7 @@ import logging
 import re
 from functools import lru_cache
 
-from nextcord import User, Message
+from nextcord import User, Message, Member
 from nextcord.ext.commands import Context
 
 from .. import config
@@ -57,12 +57,8 @@ def permission_check(ctx: Context, level: int) -> bool:
 
 
 @lru_cache(5)
-def user_info(user: User | config.Users) -> dict:
-    if isinstance(user, User):
-        return {"user_full_name": str(user), "user_id": user.id}
-    elif isinstance(user, config.Users):
-        return {"user_full_name": user.full_name, "user_id": user.id}
-    return {}
+def user_info(user: User | Member) -> dict:
+    return {"user_full_name": user.global_name, "user_id": user.id}
 
 
 @lru_cache(5)
