@@ -87,6 +87,7 @@ class Bot(commands.Bot):
                 time.sleep(5)
         else:  # this happens if the loop is not broken by a successful connection
             raise ConnectionError("Could not connect to the DB")
+        config.migrate()
 
     def setup_logger(self):
         logging.root = logging.Logger("FRED")
