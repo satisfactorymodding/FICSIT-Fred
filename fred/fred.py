@@ -121,7 +121,7 @@ class Bot(commands.Bot):
             channel_str = ""
 
         fred_str = f"Fred v{self.version}"
-        error_meta = f"{type.__name__} exception handled in {event}{channel_str}"
+        error_meta = f"{type.__name__} exception handled in `{event}` {channel_str}"
         full_error = f"\n{value}\n\n{''.join(traceback.format_tb(tb))}"
         logging.error(f"{fred_str}\n{error_meta}\n{full_error}")
 

@@ -216,7 +216,7 @@ class CommandCmds(BaseCmds):
 
         results: list[config.Commands]
         if not (results := list(config.Commands.selectBy(name=name))):  # this command hasn't been created yet
-            await self.bot.reply_to_msg("Command could not be found!")
+            await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
             return
 
         if new_name is None:

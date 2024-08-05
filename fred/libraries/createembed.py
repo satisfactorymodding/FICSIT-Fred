@@ -80,7 +80,7 @@ def format_commit(commit: dict) -> tuple[str, str]:
     change_summary_icons = " ".join(
         [f"{em} {len(commit[k])}" for em, k in zip("✅❌📝", ["added", "removed", "modified"])]
     )
-    return (f"{commit_message}\n", f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n')
+    return f"{commit_message}\n", f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n'
 
 
 def push(data: dict) -> nextcord.Embed:

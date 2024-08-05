@@ -1,5 +1,3 @@
-import logging
-
 import nextcord.ui
 
 
