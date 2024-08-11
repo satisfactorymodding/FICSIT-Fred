@@ -1,7 +1,7 @@
 import asyncio
 import json
-import logging
 import uuid
+from os import getenv
 
 import nextcord
 from google.cloud import dialogflow
@@ -10,14 +10,17 @@ from google.oauth2 import service_account
 from .. import config
 from ..libraries import common
 
-
-if os.environ.get("DIALOGFLOW_AUTH"):
-    DIALOGFLOW_AUTH = json.loads(os.environ.get("DIALOGFLOW_AUTH"))
+if env_auth_str := getenv("DIALOGFLOW_AUTH"):
+    DIALOGFLOW_AUTH = json.loads(env_auth_str)
     session_client = dialogflow.SessionsClient(
         credentials=service_account.Credentials.from_service_account_info(DIALOGFLOW_AUTH)
     )
     DIALOGFLOW_PROJECT_ID = DIALOGFLOW_AUTH["project_id"]
     SESSION_LIFETIME = 10 * 60  # 10 minutes to avoid repeated false positives
+else:
+    DIALOGFLOW_AUTH = None
+    session_client = None
+    DIALOGFLOW_PROJECT_ID = None
 
 
 class DialogFlow(common.FredCog):
@@ -36,7 +39,7 @@ class DialogFlow(common.FredCog):
             # We're in a DM channel
             self.logger.info("Ignoring a message because it is in a DM channel", extra=common.message_info(message))
             return
-            self.logger.info("Ignoring a message because NLP is disabled", extra=common.message_info(message))
+        if not config.Misc.fetch("dialogflow_state") or DIALOGFLOW_AUTH is None:
             self.logger.info(
                 "Ignoring a message because NLP is disabled or not configured", extra=common.message_info(message)
             )

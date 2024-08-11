@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import io
 import json
@@ -6,11 +8,14 @@ import re
 import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
+from os.path import split
 from time import strptime
-from typing import AsyncIterator
+from typing import AsyncIterator, IO
+from urllib.parse import urlparse
 
 import nextcord
 from PIL import Image, ImageEnhance, UnidentifiedImageError
+from nextcord import Message
 from pytesseract import image_to_string, TesseractError
 
 from .. import config
@@ -50,7 +55,13 @@ class Crashes(FredCog):
         vanilla_info_search_area = filter(lambda l: re.match("^LogInit", l), lines)
 
         info = {}
-        patterns = self.vanilla_info_patterns[:]
+        patterns = self.vanilla_info_patterns[:]  # shallow copy
+        """
+        This godforsaken loop sequentially finds information, 
+        dropping patterns to look for as they are found (until it runs out of patterns).
+        The patterns have named regex captures which the rest of the code knows the names of.
+        - Borketh
+        """
         for line in vanilla_info_search_area:
             if not patterns:
                 break
@@ -185,7 +196,7 @@ class Crashes(FredCog):
             if latest_compatible_loader > strptime(mod["last_version_date"], "%Y-%m-%dT%H:%M:%S.%fZ")
         ]
 
-    async def process_file(self, file, extension) -> list[dict]():
+    async def process_file(self, file: IO, extension: str) -> list[dict]():
         self.logger.info(f"Processing {extension} file")
         match extension:
             case "":
@@ -326,7 +337,7 @@ class Crashes(FredCog):
     async def process_text(self, text: str) -> list[dict]:
         return [msg async for msg in self.mass_regex(text)]
 
-    async def process_message(self, message) -> bool:
+    async def process_message(self, message: Message) -> bool:
         self.bot.logger.info("Processing crashes")
         responses: list[dict] = []
         # attachments
@@ -343,9 +354,10 @@ class Crashes(FredCog):
                 self.logger.info("Couldn't acquire file from discord API")
                 try:
                     self.logger.info("Attempting to acquire linked file manually")
-                    url = cdn_link.group(1)
-                    name = url.split("/")[-1]
-                    async with self.bot.web_session.get(url) as response:
+                    att_url = cdn_link.group(1)
+                    url_path = urlparse(att_url).path
+                    _, name = split(url_path)
+                    async with self.bot.web_session.get(att_url) as response:
                         assert response.status == 200, f"the web request failed with status {response.status}"
                         file = io.BytesIO(await response.read())
                 except (AttributeError, AssertionError) as e:
@@ -381,10 +393,10 @@ class Crashes(FredCog):
             await self.bot.reply_to_msg(message, embed=createembed.crashes(responses))
         else:
             for response in responses:
-                attachment = response.get("attachment")
-                if attachment is not None:
-                    async with self.bot.web_session.get(attachment) as resp:
+                att_url: str = response.get("attachment")
+                if att_url is not None:
+                    async with self.bot.web_session.get(att_url) as resp:
                         buff = io.BytesIO(await resp.read())
-                        attachment = nextcord.File(filename=attachment.split("/")[-1], fp=buff)
+                        attachment = nextcord.File(filename=att_url.split("/")[-1], fp=buff)
                 await self.bot.reply_to_msg(message, response["value"], file=attachment, propagate_reply=False)
         return len(responses) > 0

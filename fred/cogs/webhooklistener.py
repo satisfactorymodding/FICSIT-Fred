@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import socket
@@ -5,8 +7,13 @@ import sys
 import threading
 import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from os import getenv
+from typing import TYPE_CHECKING
 
 from fred.libraries import common
+
+if TYPE_CHECKING:
+    from fred.fred import Bot
 
 logger = common.new_logger(__name__)
 
@@ -29,12 +36,11 @@ class Githook(common.FredCog):
 
         # Run GitHub webhook handling server
         try:
-            botargs = [bot, bot]
-            daemon = threading.Thread(target=runServer, args=botargs)
+            daemon = threading.Thread(target=runServer, args=[self.bot, self.bot])
             daemon.daemon = True
             daemon.start()
-        except Exception:
-            type, value, tb = sys.exc_info()
+        except Exception:  # noqa
+            exc_type, value, tb = sys.exc_info()
             tbs = "".join(traceback.format_tb(tb))
             self.logger.error(f"Failed to run the webserver:\n{tbs}")
 
@@ -47,7 +53,7 @@ CONTENT_LEN = "content-length"
 EVENT_TYPE = "x-github-event"
 
 
-def MakeGithookHandler(bot):
+def MakeGithookHandler(bot: Bot):
     class MyGithookHandler(BaseHTTPRequestHandler):
         def respond(self, code: int, message: str | None = None):
             self.send_response(code, message)

@@ -1,9 +1,8 @@
 import asyncio
-import logging
-import os
 import sys
 import time
 import traceback
+from os import getenv
 
 import aiohttp
 import nextcord
@@ -48,7 +47,7 @@ class Bot(commands.Bot):
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
-            self.web_session = session
+            self.web_session = session  # noqa
             return await super().start(*args, **kwargs)
 
     @staticmethod
@@ -67,11 +66,11 @@ class Bot(commands.Bot):
 
     def setup_DB(self):
         self.logger.info("Connecting to the database")
-        user = os.environ.get("FRED_SQL_USER")
-        password = os.environ.get("FRED_SQL_PASSWORD")
-        host = os.environ.get("FRED_SQL_HOST")
-        port = os.environ.get("FRED_SQL_PORT")
-        dbname = os.environ.get("FRED_SQL_DB")
+        user = getenv("FRED_SQL_USER")
+        password = getenv("FRED_SQL_PASSWORD")
+        host = getenv("FRED_SQL_HOST")
+        port = getenv("FRED_SQL_PORT")
+        dbname = getenv("FRED_SQL_DB")
         uri = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
         attempt = 1
         while attempt < 6:
@@ -101,8 +100,20 @@ class Bot(commands.Bot):
 
         self.logger.info("Successfully set up cogs")
 
+    @property
+    def MediaOnly(self) -> mediaonly.MediaOnly:
+        return self.get_cog("MediaOnly")  # noqa
+
+    @property
+    def Crashes(self) -> crashes.Crashes:
+        return self.get_cog("Crashes")  # noqa
+
+    @property
+    def DialogFlow(self) -> dialogflow.DialogFlow:
+        return self.get_cog("DialogFlow")  # noqa
+
     async def on_error(self, event, *args, **kwargs):
-        type, value, tb = sys.exc_info()
+        exc_type, value, tb = sys.exc_info()
         if event == "on_message":
             channel: nextcord.TextChannel | nextcord.DMChannel = args[0].channel
             if isinstance(channel, nextcord.DMChannel):
@@ -113,7 +124,7 @@ class Bot(commands.Bot):
             channel_str = ""
 
         fred_str = f"Fred v{self.version}"
-        error_meta = f"{type.__name__} exception handled in `{event}` {channel_str}"
+        error_meta = f"{exc_type.__name__} exception handled in `{event}` {channel_str}"
         full_error = f"\n{value}\n\n{''.join(traceback.format_tb(tb))}"
         self.logger.error(f"{fred_str}\n{error_meta}\n{full_error}")
 
@@ -135,7 +146,7 @@ class Bot(commands.Bot):
 
     async def send_DM(
         self,
-        user: nextcord.User,
+        user: nextcord.User | nextcord.Member,
         content: str = None,
         embed: nextcord.Embed = None,
         user_meta: config.Users = None,
@@ -168,7 +179,7 @@ class Bot(commands.Bot):
                 content = None
             await user.dm_channel.send(content=content, embed=embed, **kwargs)
             return True
-        except Exception:
+        except Exception:  # noqa
             self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
         return False
 

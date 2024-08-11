@@ -4,7 +4,7 @@ import logging
 import math
 from datetime import *
 
-import nextcord.ext.commands as commands
+from nextcord import DMChannel, Message, Guild
 from nextcord.ext.commands import MemberNotFound
 
 from .. import config
@@ -14,11 +14,9 @@ logger = common.new_logger(__name__)
 
 
 class UserProfile:
-    def __init__(self, user_id, guild, bot):
+    def __init__(self, user_id: int, guild: Guild):
         self.guild = guild
-        self.bot = bot
         self.user_id = user_id
-        self.logger = logging.Logger("USERPROFILE")
 
         self.member = guild.get_member(user_id)
         if self.member is None:
@@ -32,8 +30,13 @@ class UserProfile:
         else:
             self.DB_user = config.Users(user_id=user_id)
 
-        self.rank = self.DB_user.rank
-        self.xp_count = self.DB_user.xp_count
+    @property
+    def rank(self):
+        return self.DB_user.rank
+
+    @property
+    def xp_count(self):
+        return self.DB_user.xp_count
 
     async def validate_role(self):
         if not self.member:
@@ -87,12 +90,12 @@ class UserProfile:
             self.DB_user.rank = expected_level
             if self.DB_user.accepts_dms:
                 if expected_level > self.rank:
-                    await self.bot.send_DM(
+                    await Levelling.bot.send_DM(
                         self.member,
                         f"You went up from level {self.rank} to level {expected_level}! " f"Congratulations!",
                     )
                 else:
-                    await self.bot.send_DM(
+                    await Levelling.bot.send_DM(
                         self.member,
                         f"You went down from level {self.rank} to level {expected_level}... " f"Sorry about that",
                     )
@@ -112,7 +115,6 @@ class UserProfile:
         logpayload["xp_gain"] = xp
         logger.info("Giving someone xp", logpayload)
         self.DB_user.xp_count += xp
-        self.xp_count += xp
         await self.validate_level()
         return True
 
@@ -124,7 +126,6 @@ class UserProfile:
         logpayload["xp_loss"] = xp
         logger.info("Taking xp from someone", logpayload)
         self.DB_user.xp_count -= xp
-        self.xp_count -= xp
         await self.validate_level()
         return True
 
@@ -133,7 +134,6 @@ class UserProfile:
         logpayload["new_xp"] = xp
         logger.info("Setting someone's xp", logpayload)
         self.DB_user.xp_count = xp
-        self.xp_count = xp
         await self.validate_level()
         return True
 
@@ -151,8 +151,8 @@ class Levelling(common.FredCog):
     #     if before.roles != after.roles:
     #         config.XpRoles
 
-    @commands.Cog.listener()
     @common.FredCog.listener()
+    async def on_message(self, message: Message):
         self.logger.info("Levelling: Processing message", extra=common.message_info(message))
         if (
             message.author.bot
@@ -162,7 +162,7 @@ class Levelling(common.FredCog):
         ):
             return
 
-        profile = UserProfile(message.author.id, message.guild, self.bot)
+        profile = UserProfile(message.author.id, message.guild)
         profile.DB_user.message_count += 1
         if profile.user_id in self.xp_timers:
             if datetime.now() >= self.xp_timers[profile.user_id]:

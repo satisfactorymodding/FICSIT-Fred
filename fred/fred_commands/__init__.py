@@ -1,21 +1,20 @@
 from __future__ import annotations
 
-import logging
-
 import asyncio
 import inspect
 import io
+import logging
 import re
 
 import nextcord
-from nextcord.ext.commands.view import StringView
 from algoliasearch.search_client import SearchClient
+from nextcord.ext.commands.view import StringView
 
 from ._baseclass import BaseCmds, common, config, commands
 from .bot_meta import BotCmds
 from .channels import ChannelCmds
-from .dbcommands import CommandCmds
 from .crashes import CrashCmds
+from .dbcommands import CommandCmds
 from .dialogflow import DialogflowCmds
 from .experience import EXPCmds
 from .help import HelpCmds, FredHelpEmbed
