@@ -4,7 +4,6 @@ import asyncio
 import io
 import json
 import logging
-import re
 import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
@@ -14,6 +13,7 @@ from typing import AsyncIterator, IO
 from urllib.parse import urlparse
 
 import nextcord
+import regex
 from PIL import Image, ImageEnhance, UnidentifiedImageError
 from nextcord import Message
 from pytesseract import image_to_string, TesseractError
@@ -22,12 +22,12 @@ from .. import config
 from ..libraries import createembed
 from ..libraries.common import FredCog
 
-REGEX_LIMIT: float = 2
+REGEX_LIMIT: float = 6.9
 
 
-async def regex_with_timeout(*args, **kwargs):
+def regex_with_timeout(*args, **kwargs):
     try:
-        return await asyncio.wait_for(asyncio.to_thread(re.search, *args, **kwargs), REGEX_LIMIT)
+        return asyncio.wait_for(asyncio.to_thread(regex.search, *args, **kwargs), REGEX_LIMIT)
     except asyncio.TimeoutError:
         raise TimeoutError(
             f"A regex timed out after {REGEX_LIMIT} seconds! \n"
@@ -39,10 +39,10 @@ async def regex_with_timeout(*args, **kwargs):
 
 class Crashes(FredCog):
     vanilla_info_patterns = [
-        re.compile(r"Net CL: (?P<game_version>\d+)"),
-        re.compile(r"Command Line: (?P<cli>.*)"),
-        re.compile(r"Base Directory: (?P<path>.+)"),
-        re.compile(r"Launcher ID: (?P<launcher>\w+)"),
+        regex.compile(r"Net CL: (?P<game_version>\d+)"),
+        regex.compile(r"Command Line: (?P<cli>.*)"),
+        regex.compile(r"Base Directory: (?P<path>.+)"),
+        regex.compile(r"Launcher ID: (?P<launcher>\w+)"),
     ]
 
     @staticmethod
@@ -52,7 +52,7 @@ class Crashes(FredCog):
     async def parse_factory_game_log(self, text: str) -> dict[str, str | int]:
         self.logger.info("Extracting game info")
         lines = text.splitlines()
-        vanilla_info_search_area = filter(lambda l: re.match("^LogInit", l), lines)
+        vanilla_info_search_area = filter(lambda l: regex.match("^LogInit", l), lines)
 
         info = {}
         patterns = self.vanilla_info_patterns[:]  # shallow copy
@@ -71,7 +71,7 @@ class Crashes(FredCog):
         else:
             self.logger.info("Didn't find all four pieces of information normally found in a log")
 
-        mod_loader_logs = filter(lambda l: re.match("LogSatisfactoryModLoader", l), lines)
+        mod_loader_logs = filter(lambda l: regex.match("LogSatisfactoryModLoader", l), lines)
         for line in mod_loader_logs:
             if match := await regex_with_timeout(r"(?<=v\.)(?P<sml>[\d.]+)", line):
                 info |= match.groupdict()
@@ -309,8 +309,15 @@ class Crashes(FredCog):
                     return []
 
     async def mass_regex(self, text: str) -> AsyncIterator[dict]:
-        for crash in config.Crashes.fetch_all():
-            if match := await regex_with_timeout(crash["crash"], text, flags=re.IGNORECASE):
+
+        async def silly_async_gen():
+            nonlocal text
+            all_crashes = config.Crashes.fetch_all()
+            for crash_ in all_crashes:
+                yield crash_, regex_with_timeout(crash_["crash"], text, flags=regex.IGNORECASE)
+
+        async for crash, queued_regex in silly_async_gen():
+            if match := await queued_regex:
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
                         command_response = command["content"]
@@ -323,7 +330,7 @@ class Crashes(FredCog):
                             inline=True,
                         )
                 else:
-                    response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
+                    response = regex.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
                     yield dict(name=crash["name"], value=response, inline=True)
 
     async def complex_responses(self, log_details: dict):
@@ -341,7 +348,7 @@ class Crashes(FredCog):
         self.bot.logger.info("Processing crashes")
         responses: list[dict] = []
         # attachments
-        cdn_link = re.search(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
+        cdn_link = regex.search(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
         if cdn_link or message.attachments:
             self.logger.info("Found file in message")
 
@@ -377,8 +384,8 @@ class Crashes(FredCog):
             file.close()
 
         # Pastebin links
-        elif match := re.search(r"(https://pastebin.com/\S+)", message.content):
-            url = re.sub(r"(?<=bin.com)/", "/raw/", match.group(1))
+        elif match := regex.search(r"(https://pastebin.com/\S+)", message.content):
+            url = regex.sub(r"(?<=bin.com)/", "/raw/", match.group(1))
             async with self.bot.web_session.get(url) as response:
                 text: str = await response.text()
 
@@ -398,5 +405,7 @@ class Crashes(FredCog):
                     async with self.bot.web_session.get(att_url) as resp:
                         buff = io.BytesIO(await resp.read())
                         attachment = nextcord.File(filename=att_url.split("/")[-1], fp=buff)
+                else:
+                    attachment = None
                 await self.bot.reply_to_msg(message, response["value"], file=attachment, propagate_reply=False)
         return len(responses) > 0
