@@ -1,15 +1,9 @@
-import logging
-
-import nextcord.ext.commands as commands
-
 from .. import config
 from ..libraries import common
+from ..libraries.common import FredCog
 
 
-class MediaOnly(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.logger = logging.Logger("MEDIA_ONLY")
+class MediaOnly(FredCog):
 
     async def process_message(self, message):
         self.logger.info("Processing a message", extra=common.message_info(message))

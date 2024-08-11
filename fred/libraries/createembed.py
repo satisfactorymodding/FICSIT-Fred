@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from io import BytesIO
 from urllib.parse import quote as url_safe
@@ -9,6 +8,8 @@ from nextcord.utils import format_dt
 
 from .. import config
 from ..libraries import common
+
+logger = common.new_logger(__name__)
 
 
 def timestamp(iso8601: str) -> str:
@@ -30,7 +31,7 @@ async def run(data: dict) -> nextcord.Embed | None:
         repo_name, repo_full_name = "", ""
 
     if (data_type := data.get("type")) is None:
-        logging.error("data didn't have a type field")
+        logger.error("data didn't have a type field")
         return
 
     match data_type:
@@ -47,7 +48,7 @@ async def run(data: dict) -> nextcord.Embed | None:
         case "issue":
             embed = issue(data)
         case _:
-            logging.warning("Unsupported GitHub payload", extra={"data": data})
+            logger.warning("Unsupported GitHub payload", extra={"data": data})
     return embed
 
 
@@ -360,7 +361,7 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
     # fmt: on
     result = await bot.repository_query(query)
     mods: list[dict] = result["data"]["getMods"]["mods"]
-    logging.debug(mods)
+    logger.debug(mods)
     if not mods:
         return None, None, None
 

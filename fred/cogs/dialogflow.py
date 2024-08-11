@@ -1,11 +1,9 @@
 import asyncio
 import json
 import logging
-import os
 import uuid
 
 import nextcord
-from nextcord.ext import commands
 from google.cloud import dialogflow
 from google.oauth2 import service_account
 
@@ -22,11 +20,10 @@ if os.environ.get("DIALOGFLOW_AUTH"):
     SESSION_LIFETIME = 10 * 60  # 10 minutes to avoid repeated false positives
 
 
-class DialogFlow(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+class DialogFlow(common.FredCog):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.session_ids = {}
-        self.logger = logging.Logger("DIALOGFLOW")
 
     async def process_message(self, message):
         self.bot.logger.info("Processing NLP")
@@ -39,8 +36,10 @@ class DialogFlow(commands.Cog):
             # We're in a DM channel
             self.logger.info("Ignoring a message because it is in a DM channel", extra=common.message_info(message))
             return
-        if not config.Misc.fetch("dialogflow_state"):
             self.logger.info("Ignoring a message because NLP is disabled", extra=common.message_info(message))
+            self.logger.info(
+                "Ignoring a message because NLP is disabled or not configured", extra=common.message_info(message)
+            )
             return
         if not config.Misc.fetch("dialogflow_debug_state"):
             self.logger.info("Checking someone's permissions", extra=common.user_info(message.author))
@@ -53,7 +52,7 @@ class DialogFlow(commands.Cog):
             for role in roles:
                 if role.id not in exception_roles:
                     self.logger.info(
-                        "Ignoring someone's message because they are authorised", extra=common.user_info(message.author)
+                        "Ignoring someone's message because they are exempt", extra=common.user_info(message.author)
                     )
                     return
 

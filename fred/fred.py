@@ -21,21 +21,21 @@ __version__ = "2.21.0"
 class Bot(commands.Bot):
     async def isAlive(self):
         try:
-            logging.info("getting from config")
+            self.logger.info("Healthcheck: Attempting DB fetch")
             _ = config.Misc.get(1)
-            logging.info("creating user fetch")
+            self.logger.info("Healthcheck: Creating user fetch")
             coro = self.fetch_user(227473074616795137)
-            logging.info("fetching user")
+            self.logger.info("Healthcheck: Executing user fetch")
             await asyncio.wait_for(coro, timeout=5)
         except Exception as e:
-            self.logger.error(f"Healthiness check failed: {e}")
+            self.logger.error(f"Healthcheck failed: {e}")
             return False
         return True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.isReady = False
-        self.setup_logger()
+        self.logger = common.new_logger(self.__class__.__name__)
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
@@ -58,7 +58,7 @@ class Bot(commands.Bot):
     async def on_ready(self):
         await self.change_presence(activity=nextcord.Game(f"v{self.version}"))
         self.isReady = True
-        logging.info(f"We have logged in as {self.user} with prefix {self.command_prefix}")
+        self.logger.info(f"We have logged in as {self.user} with prefix {self.command_prefix}")
 
     @staticmethod
     async def on_reaction_add(reaction: nextcord.Reaction, user: nextcord.User) -> None:
@@ -85,19 +85,12 @@ class Bot(commands.Bot):
                 time.sleep(5)
         else:  # this happens if the loop is not broken by a successful connection
             raise ConnectionError("Could not connect to the DB")
+        self.logger.info(f"Connected to the DB. Took {attempt} tries.")
         config.migrate()
-
-    def setup_logger(self):
-        logging.root = logging.Logger("FRED")
-        logging.root.setLevel(logging.DEBUG)
-
-        self.logger = logging.root
-
-        self.logger.info("Successfully set up the logger")
-        self.logger.info(f"Prefix: {self.command_prefix}")
+        self.logger.debug("Applied migration.")
 
     def setup_cogs(self):
-        logging.info("Setting up cogs")
+        self.logger.info("Setting up cogs")
         self.add_cog(Commands(self))
         self.add_cog(webhooklistener.Githook(self))
         self.add_cog(mediaonly.MediaOnly(self))
@@ -105,10 +98,8 @@ class Bot(commands.Bot):
         self.add_cog(dialogflow.DialogFlow(self))
         self.add_cog(welcome.Welcome(self))
         self.add_cog(levelling.Levelling(self))
-        self.MediaOnly = self.get_cog("MediaOnly")
-        self.Crashes = self.get_cog("Crashes")
-        self.DialogFlow = self.get_cog("DialogFlow")
-        logging.info("Successfully set up cogs")
+
+        self.logger.info("Successfully set up cogs")
 
     async def on_error(self, event, *args, **kwargs):
         type, value, tb = sys.exc_info()
@@ -124,7 +115,7 @@ class Bot(commands.Bot):
         fred_str = f"Fred v{self.version}"
         error_meta = f"{type.__name__} exception handled in `{event}` {channel_str}"
         full_error = f"\n{value}\n\n{''.join(traceback.format_tb(tb))}"
-        logging.error(f"{fred_str}\n{error_meta}\n{full_error}")
+        self.logger.error(f"{fred_str}\n{error_meta}\n{full_error}")
 
         # error_embed = nextcord.Embed(colour=nextcord.Colour.red(), title=error_meta, description=full_error)
         # error_embed.set_author(name=fred_str)

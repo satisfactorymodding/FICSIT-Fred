@@ -10,12 +10,12 @@ from time import strptime
 from typing import AsyncIterator
 
 import nextcord
-import nextcord.ext.commands as commands
 from PIL import Image, ImageEnhance, UnidentifiedImageError
 from pytesseract import image_to_string, TesseractError
 
 from .. import config
 from ..libraries import createembed
+from ..libraries.common import FredCog
 
 REGEX_LIMIT: float = 2
 
@@ -32,17 +32,13 @@ async def regex_with_timeout(*args, **kwargs):
         )
 
 
-class Crashes(commands.Cog):
+class Crashes(FredCog):
     vanilla_info_patterns = [
         re.compile(r"Net CL: (?P<game_version>\d+)"),
         re.compile(r"Command Line: (?P<cli>.*)"),
         re.compile(r"Base Directory: (?P<path>.+)"),
         re.compile(r"Launcher ID: (?P<launcher>\w+)"),
     ]
-
-    def __init__(self, bot):
-        self.bot = bot
-        self.logger = logging.Logger("CRASH_PARSING")
 
     @staticmethod
     def filter_epic_commandline(cli: str) -> str:

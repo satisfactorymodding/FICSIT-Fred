@@ -1,8 +1,14 @@
+import logging
 from os import getenv
 
 from dotenv import load_dotenv
 
-from .fred import __version__
+logging.root = logging.getLogger("FRED")
+logging.basicConfig(level=getenv("FRED_LOG_LEVEL", logging.DEBUG))
+
+from .fred import __version__  # noqa
+
+logging.root.debug(f"HELLO WORLD!!! FRED version: {__version__}")
 
 ENVVARS = (
     "FRED_IP",

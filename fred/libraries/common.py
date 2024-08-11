@@ -1,13 +1,36 @@
+from __future__ import annotations
+
 import logging
 import re
 from functools import lru_cache
+from typing import TYPE_CHECKING, Optional
 
 from nextcord import User, Message, Member
 from nextcord.ext.commands import Context
 
 from .. import config
 
-logger = logging.Logger("PERMISSIONS")
+if TYPE_CHECKING:
+    from ..fred import Bot
+
+
+def new_logger(name: str) -> logging.Logger:
+    logging.root.debug("Creating new logger for %s", name)
+    new_logger_ = logging.root.getChild(name)
+    new_logger_.setLevel(new_logger_.parent.level)
+    return new_logger_
+
+
+logger = new_logger(__name__)
+
+
+class FredCog(commands.Cog):
+    bot: Bot  # we can assume any cog will have a bot by the time it needs to be accessed
+
+    def __init__(self, bot: Bot):
+        self.bot = bot
+        self.logger = new_logger(self.__class__.__name__)
+        self.logger.debug("Cog loaded.")
 
 
 def is_bot_author(user_id: int) -> bool:
@@ -39,6 +62,9 @@ def permission_check(ctx: Context, level: int) -> bool:
 
     if (main_guild_member := main_guild.get_member(ctx.author.id)) is None:
         logger.warning("Checked permissions for someone but they weren't in the main guild", extra=logpayload)
+        logger.warning(
+            "Checked permissions for someone but they weren't in the main guild", extra=user_info(ctx.author)
+        )
         return False
 
     user_roles = [role.id for role in main_guild_member.roles]

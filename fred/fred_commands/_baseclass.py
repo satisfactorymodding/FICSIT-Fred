@@ -1,25 +1,12 @@
-from __future__ import annotations
-
-import logging
-from typing import TYPE_CHECKING
-
 from nextcord.ext import commands
 
 from .. import config
-
-if TYPE_CHECKING:
-    from ..fred import Bot
 from ..libraries import common
 
 assert config  # noqa
 
 
-class BaseCmds(commands.Cog):
-
-    logger = logging.Logger("COMMANDS")
-
-    def __init__(self, bot: Bot):
-        self.bot: Bot = bot
+class BaseCmds(common.FredCog):
 
     @commands.group()
     @commands.check(common.l4_only)

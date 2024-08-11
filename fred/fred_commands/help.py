@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-import logging
+import re
 from functools import lru_cache
 from typing import Coroutine
 
 import attrs
 import nextcord
-import re
 
 from ._baseclass import BaseCmds, commands, config
+from ..libraries import common
+
+logger = common.new_logger(__name__)
 
 
 class HelpCmds(BaseCmds):
@@ -121,7 +123,6 @@ class FredHelpEmbed(nextcord.Embed):
     # these are placeholder values only, they will be set up when setup() is called post-DB connection
     help_colour: int = 0
     prefix: str = ">"
-    logger = logging.Logger("HELP-EMBEDS")
 
     def __init__(
         self: FredHelpEmbed, name: str, desc: str, /, usage: str = "", fields: list[dict] = (), **kwargs
@@ -230,7 +231,7 @@ class FredHelpEmbed(nextcord.Embed):
             "in a message, pastebin, debug file, or screenshot.*\n"
         )
         all_crashes = list(config.Crashes.selectBy())
-        cls.logger.info(f"Fetched {len(all_crashes)} crashes from database.")
+        logger.info(f"Fetched {len(all_crashes)} crashes from database.")
 
         global page_size, field_size
         # splits all crashes into groups of {page_size}
@@ -278,7 +279,7 @@ class FredHelpEmbed(nextcord.Embed):
         desc = "*These are normal commands that can be called by stating their name.*\n"
 
         all_commands = list(config.Commands.selectBy())
-        cls.logger.info(f"Fetched {len(all_commands)} commands from database.")
+        logger.info(f"Fetched {len(all_commands)} commands from database.")
         global page_size, field_size
         # splits all commands into groups of {page_size}
         pages = [all_commands[page : page + page_size] for page in range(0, len(all_commands), page_size)]
