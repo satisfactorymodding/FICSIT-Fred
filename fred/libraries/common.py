@@ -50,7 +50,12 @@ async def mod_only(ctx: Context) -> bool:
 
 
 @singledispatch
-def permission_check(ctx: Context, *, level: int) -> bool:
+def permission_check(_, *, level: int) -> bool:
+    pass
+
+
+@permission_check.register
+def _permission_check_ctx(ctx: Context, *, level: int) -> bool:
     main_guild_id = config.Misc.fetch("main_guild_id")
     main_guild = ctx.bot.get_guild(main_guild_id)
 
@@ -63,11 +68,11 @@ def permission_check(ctx: Context, *, level: int) -> bool:
         )
         return False
 
-    return permission_check(main_guild_member, level=level)
+    return _permission_check_member(main_guild_member, level=level)
 
 
 @permission_check.register
-def permission_check(member: Member, *, level: int) -> bool:
+def _permission_check_member(member: Member, *, level: int) -> bool:
     """Checks permissions for a member assuming they are in the main guild."""
     logpayload = user_info(member)
     logpayload["level"] = level
