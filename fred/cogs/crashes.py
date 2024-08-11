@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import io
 import json
-import logging
 import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
@@ -26,15 +25,7 @@ REGEX_LIMIT: float = 6.9
 
 
 def regex_with_timeout(*args, **kwargs):
-    try:
-        return asyncio.wait_for(asyncio.to_thread(regex.search, *args, **kwargs), REGEX_LIMIT)
-    except asyncio.TimeoutError:
-        raise TimeoutError(
-            f"A regex timed out after {REGEX_LIMIT} seconds! \n"
-            f"pattern: ({args[0]}) \n"
-            f"flags: {kwargs['flags']} \n"
-            f"on text of length {len(args[1])}"
-        )
+    return asyncio.wait_for(asyncio.to_thread(regex.search, *args, **kwargs), REGEX_LIMIT)
 
 
 class Crashes(FredCog):
@@ -65,7 +56,7 @@ class Crashes(FredCog):
         for line in vanilla_info_search_area:
             if not patterns:
                 break
-            elif match := await regex_with_timeout(patterns[0], line):
+            elif match := regex.search(patterns[0], line):
                 info |= match.groupdict()
                 patterns.pop(0)
         else:
@@ -73,7 +64,7 @@ class Crashes(FredCog):
 
         mod_loader_logs = filter(lambda l: regex.match("LogSatisfactoryModLoader", l), lines)
         for line in mod_loader_logs:
-            if match := await regex_with_timeout(r"(?<=v\.)(?P<sml>[\d.]+)", line):
+            if match := regex.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):
                 info |= match.groupdict()
                 break
 
@@ -316,8 +307,14 @@ class Crashes(FredCog):
             for crash_ in all_crashes:
                 yield crash_, regex_with_timeout(crash_["crash"], text, flags=regex.IGNORECASE)
 
+        async def patience(coro):
+            try:
+                return await coro
+            except asyncio.TimeoutError:
+                self.logger.warning("Regex timed out")
+
         async for crash, queued_regex in silly_async_gen():
-            if match := await queued_regex:
+            if match := await patience(queued_regex):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
                         command_response = command["content"]
