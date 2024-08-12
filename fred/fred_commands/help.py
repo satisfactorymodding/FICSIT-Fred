@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import re
+import regex
 from functools import lru_cache
 from typing import Coroutine
 
@@ -128,9 +128,9 @@ class FredHelpEmbed(nextcord.Embed):
         self: FredHelpEmbed, name: str, desc: str, /, usage: str = "", fields: list[dict] = (), **kwargs
     ) -> None:
 
-        desc = re.sub(r"^\s*(\S.*)$", r"\1", desc, flags=re.MULTILINE)
-        desc = re.sub(r"(?<=Usage: )`(.+)`", rf"`{self.prefix}\1`", desc)
-        desc = re.sub(r"^(\w+:) ", r"**\1** ", desc, flags=re.MULTILINE)
+        desc = regex.sub(r"^\s*(\S.*)$", r"\1", desc, flags=regex.MULTILINE)
+        desc = regex.sub(r"(?<=Usage: )`(.+)`", rf"`{self.prefix}\1`", desc)
+        desc = regex.sub(r"^(\w+:) ", r"**\1** ", desc, flags=regex.MULTILINE)
         super().__init__(title=f"**{name}**", colour=self.help_colour, description=desc, **kwargs)
         for f in fields:
             self.add_field(**f)

@@ -30,13 +30,26 @@ class UserProfile:
         else:
             self.DB_user = config.Users(user_id=user_id)
 
+        self._rank: int = DB_user.rank
+        self._xp_count: int = DB_user.xp_count
+
     @property
     def rank(self):
-        return self.DB_user.rank
+        return self._rank
+
+    @rank.setter
+    def rank(self, value: int):
+        self._rank = value
+        self.DB_user.rank = value
 
     @property
     def xp_count(self):
-        return self.DB_user.xp_count
+        return self._xp_count
+
+    @xp_count.setter
+    def xp_count(self, value: int):
+        self._xp_count = value
+        self.DB_user.xp_count = value
 
     async def validate_role(self):
         if not self.member:
@@ -59,7 +72,7 @@ class UserProfile:
             # if not self.guild.get_channel(config.Misc.fetch("mod_channel")).permissions_for(self.member).send_messages:
             if not common.permission_check(self.member, level=6):
                 for member_role in self.member.roles:
-                    if rank := config.RankRoles.fetch_by_role(member_role.id):
+                    if config.RankRoles.fetch_by_role(member_role.id) is not None:  # i.e. member_role is a rank role
                         logpayload["role_id"] = member_role.id
                         logger.info("Removing a mismatched level role from someone", extra=logpayload)
                         await self.member.remove_roles(member_role)
@@ -87,7 +100,6 @@ class UserProfile:
         logpayload["current_level"] = self.rank
         if expected_level != self.rank:
             logger.info("Correcting a mismatched level", extra=logpayload)
-            self.DB_user.rank = expected_level
             if self.DB_user.accepts_dms:
                 if expected_level > self.rank:
                     await Levelling.bot.send_DM(
@@ -99,6 +111,7 @@ class UserProfile:
                         self.member,
                         f"You went down from level {self.rank} to level {expected_level}... " f"Sorry about that",
                     )
+            self.rank = expected_level
         await self.validate_role()
 
     async def increment_xp(self):
@@ -114,18 +127,18 @@ class UserProfile:
         logpayload = common.user_info(self.member)
         logpayload["xp_gain"] = xp
         logger.info("Giving someone xp", logpayload)
-        self.DB_user.xp_count += xp
+        self.xp_count += xp
         await self.validate_level()
         return True
 
     async def take_xp(self, xp):
-        if xp > self.DB_user.xp_count:
+        if xp > self.xp_count:
             return False  # can't take more than a user has
 
         logpayload = common.user_info(self.member)
         logpayload["xp_loss"] = xp
         logger.info("Taking xp from someone", logpayload)
-        self.DB_user.xp_count -= xp
+        self.xp_count -= xp
         await self.validate_level()
         return True
 
@@ -133,7 +146,7 @@ class UserProfile:
         logpayload = common.user_info(self.member)
         logpayload["new_xp"] = xp
         logger.info("Setting someone's xp", logpayload)
-        self.DB_user.xp_count = xp
+        self.xp_count = xp
         await self.validate_level()
         return True
 
