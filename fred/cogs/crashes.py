@@ -24,8 +24,16 @@ from ..libraries.common import FredCog
 REGEX_LIMIT: float = 6.9
 
 
-def regex_with_timeout(*args, **kwargs):
-    return asyncio.wait_for(asyncio.to_thread(regex.search, *args, **kwargs), REGEX_LIMIT)
+async def regex_with_timeout(*args, **kwargs):
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(regex.search, *args, **kwargs), REGEX_LIMIT)
+    except asyncio.TimeoutError:
+        raise TimeoutError(
+            f"A regex timed out after {REGEX_LIMIT} seconds! \n"
+            f"pattern: ({args[0]}) \n"
+            f"flags: {kwargs['flags']} \n"
+            f"on text of length {len(args[1])}"
+        )
 
 
 class Crashes(FredCog):
@@ -56,7 +64,7 @@ class Crashes(FredCog):
         for line in vanilla_info_search_area:
             if not patterns:
                 break
-            elif match := regex.search(patterns[0], line):
+            elif match := await regex_with_timeout(patterns[0], line):
                 info |= match.groupdict()
                 patterns.pop(0)
         else:
@@ -64,7 +72,7 @@ class Crashes(FredCog):
 
         mod_loader_logs = filter(lambda l: regex.match("LogSatisfactoryModLoader", l), lines)
         for line in mod_loader_logs:
-            if match := regex.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):
+            if match := await regex_with_timeout(r"(?<=v\.)(?P<sml>[\d.]+)", line):
                 info |= match.groupdict()
                 break
 
@@ -189,6 +197,7 @@ class Crashes(FredCog):
 
     async def process_file(self, file: IO, extension: str) -> list[dict]():
         self.logger.info(f"Processing {extension} file")
+
         match extension:
             case "":
                 return []
@@ -209,7 +218,8 @@ class Crashes(FredCog):
                                 return messages + [
                                     dict(
                                         name="Bad Zip File!",
-                                        value="This zipfile is invalid! Its contents may have been changed after zipping.",
+                                        value="This zipfile is invalid! "
+                                        "Its contents may have been changed after zipping.",
                                         inline=False,
                                     )
                                 ]
@@ -300,21 +310,8 @@ class Crashes(FredCog):
                     return []
 
     async def mass_regex(self, text: str) -> AsyncIterator[dict]:
-
-        async def silly_async_gen():
-            nonlocal text
-            all_crashes = config.Crashes.fetch_all()
-            for crash_ in all_crashes:
-                yield crash_, regex_with_timeout(crash_["crash"], text, flags=regex.IGNORECASE)
-
-        async def patience(coro):
-            try:
-                return await coro
-            except asyncio.TimeoutError:
-                self.logger.warning("Regex timed out")
-
-        async for crash, queued_regex in silly_async_gen():
-            if match := await patience(queued_regex):
+        for crash in config.Crashes.fetch_all():
+            if match := await regex_with_timeout(crash["crash"], text, flags=regex.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
                         command_response = command["content"]
