@@ -1,5 +1,7 @@
 import json
 
+from nextcord import Role
+
 from ._baseclass import BaseCmds, commands, config
 
 
@@ -59,9 +61,10 @@ class DialogflowCmds(BaseCmds):
     async def add_dialogflow_role(self, ctx: commands.Context, role: commands.RoleConverter):
         """Usage: `add dialogflowRole (role)`
         Purpose: Adds role to the list of roles that natural language processing is not applied to"""
+        role: Role
         role_id = role.id
 
-        if config.DialogflowExceptionRoles.fetch(role_id):
+        if config.DialogflowExceptionRoles.check(role_id):
             await self.bot.reply_to_msg(ctx.message, "This role is already a dialogflow exception role")
             return
 
@@ -72,9 +75,10 @@ class DialogflowCmds(BaseCmds):
     async def remove_dialogflow_role(self, ctx: commands.Context, role: commands.RoleConverter):
         """Usage: `remove dialogflowRole (role)`
         Purpose: Removes role from the list of roles that natural language processing is not applied to"""
+        role: Role
         role_id = role.id
 
-        if config.DialogflowExceptionRoles.fetch(role_id):
+        if config.DialogflowExceptionRoles.check(role_id):
             config.DialogflowExceptionRoles.deleteBy(role_id=role_id)
             await self.bot.reply_to_msg(ctx.message, "Dialogflow role removed!")
         else:

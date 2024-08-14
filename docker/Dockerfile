@@ -1,26 +1,31 @@
-FROM python:3.10-slim as runtime
+FROM python:3.12-alpine AS runtime
+#FROM python:3.12-slim AS runtime
 
-ENV DEBIAN_FRONTEND=noninteractive
 VOLUME /config
 WORKDIR /app
 
-COPY docker/runtime-deps.sh .
-RUN bash runtime-deps.sh 1> /dev/null && rm runtime-deps.sh
+RUN apk update; apk add --no-cache tesseract-ocr-data-eng
+#ENV DEBIAN_FRONTEND=noninteractive APT="apt-get -qq"
+#RUN $APT update;  \
+#    $APT install tesseract-ocr;  \
+#    $APT clean; \
+#    rm -rf /var/lib/apt/lists/*
 
-FROM python:3.10-slim as build
+FROM python:3.12-alpine AS build
+#FROM python:3.12-slim AS build
 
-WORKDIR /app
+WORKDIR /deps
 
-RUN apt-get -qq update && apt-get -qq install curl libpq-dev gcc 1> /dev/null
-
-RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local python3 -
+RUN pip --no-cache-dir install --progress-bar=off "poetry==1.8"
 
 COPY pyproject.toml .
-RUN poetry install -nvvv --no-dev && mv $(poetry env info --path) /app/venv
+COPY poetry.lock .
+RUN poetry install -nvvv --only main --no-root; mv $(poetry env info --path) ./venv
 
 FROM runtime
 
-COPY --from=build /app/venv /app/venv
-COPY fred *.env ./fred/
+COPY --from=build /deps/venv ./venv
+COPY fred ./fred/
+COPY *.env .
 
 CMD ./venv/bin/python3 -m fred

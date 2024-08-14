@@ -1,5 +1,4 @@
 from typing import Type
-import logging
 
 from regex import E, match, escape
 

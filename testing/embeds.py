@@ -6,7 +6,7 @@ from os.path import abspath
 import sys
 
 sys.path.insert(0, abspath("./bot"))
-from libraries.createembed import run
+from fred.libraries.createembed import run
 from asyncio import run as nonawait
 from json import load
 from os import getenv

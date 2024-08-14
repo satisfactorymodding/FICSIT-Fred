@@ -1,15 +1,9 @@
-import logging
-
-import nextcord.ext.commands as commands
-
-from ..libraries import common
 from .. import config
+from ..libraries import common
+from ..libraries.common import FredCog
 
 
-class MediaOnly(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.logger = logging.Logger("MEDIA_ONLY")
+class MediaOnly(FredCog):
 
     async def process_message(self, message):
         self.logger.info("Processing a message", extra=common.message_info(message))
@@ -20,7 +14,7 @@ class MediaOnly(commands.Cog):
         if await common.l4_only(ctx):
             self.logger.info("Message doesn't contain media but the author is a T3", extra=common.message_info(message))
             return False
-        if config.MediaOnlyChannels.fetch(message.channel.id):
+        if config.MediaOnlyChannels.check(message.channel.id):
             self.logger.info("Removing a message", extra=common.message_info(message))
             await message.delete()
             await self.bot.send_DM(

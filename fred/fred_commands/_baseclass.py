@@ -1,18 +1,12 @@
-import logging
-
 from nextcord.ext import commands
+
 from .. import config
 from ..libraries import common
 
-assert config  # shut up linter, things that import this need this for convenience
+assert config  # noqa
 
 
-class BaseCmds(commands.Cog):
-
-    logger = logging.Logger("COMMANDS")
-
-    def __init__(self, bot):
-        self.bot = bot
+class BaseCmds(common.FredCog):
 
     @commands.group()
     @commands.check(common.l4_only)

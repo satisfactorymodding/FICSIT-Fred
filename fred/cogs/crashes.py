@@ -1,28 +1,32 @@
+from __future__ import annotations
+
 import asyncio
 import io
 import json
-import logging
-import re
 import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
+from os.path import split
 from time import strptime
-from typing import AsyncIterator
+from typing import AsyncIterator, IO
+from urllib.parse import urlparse
 
 import nextcord
-import nextcord.ext.commands as commands
+import regex
 from PIL import Image, ImageEnhance, UnidentifiedImageError
+from nextcord import Message
 from pytesseract import image_to_string, TesseractError
 
 from .. import config
 from ..libraries import createembed
+from ..libraries.common import FredCog
 
-REGEX_LIMIT: float = 2
+REGEX_LIMIT: float = 6.9
 
 
 async def regex_with_timeout(*args, **kwargs):
     try:
-        return await asyncio.wait_for(asyncio.to_thread(re.search, *args, **kwargs), REGEX_LIMIT)
+        return await asyncio.wait_for(asyncio.to_thread(regex.search, *args, **kwargs), REGEX_LIMIT)
     except asyncio.TimeoutError:
         raise TimeoutError(
             f"A regex timed out after {REGEX_LIMIT} seconds! \n"
@@ -32,17 +36,13 @@ async def regex_with_timeout(*args, **kwargs):
         )
 
 
-class Crashes(commands.Cog):
+class Crashes(FredCog):
     vanilla_info_patterns = [
-        re.compile(r"Net CL: (?P<game_version>\d+)"),
-        re.compile(r"Command Line: (?P<cli>.*)"),
-        re.compile(r"Base Directory: (?P<path>.+)"),
-        re.compile(r"Launcher ID: (?P<launcher>\w+)"),
+        regex.compile(r"Net CL: (?P<game_version>\d+)"),
+        regex.compile(r"Command Line: (?P<cli>.*)"),
+        regex.compile(r"Base Directory: (?P<path>.+)"),
+        regex.compile(r"Launcher ID: (?P<launcher>\w+)"),
     ]
-
-    def __init__(self, bot):
-        self.bot = bot
-        self.logger = logging.Logger("CRASH_PARSING")
 
     @staticmethod
     def filter_epic_commandline(cli: str) -> str:
@@ -51,10 +51,16 @@ class Crashes(commands.Cog):
     async def parse_factory_game_log(self, text: str) -> dict[str, str | int]:
         self.logger.info("Extracting game info")
         lines = text.splitlines()
-        vanilla_info_search_area = filter(lambda l: re.match("^LogInit", l), lines)
+        vanilla_info_search_area = filter(lambda l: regex.match("^LogInit", l), lines)
 
         info = {}
-        patterns = self.vanilla_info_patterns[:]
+        patterns = self.vanilla_info_patterns[:]  # shallow copy
+        """
+        This godforsaken loop sequentially finds information, 
+        dropping patterns to look for as they are found (until it runs out of patterns).
+        The patterns have named regex captures which the rest of the code knows the names of.
+        - Borketh
+        """
         for line in vanilla_info_search_area:
             if not patterns:
                 break
@@ -64,7 +70,7 @@ class Crashes(commands.Cog):
         else:
             self.logger.info("Didn't find all four pieces of information normally found in a log")
 
-        mod_loader_logs = filter(lambda l: re.match("LogSatisfactoryModLoader", l), lines)
+        mod_loader_logs = filter(lambda l: regex.match("LogSatisfactoryModLoader", l), lines)
         for line in mod_loader_logs:
             if match := await regex_with_timeout(r"(?<=v\.)(?P<sml>[\d.]+)", line):
                 info |= match.groupdict()
@@ -189,8 +195,9 @@ class Crashes(commands.Cog):
             if latest_compatible_loader > strptime(mod["last_version_date"], "%Y-%m-%dT%H:%M:%S.%fZ")
         ]
 
-    async def process_file(self, file, extension) -> list[dict]():
+    async def process_file(self, file: IO, extension: str) -> list[dict]():
         self.logger.info(f"Processing {extension} file")
+
         match extension:
             case "":
                 return []
@@ -211,7 +218,8 @@ class Crashes(commands.Cog):
                                 return messages + [
                                     dict(
                                         name="Bad Zip File!",
-                                        value="This zipfile is invalid! Its contents may have been changed after zipping.",
+                                        value="This zipfile is invalid! "
+                                        "Its contents may have been changed after zipping.",
                                         inline=False,
                                     )
                                 ]
@@ -280,7 +288,9 @@ class Crashes(commands.Cog):
                     image = Image.open(file)
                     ratio = 2160 / image.height
                     if ratio > 1:
-                        image = image.resize((round(image.width * ratio), round(image.height * ratio)), Image.LANCZOS)
+                        image = image.resize(
+                            (round(image.width * ratio), round(image.height * ratio)), Image.Resampling.LANCZOS
+                        )
 
                     enhancer_contrast = ImageEnhance.Contrast(image)
 
@@ -301,15 +311,20 @@ class Crashes(commands.Cog):
 
     async def mass_regex(self, text: str) -> AsyncIterator[dict]:
         for crash in config.Crashes.fetch_all():
-            if match := await regex_with_timeout(crash["crash"], text, flags=re.IGNORECASE):
+            if match := await regex_with_timeout(crash["crash"], text, flags=regex.IGNORECASE):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
                         command_response = command["content"]
                         if command_response.startswith(self.bot.command_prefix):  # is alias
                             command = config.Commands.fetch(command_response.strip(self.bot.command_prefix))
-                        yield dict(name=command["name"], value=command["content"], attachment=command["attachment"], inline=True)
+                        yield dict(
+                            name=command["name"],
+                            value=command["content"],
+                            attachment=command["attachment"],
+                            inline=True,
+                        )
                 else:
-                    response = re.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
+                    response = regex.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
                     yield dict(name=crash["name"], value=response, inline=True)
 
     async def complex_responses(self, log_details: dict):
@@ -323,26 +338,28 @@ class Crashes(commands.Cog):
     async def process_text(self, text: str) -> list[dict]:
         return [msg async for msg in self.mass_regex(text)]
 
-    async def process_message(self, message) -> bool:
+    async def process_message(self, message: Message) -> bool:
         self.bot.logger.info("Processing crashes")
         responses: list[dict] = []
         # attachments
-        cdn_link = re.search(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
+        cdn_link = regex.search(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
         if cdn_link or message.attachments:
             self.logger.info("Found file in message")
 
             try:
-                file = await message.attachments[0].to_file()
-                file = file.fp
-                name = message.attachments[0].filename
-                self.logger.info("Acquired file from discord API")
+                with message.channel.typing():
+                    file = await message.attachments[0].to_file()
+                    file = file.fp
+                    name = message.attachments[0].filename
+                    self.logger.info("Acquired file from discord API")
             except IndexError:
                 self.logger.info("Couldn't acquire file from discord API")
                 try:
                     self.logger.info("Attempting to acquire linked file manually")
-                    url = cdn_link.group(1)
-                    name = url.split("/")[-1]
-                    async with self.bot.web_session.get(url) as response:
+                    att_url = cdn_link.group(1)
+                    url_path = urlparse(att_url).path
+                    _, name = split(url_path)
+                    async with self.bot.web_session.get(att_url) as response, message.channel.typing():
                         assert response.status == 200, f"the web request failed with status {response.status}"
                         file = io.BytesIO(await response.read())
                 except (AttributeError, AssertionError) as e:
@@ -353,7 +370,7 @@ class Crashes(commands.Cog):
 
             extension = name.rpartition(".")[-1]
 
-            if name.startswith("SMMDebug") or extension == "log":
+            if name.startswith("SMMDebug") or extension in ("log", "zip"):
                 async with message.channel.typing():
                     responses += await self.process_file(file, extension)
             else:
@@ -362,14 +379,14 @@ class Crashes(commands.Cog):
             file.close()
 
         # Pastebin links
-        elif match := re.search(r"(https://pastebin.com/\S+)", message.content):
-            url = re.sub(r"(?<=bin.com)/", "/raw/", match.group(1))
-            async with self.bot.web_session.get(url) as response:
+        elif match := regex.search(r"(https://pastebin.com/\S+)", message.content):
+            url = regex.sub(r"(?<=bin.com)/", "/raw/", match.group(1))
+            async with self.bot.web_session.get(url) as response, message.channel.typing():
                 text: str = await response.text()
 
-            responses += await self.process_text(text)
-            maybe_log_info = await self.parse_factory_game_log(message.content)
-            responses += await self.complex_responses(maybe_log_info)
+                responses += await self.process_text(text)
+                maybe_log_info = await self.parse_factory_game_log(message.content)
+                responses += await self.complex_responses(maybe_log_info)
 
         else:
             responses += await self.process_text(message.content)
@@ -378,10 +395,12 @@ class Crashes(commands.Cog):
             await self.bot.reply_to_msg(message, embed=createembed.crashes(responses))
         else:
             for response in responses:
-                attachment = response.get("attachment")
-                if attachment is not None:
-                    async with self.bot.web_session.get(attachment) as resp:
+                att_url: str = response.get("attachment")
+                if att_url is not None:
+                    async with self.bot.web_session.get(att_url) as resp:
                         buff = io.BytesIO(await resp.read())
-                        attachment = nextcord.File(filename=attachment.split("/")[-1], fp=buff)
+                        attachment = nextcord.File(filename=att_url.split("/")[-1], fp=buff)
+                else:
+                    attachment = None
                 await self.bot.reply_to_msg(message, response["value"], file=attachment, propagate_reply=False)
         return len(responses) > 0

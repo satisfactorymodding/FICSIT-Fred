@@ -1,5 +1,13 @@
-from sqlobject import *
+from __future__ import annotations
+
 import json
+import os
+import pathlib
+from numbers import Number
+from typing import Optional, Any
+
+import nextcord
+from sqlobject import SQLObject, IntCol, BoolCol, JSONCol, BigIntCol, StringCol, FloatCol, sqlhub
 
 
 class PermissionRoles(SQLObject):
@@ -11,12 +19,12 @@ class PermissionRoles(SQLObject):
     role_name = StringCol()
 
     @staticmethod
-    def fetch_by_lvl(perm_lvl):
+    def fetch_by_lvl(perm_lvl: int) -> list[PermissionRoles]:
         query = PermissionRoles.select(PermissionRoles.q.perm_lvl >= perm_lvl).orderBy("-perm_lvl")
         return list(query)
 
     @staticmethod
-    def fetch_by_role(role_id):
+    def fetch_by_role(role_id: int) -> list[PermissionRoles]:
         query = PermissionRoles.selectBy(role_id=role_id)
         return list(query)
 
@@ -29,16 +37,14 @@ class RankRoles(SQLObject):
     role_id = BigIntCol()
 
     @staticmethod
-    def fetch_by_rank(rank):
-        query = RankRoles.select(RankRoles.q.rank <= rank).orderBy("-rank")
-        results = list(query)
-        return results[0].role_id if results else None
+    def fetch_by_rank(rank: int) -> Optional[int]:
+        query = RankRoles.select(RankRoles.q.rank <= rank).orderBy("-rank").getOne(None)
+        return getattr(query, "role_id", None)
 
     @staticmethod
-    def fetch_by_role(role_id):
-        query = RankRoles.selectBy(role_id=role_id)
-        results = list(query)
-        return results[0].rank if results else None
+    def fetch_by_role(role_id: int) -> Optional[int]:
+        query = RankRoles.selectBy(role_id=role_id).getOne(None)
+        return getattr(query, "rank", None)
 
 
 class XpRoles(SQLObject):
@@ -49,15 +55,12 @@ class XpRoles(SQLObject):
     role_id = BigIntCol()
 
     @staticmethod
-    def fetch(role_id):
-        query = XpRoles.selectBy(role_id=role_id)
-        results = list(query)
-        return results[0] if results else None
+    def fetch(role_id: int) -> Optional[XpRoles]:
+        return XpRoles.selectBy(role_id=role_id).getOne(None)
 
 
 class Users(SQLObject):
     user_id = BigIntCol()
-    full_name = StringCol()
     message_count = IntCol(default=0)
     xp_count = FloatCol(default=0)
     xp_multiplier = FloatCol(default=1)
@@ -66,31 +69,23 @@ class Users(SQLObject):
     rank_role_id = BigIntCol(default=None)
     accepts_dms = BoolCol(default=True)
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         return dict(
             user_id=self.user_id,
             message_count=self.message_count,
             xp_count=self.xp_count,
             rank_role_id=self.rank_role_id,
             rank=self.rank,
-            full_name=self.full_name,
             accepts_dms=self.accepts_dms,
         )
 
     @staticmethod
-    def fetch(user_id):
-        query = Users.selectBy(user_id=user_id)
-        results = list(query)
-        return results[0] if results else None
+    def fetch(user_id: int) -> Users:
+        return Users.selectBy(user_id=user_id).getOne(None)
 
     @staticmethod
-    def create_if_missing(user):
-        query = Users.selectBy(user_id=user.id)
-        results = list(query)
-        if results:
-            return results[0]
-        else:
-            return Users(user_id=user.id, full_name=f"{user.name}#{user.discriminator}")
+    def create_if_missing(user: nextcord.User) -> Users:
+        return Users.selectBy(user_id=user.id).getOne(False) or Users(user_id=user.id)
 
 
 class ActionColours(SQLObject):
@@ -101,10 +96,9 @@ class ActionColours(SQLObject):
     colour = IntCol()
 
     @staticmethod
-    def fetch(name):
-        query = ActionColours.selectBy(name=name.lower())
-        results = list(query)
-        return results[0].colour if results else None
+    def fetch(name: str) -> Optional[int]:
+        query = ActionColours.selectBy(name=name.lower()).getOne(None)
+        return getattr(query, "colour", None)
 
 
 class MediaOnlyChannels(SQLObject):
@@ -114,10 +108,8 @@ class MediaOnlyChannels(SQLObject):
     channel_id = BigIntCol()
 
     @staticmethod
-    def fetch(channel_id):
-        query = MediaOnlyChannels.selectBy(channel_id=channel_id)
-        results = list(query)
-        return results[0].channel_id if results else None
+    def check(channel_id: int) -> bool:
+        return bool(MediaOnlyChannels.selectBy(channel_id=channel_id).getOne(False))
 
 
 class DialogflowChannels(SQLObject):
@@ -127,10 +119,8 @@ class DialogflowChannels(SQLObject):
     channel_id = BigIntCol()
 
     @staticmethod
-    def fetch(channel_id):
-        query = DialogflowChannels.selectBy(channel_id=channel_id)
-        results = list(query)
-        return results[0].channel_id if results else None
+    def check(channel_id: int) -> bool:
+        return bool(DialogflowChannels.selectBy(channel_id=channel_id).getOne(False))
 
 
 class DialogflowExceptionRoles(SQLObject):
@@ -140,16 +130,13 @@ class DialogflowExceptionRoles(SQLObject):
     role_id = BigIntCol()
 
     @staticmethod
-    def fetch(role_id):
-        query = DialogflowExceptionRoles.selectBy(role_id=role_id)
-        results = list(query)
-        return results[0].role_id if results else None
+    def check(role_id: int) -> bool:
+        return bool(DialogflowExceptionRoles.selectBy(role_id=role_id).getOne(False))
 
     @staticmethod
-    def fetch_all():
+    def fetch_all() -> list[int]:
         query = DialogflowExceptionRoles.select()
-        results = list(query)
-        return [role.role_id for role in results]
+        return [role.role_id for role in query.lazyIter()]
 
 
 class Dialogflow(SQLObject):
@@ -158,7 +145,7 @@ class Dialogflow(SQLObject):
     response = StringCol()
     has_followup = BoolCol()
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         return dict(
             intent_id=self.intent_id,
             data=json.loads(str(self.data)) if self.data else None,
@@ -167,10 +154,11 @@ class Dialogflow(SQLObject):
         )
 
     @staticmethod
-    def fetch(intent_id, data):
-        query = Dialogflow.selectBy(intent_id=intent_id, data=data)
-        results = list(query)
-        return results[0].as_dict() if results else None
+    def fetch(intent_id: str, data: dict) -> Optional[Dialogflow]:
+        return Dialogflow.selectBy(intent_id=intent_id, data=data).getOne(None)
+
+
+type CommandsOrCrashesDict = dict[str, str | StringCol]
 
 
 class Commands(SQLObject):
@@ -178,30 +166,32 @@ class Commands(SQLObject):
     content = StringCol()
     attachment = StringCol(default=None)
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> CommandsOrCrashesDict:
         return dict(name=self.name, content=self.content, attachment=self.attachment)
 
     @staticmethod
-    def fetch(name) -> dict | None:
-        query = Commands.selectBy(name=name.lower())
-        results = list(query)
-        return results[0].as_dict() if results else None
+    def fetch(name: str) -> Optional[CommandsOrCrashesDict]:
+        query: Optional[Commands]
+        if query := Commands.selectBy(name=name.lower()).getOne(None):
+            return query.as_dict()
+        return None
 
     @classmethod
-    def fetch_by(cls, col: str, val: str) -> dict | None:
+    def fetch_by(cls, col: str, val: str) -> Optional[CommandsOrCrashesDict]:
+        # used by the search command to get a specific value if possible
         col, val = col.lower(), val.lower()
-        if not isinstance(getattr(cls, col), property):
+        if not isinstance(getattr(cls, col, None), property):
             raise KeyError("This is not a valid column!")
 
-        query = cls.selectBy(**{col: val})
-        results: list[Commands] = list(query)
-        return results[0].as_dict() if results else None
+        query: Optional[Commands] = cls.selectBy(**{col: val}).getOne(None)
+        if query is None:
+            return None
+        return query.as_dict()
 
     @staticmethod
-    def fetch_all() -> list[dict]:
+    def fetch_all() -> list[CommandsOrCrashesDict]:
         query = Commands.selectBy()
-        results = list(query)
-        return [cmd.as_dict() for cmd in results]
+        return [cmd.as_dict() for cmd in query.lazyIter()]
 
 
 class Crashes(SQLObject):
@@ -209,30 +199,31 @@ class Crashes(SQLObject):
     crash = StringCol()
     response = StringCol()
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> CommandsOrCrashesDict:
         return dict(name=self.name, response=self.response, crash=self.crash)
 
     @staticmethod
-    def fetch(name) -> dict | None:
-        query = Crashes.selectBy(name=name.lower())
-        results = list(query)
-        return results[0].as_dict() if results else None
+    def fetch(name: str) -> Optional[CommandsOrCrashesDict]:
+        query: Optional[Crashes]
+        if (query := Crashes.selectBy(name=name.lower()).getOne(None)) is not None:
+            return query.as_dict()
+        return None
 
     @classmethod
-    def fetch_by(cls, col: str, val: str) -> dict | None:
+    def fetch_by(cls, col: str, val: str) -> Optional[CommandsOrCrashesDict]:
         col, val = col.lower(), val.lower()
         if not isinstance(getattr(cls, col), property):
             raise KeyError("This is not a valid column!")
 
-        query = cls.selectBy(**{col: val})
-        results: list[Commands] = list(query)
-        return results[0].as_dict() if results else None
+        query: Optional[Crashes] = cls.selectBy(**{col: val}).getOne(None)
+        if query is None:
+            return None
+        return query.as_dict()
 
     @staticmethod
-    def fetch_all() -> list[dict]:
+    def fetch_all() -> list[CommandsOrCrashesDict]:
         query = Crashes.selectBy()
-        results = list(query)
-        return [crash.as_dict() for crash in results]
+        return [crash.as_dict() for crash in query.lazyIter()]
 
 
 class ReservedCommands(SQLObject):
@@ -242,10 +233,12 @@ class ReservedCommands(SQLObject):
     name = StringCol()
 
     @staticmethod
-    def fetch(name):
-        query = ReservedCommands.selectBy(name=name.lower())
-        results = list(query)
-        return bool(results)
+    def check(name: str) -> bool:
+        query = ReservedCommands.selectBy(name=name.lower()).getOne(False)
+        return bool(query)
+
+
+type JSONValue = Number | bool | str | list | dict
 
 
 class Misc(SQLObject):
@@ -256,14 +249,41 @@ class Misc(SQLObject):
     value = JSONCol()
 
     @staticmethod
-    def fetch(key):
-        query = Misc.selectBy(key=key)
-        results = list(query)
-        return results[0].value if results else None
+    def fetch(key: str) -> Optional[JSONValue]:
+        query = Misc.selectBy(key=key).getOne(None)
+        return getattr(query, "value", None)
 
     @staticmethod
-    def change(key, value):
-        query = Misc.selectBy(key=key)
-        results = list(query)
-        if results:
-            results[0].value = value
+    def change(key: str, value: JSONValue):
+        query = Misc.selectBy(key=key).getOne(None)
+        if query is not None:
+            query.value = value
+
+    @staticmethod
+    def create_or_change(key: str, value: JSONValue):
+        query: Optional[Misc] = Misc.selectBy(key=key).getOne(None)
+        if query is None:
+            Misc(key=key, value=value)
+        else:
+            query.value = value
+
+
+def migrate():
+    current_migration_rev = Misc.fetch("migration_rev")
+    if current_migration_rev is None:
+        current_migration_rev = 0
+
+    migrations_dir = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
+    migrations_filenames = list(migrations_dir.glob("migrations/*-*.up.sql"))
+    valid_migrations = [
+        migration for migration in migrations_filenames if _migration_rev(migration) > current_migration_rev
+    ]
+
+    for migration in valid_migrations:
+        sqlhub.processConnection.query(migration.read_text())
+
+    Misc.create_or_change("migration_rev", _migration_rev(migrations_filenames[0]))
+
+
+def _migration_rev(filepath: pathlib.Path) -> int:
+    return int(filepath.name.split("-")[0])

@@ -1,3 +1,5 @@
+from nextcord import TextChannel
+
 from ._baseclass import BaseCmds, commands, config, common
 
 
@@ -7,7 +9,8 @@ class ChannelCmds(BaseCmds):
         """Usage: `add mediaonly (channel)`
         Purpose: Adds channel to the list of channels that are managed to be media-only
         Notes: Limited to permission level 4 and above"""
-        if config.MediaOnlyChannels.fetch(channel.id):
+        channel: TextChannel
+        if config.MediaOnlyChannels.check(channel.id):
             await self.bot.reply_to_msg(ctx.message, "This channel is already a media only channel")
             return
 
@@ -21,7 +24,9 @@ class ChannelCmds(BaseCmds):
         """Usage: `add mediaonly (channel)`
         Purpose: Removes channel from the list of channels that are managed to be media-only
         Notes: Limited to permission level 4 and above"""
-        if not config.MediaOnlyChannels.fetch(channel.id):
+        channel: TextChannel
+
+        if not config.MediaOnlyChannels.check(channel.id):
             await self.bot.reply_to_msg(ctx.message, "Media Only Channel could not be found!")
             return
 
@@ -35,7 +40,9 @@ class ChannelCmds(BaseCmds):
         """Usage: `add dialogflowChannel (channel)`
         Purpose: Adds channel to the list of channels that natural language processing is applied to
         Notes: probably don't mess around with this, Mircea is the only wizard that knows how these works"""
-        if config.DialogflowChannels.fetch(channel.id):
+        channel: TextChannel
+
+        if config.DialogflowChannels.check(channel.id):
             await self.bot.reply_to_msg(ctx.message, "This channel is already a dialogflow channel!")
         else:
             config.DialogflowChannels(channel_id=channel.id)
@@ -48,7 +55,9 @@ class ChannelCmds(BaseCmds):
         """Usage: `remove dialogflowChannel (channel)`
         Purpose: Removes channel from the list of channels that natural language processing is applied to
         Notes: probably don't mess around with this, Mircea is the only wizard that knows how these works"""
-        if config.DialogflowChannels.fetch(channel.id):
+        channel: TextChannel
+
+        if config.DialogflowChannels.check(channel.id):
             config.DialogflowChannels.deleteBy(channel_id=channel.id)
             await self.bot.reply_to_msg(
                 ctx.message, f"Dialogflow Channel {self.bot.get_channel(channel.id).mention} removed!"
@@ -62,6 +71,7 @@ class ChannelCmds(BaseCmds):
         """Usage: `set webhook_channel (channel: int | channel mention)`
         Purpose: changes where GitHub webhooks are sent
         Notes: unless you're testing me as a beta fork, don't use this"""
+        channel: TextChannel
         config.Misc.change("githook_channel", channel.id)
         await self.bot.reply_to_msg(
             ctx.message, f"The channel for the github hooks is now " f"{self.bot.get_channel(channel.id).mention}!"

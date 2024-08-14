@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-import logging
+import regex
 from functools import lru_cache
 from typing import Coroutine
 
 import attrs
 import nextcord
-import re
 
 from ._baseclass import BaseCmds, commands, config
+from ..libraries import common
+
+logger = common.new_logger(__name__)
 
 
 class HelpCmds(BaseCmds):
@@ -24,7 +26,7 @@ class HelpCmds(BaseCmds):
     async def _send_help(self, ctx: commands.Context, **kwargs):
         if not ctx.author.dm_channel:
             await ctx.author.create_dm()
-        if not await self.bot.checked_DM(ctx.author, in_dm=ctx.channel == ctx.author.dm_channel,**kwargs):
+        if not await self.bot.checked_DM(ctx.author, in_dm=ctx.channel == ctx.author.dm_channel, **kwargs):
             await ctx.reply(
                 "Help commands only work in DMs to avoid clutter. "
                 "You have either disabled server DMs or indicated that you do not wish for Fred to DM you. "
@@ -121,15 +123,14 @@ class FredHelpEmbed(nextcord.Embed):
     # these are placeholder values only, they will be set up when setup() is called post-DB connection
     help_colour: int = 0
     prefix: str = ">"
-    logger = logging.Logger("HELP-EMBEDS")
 
     def __init__(
         self: FredHelpEmbed, name: str, desc: str, /, usage: str = "", fields: list[dict] = (), **kwargs
     ) -> None:
 
-        desc = re.sub(r"^\s*(\S.*)$", r"\1", desc, flags=re.MULTILINE)
-        desc = re.sub(r"(?<=Usage: )`(.+)`", rf"`{self.prefix}\1`", desc)
-        desc = re.sub(r"^(\w+:) ", r"**\1** ", desc, flags=re.MULTILINE)
+        desc = regex.sub(r"^\s*(\S.*)$", r"\1", desc, flags=regex.MULTILINE)
+        desc = regex.sub(r"(?<=Usage: )`(.+)`", rf"`{self.prefix}\1`", desc)
+        desc = regex.sub(r"^(\w+:) ", r"**\1** ", desc, flags=regex.MULTILINE)
         super().__init__(title=f"**{name}**", colour=self.help_colour, description=desc, **kwargs)
         for f in fields:
             self.add_field(**f)
@@ -230,7 +231,7 @@ class FredHelpEmbed(nextcord.Embed):
             "in a message, pastebin, debug file, or screenshot.*\n"
         )
         all_crashes = list(config.Crashes.selectBy())
-        cls.logger.info(f"Fetched {len(all_crashes)} crashes from database.")
+        logger.info(f"Fetched {len(all_crashes)} crashes from database.")
 
         global page_size, field_size
         # splits all crashes into groups of {page_size}
@@ -278,7 +279,7 @@ class FredHelpEmbed(nextcord.Embed):
         desc = "*These are normal commands that can be called by stating their name.*\n"
 
         all_commands = list(config.Commands.selectBy())
-        cls.logger.info(f"Fetched {len(all_commands)} commands from database.")
+        logger.info(f"Fetched {len(all_commands)} commands from database.")
         global page_size, field_size
         # splits all commands into groups of {page_size}
         pages = [all_commands[page : page + page_size] for page in range(0, len(all_commands), page_size)]

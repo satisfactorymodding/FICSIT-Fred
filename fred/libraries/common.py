@@ -1,13 +1,37 @@
+from __future__ import annotations
+
 import logging
 import re
-from functools import lru_cache
+from functools import lru_cache, singledispatch
+from typing import TYPE_CHECKING, Optional
 
-from nextcord import User, Message
+from nextcord import User, Message, Member
+from nextcord.ext import commands
 from nextcord.ext.commands import Context
 
 from .. import config
 
-logger = logging.Logger("PERMISSIONS")
+if TYPE_CHECKING:
+    from ..fred import Bot
+
+
+def new_logger(name: str) -> logging.Logger:
+    logging.root.debug("Creating new logger for %s", name)
+    new_logger_ = logging.root.getChild(name)
+    new_logger_.setLevel(new_logger_.parent.level)
+    return new_logger_
+
+
+logger = new_logger(__name__)
+
+
+class FredCog(commands.Cog):
+    bot: Bot  # we can assume any cog will have a bot by the time it needs to be accessed
+
+    def __init__(self, bot: Bot):
+        self.bot = bot
+        self.logger = new_logger(self.__class__.__name__)
+        self.logger.debug("Cog loaded.")
 
 
 def is_bot_author(user_id: int) -> bool:
@@ -17,25 +41,50 @@ def is_bot_author(user_id: int) -> bool:
 
 async def l4_only(ctx: Context) -> bool:
     logger.info("Checking if someone is a T3", extra=user_info(ctx.author))
-    return is_bot_author(ctx.author.id) or permission_check(ctx, 4)
+    return is_bot_author(ctx.author.id) or permission_check(ctx, level=4)
 
 
 async def mod_only(ctx: Context) -> bool:
     logger.info("Checking if someone is a Moderator", extra=user_info(ctx.author))
-    return is_bot_author(ctx.author.id) or permission_check(ctx, 6)
+    return is_bot_author(ctx.author.id) or permission_check(ctx, level=6)
 
 
-def permission_check(ctx: Context, level: int) -> bool:
-    logpayload = user_info(ctx.author)
-    logpayload["level"] = level
-    logger.info("Checking permissions for someone", extra=logpayload)
-    perms = config.PermissionRoles.fetch_by_lvl(level)
-    main_guild = ctx.bot.get_guild(config.Misc.fetch("main_guild_id"))
+@singledispatch
+def permission_check(_, *, level: int) -> bool:
+    pass
+
+
+@permission_check.register
+def _permission_check_ctx(ctx: Context, *, level: int) -> bool:
+    main_guild_id = config.Misc.fetch("main_guild_id")
+    main_guild = ctx.bot.get_guild(main_guild_id)
+
+    if main_guild is None:
+        raise LookupError(f"Unable to retrieve the guild {main_guild_id}. Is this the guild you meant?")
+
     if (main_guild_member := main_guild.get_member(ctx.author.id)) is None:
-        logger.warning("Checked permissions for someone but they weren't in the main guild", extra=logpayload)
+        logger.warning(
+            "Checked permissions for someone but they weren't in the main guild", extra=user_info(ctx.author)
+        )
         return False
 
-    user_roles = [role.id for role in main_guild_member.roles]
+    return _permission_check_member(main_guild_member, level=level)
+
+
+@permission_check.register
+def _permission_check_member(member: Member, *, level: int) -> bool:
+    """Checks permissions for a member assuming they are in the main guild."""
+    logpayload = user_info(member)
+    logpayload["level"] = level
+
+    if member.guild.id != config.Misc.fetch("main_guild_id"):
+        logger.warning("Checked permissions for a member of the wrong guild", extra=logpayload)
+        return False
+
+    logger.info("Checking permissions for someone", extra=logpayload)
+    perms = config.PermissionRoles.fetch_by_lvl(level)
+
+    user_roles = [role.id for role in member.roles]
     if (
         # it shouldn't be possible to request a level above the defined levels but check anyway
         role := next(
@@ -50,20 +99,18 @@ def permission_check(ctx: Context, level: int) -> bool:
     return False
 
 
-@lru_cache(5)
-def user_info(user: User | config.Users) -> dict:
-    if isinstance(user, User):
-        return {"user_full_name": str(user), "user_id": user.id}
-    elif isinstance(user, config.Users):
-        return {"user_full_name": user.full_name, "user_id": user.id}
-    return {}
+@lru_cache(15)
+def user_info(user: Optional[User | Member]) -> dict:
+    if user is None:
+        return {}
+    return {"user_full_name": user.global_name, "user_id": user.id}
 
 
-@lru_cache(5)
-def message_info(message: Message) -> dict:
+@lru_cache(15)
+def message_info(message: Optional[Message]) -> dict:
     if message is None:
         return {}
-    return {"message_id": message.id, "channel_id": message.channel.id, "user_id": message.author.id}
+    return {"message_id": message.id, "channel_id": message.channel.id, **user_info(message.author)}
 
 
 def reduce_str(string: str) -> str:
