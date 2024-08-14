@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from io import BytesIO
 from urllib.parse import quote as url_safe
@@ -7,8 +6,10 @@ import nextcord
 from PIL import Image
 from nextcord.utils import format_dt
 
-import libraries.common
-import config
+from .. import config
+from ..libraries import common
+
+logger = common.new_logger(__name__)
 
 
 def timestamp(iso8601: str) -> str:
@@ -30,7 +31,7 @@ async def run(data: dict) -> nextcord.Embed | None:
         repo_name, repo_full_name = "", ""
 
     if (data_type := data.get("type")) is None:
-        logging.error("data didn't have a type field")
+        logger.error("data didn't have a type field")
         return
 
     match data_type:
@@ -47,7 +48,7 @@ async def run(data: dict) -> nextcord.Embed | None:
         case "issue":
             embed = issue(data)
         case _:
-            logging.warning("Unsupported GitHub payload", extra={"data": data})
+            logger.warning("Unsupported GitHub payload", extra={"data": data})
     return embed
 
 
@@ -57,9 +58,7 @@ def leaderboard(data: list[dict]) -> nextcord.Embed:
     embed = nextcord.Embed(title="XP Leaderboard", colour=config.ActionColours.fetch("purple"), description=desc)
 
     for user in data:
-        embed.add_field(
-            name=user["name"], value=f'XP: {user["count_and_rank"]["count"]} | Level: {user["count_and_rank"]["rank"]}'
-        )
+        embed.add_field(name=user["name"], value=f'XP: {user["xp"]} | Level: {user["rank"]}')
 
     return embed
 
@@ -82,7 +81,7 @@ def format_commit(commit: dict) -> tuple[str, str]:
     change_summary_icons = " ".join(
         [f"{em} {len(commit[k])}" for em, k in zip("✅❌📝", ["added", "removed", "modified"])]
     )
-    return (f"{commit_message}\n", f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n')
+    return f"{commit_message}\n", f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n'
 
 
 def push(data: dict) -> nextcord.Embed:
@@ -362,7 +361,7 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
     # fmt: on
     result = await bot.repository_query(query)
     mods: list[dict] = result["data"]["getMods"]["mods"]
-    logging.debug(mods)
+    logger.debug(mods)
     if not mods:
         return None, None, None
 

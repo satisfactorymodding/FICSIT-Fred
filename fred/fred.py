@@ -1,43 +1,40 @@
 import asyncio
-import logging
-import os
 import sys
-import textwrap
 import time
 import traceback
+from os import getenv
 
 import aiohttp
 import nextcord
-from nextcord.ext import commands
 import sqlobject as sql
+from nextcord.ext import commands
 
-import config
-from fred_commands import Commands, FredHelpEmbed
-from cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
-from libraries import createembed, common
+from . import config
+from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
+from .fred_commands import Commands, FredHelpEmbed
+from .libraries import createembed, common
 
-
-__version__ = "2.20.4"
+__version__ = "2.21.0"
 
 
 class Bot(commands.Bot):
     async def isAlive(self):
         try:
-            logging.info("getting from config")
+            self.logger.info("Healthcheck: Attempting DB fetch")
             _ = config.Misc.get(1)
-            logging.info("creating user fetch")
+            self.logger.info("Healthcheck: Creating user fetch")
             coro = self.fetch_user(227473074616795137)
-            logging.info("fetching user")
+            self.logger.info("Healthcheck: Executing user fetch")
             await asyncio.wait_for(coro, timeout=5)
         except Exception as e:
-            self.logger.error(f"Healthiness check failed: {e}")
+            self.logger.error(f"Healthcheck failed: {e}")
             return False
         return True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.isReady = False
-        self.setup_logger()
+        self.logger = common.new_logger(self.__class__.__name__)
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
@@ -46,11 +43,11 @@ class Bot(commands.Bot):
         self.owo = False
 
         self.loop = asyncio.new_event_loop()
-        self._error_channel = int(env_val) if (env_val := os.getenv("ERROR_CHANNEL")) else 748229790825185311
+        self._error_channel = int(chan) if (chan := config.Misc.fetch("error_channel")) else 748229790825185311
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
-            self.web_session = session
+            self.web_session = session  # noqa
             return await super().start(*args, **kwargs)
 
     @staticmethod
@@ -60,7 +57,7 @@ class Bot(commands.Bot):
     async def on_ready(self):
         await self.change_presence(activity=nextcord.Game(f"v{self.version}"))
         self.isReady = True
-        logging.info(f"We have logged in as {self.user} with prefix {self.command_prefix}")
+        self.logger.info(f"We have logged in as {self.user} with prefix {self.command_prefix}")
 
     @staticmethod
     async def on_reaction_add(reaction: nextcord.Reaction, user: nextcord.User) -> None:
@@ -69,11 +66,11 @@ class Bot(commands.Bot):
 
     def setup_DB(self):
         self.logger.info("Connecting to the database")
-        user = os.environ.get("FRED_SQL_USER")
-        password = os.environ.get("FRED_SQL_PASSWORD")
-        host = os.environ.get("FRED_SQL_HOST")
-        port = os.environ.get("FRED_SQL_PORT")
-        dbname = os.environ.get("FRED_SQL_DB")
+        user = getenv("FRED_SQL_USER")
+        password = getenv("FRED_SQL_PASSWORD")
+        host = getenv("FRED_SQL_HOST")
+        port = getenv("FRED_SQL_PORT")
+        dbname = getenv("FRED_SQL_DB")
         uri = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
         attempt = 1
         while attempt < 6:
@@ -87,19 +84,12 @@ class Bot(commands.Bot):
                 time.sleep(5)
         else:  # this happens if the loop is not broken by a successful connection
             raise ConnectionError("Could not connect to the DB")
+        self.logger.info(f"Connected to the DB. Took {attempt} tries.")
         config.migrate()
-
-    def setup_logger(self):
-        logging.root = logging.Logger("FRED")
-        logging.root.setLevel(logging.DEBUG)
-
-        self.logger = logging.root
-
-        self.logger.info("Successfully set up the logger")
-        self.logger.info(f"Prefix: {self.command_prefix}")
+        self.logger.debug("Applied migration.")
 
     def setup_cogs(self):
-        logging.info("Setting up cogs")
+        self.logger.info("Setting up cogs")
         self.add_cog(Commands(self))
         self.add_cog(webhooklistener.Githook(self))
         self.add_cog(mediaonly.MediaOnly(self))
@@ -107,13 +97,23 @@ class Bot(commands.Bot):
         self.add_cog(dialogflow.DialogFlow(self))
         self.add_cog(welcome.Welcome(self))
         self.add_cog(levelling.Levelling(self))
-        self.MediaOnly = self.get_cog("MediaOnly")
-        self.Crashes = self.get_cog("Crashes")
-        self.DialogFlow = self.get_cog("DialogFlow")
-        logging.info("Successfully set up cogs")
+
+        self.logger.info("Successfully set up cogs")
+
+    @property
+    def MediaOnly(self) -> mediaonly.MediaOnly:
+        return self.get_cog("MediaOnly")  # noqa
+
+    @property
+    def Crashes(self) -> crashes.Crashes:
+        return self.get_cog("Crashes")  # noqa
+
+    @property
+    def DialogFlow(self) -> dialogflow.DialogFlow:
+        return self.get_cog("DialogFlow")  # noqa
 
     async def on_error(self, event, *args, **kwargs):
-        type, value, tb = sys.exc_info()
+        exc_type, value, tb = sys.exc_info()
         if event == "on_message":
             channel: nextcord.TextChannel | nextcord.DMChannel = args[0].channel
             if isinstance(channel, nextcord.DMChannel):
@@ -124,9 +124,9 @@ class Bot(commands.Bot):
             channel_str = ""
 
         fred_str = f"Fred v{self.version}"
-        error_meta = f"{type.__name__} exception handled in {event}{channel_str}"
+        error_meta = f"{exc_type.__name__} exception handled in `{event}` {channel_str}"
         full_error = f"\n{value}\n\n{''.join(traceback.format_tb(tb))}"
-        logging.error(f"{fred_str}\n{error_meta}\n{full_error}")
+        self.logger.error(f"{fred_str}\n{error_meta}\n{full_error}")
 
         # error_embed = nextcord.Embed(colour=nextcord.Colour.red(), title=error_meta, description=full_error)
         # error_embed.set_author(name=fred_str)
@@ -146,7 +146,7 @@ class Bot(commands.Bot):
 
     async def send_DM(
         self,
-        user: nextcord.User,
+        user: nextcord.User | nextcord.Member,
         content: str = None,
         embed: nextcord.Embed = None,
         user_meta: config.Users = None,
@@ -179,7 +179,7 @@ class Bot(commands.Bot):
                 content = None
             await user.dm_channel.send(content=content, embed=embed, **kwargs)
             return True
-        except Exception:
+        except Exception:  # noqa
             self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
         return False
 
@@ -228,7 +228,7 @@ class Bot(commands.Bot):
             await self.reply_to_msg(message, "Invalid bool string. Aborting")
             raise ValueError(f"Could not convert {s} to bool")
 
-    async def on_message(self, message):
+    async def on_message(self, message: nextcord.Message):
         self.logger.info("Processing a message", extra=common.message_info(message))
         if (is_bot := message.author.bot) or not self.is_running():
             self.logger.info(
@@ -251,7 +251,9 @@ class Bot(commands.Bot):
 
         removed = await self.MediaOnly.process_message(message)
         if not removed:
-            if message.content.startswith(self.command_prefix):
+            before, space, after = message.content.partition(" ")
+            # if the prefix is the only thing before the space then this isn't a command
+            if before.startswith(self.command_prefix) and len(before) > 1:
                 self.logger.info("Processing commands")
                 await self.process_commands(message)
             else:

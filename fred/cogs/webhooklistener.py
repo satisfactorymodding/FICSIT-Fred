@@ -1,38 +1,48 @@
+from __future__ import annotations
+
 import asyncio
 import json
-import logging
-import os
 import socket
 import sys
 import threading
 import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from os import getenv
+from typing import TYPE_CHECKING
 
-import nextcord.ext.commands as commands
+from fred.libraries import common
 
-logger = logging.Logger("GITHOOK")
+if TYPE_CHECKING:
+    from fred.fred import Bot
+
+logger = common.new_logger(__name__)
 
 
 def runServer(self, bot):
     logger.info("Running the webserver for the Githook")
-    server = HTTPServerV6((os.environ.get("FRED_IP"), int(os.environ.get("FRED_PORT"))), MakeGithookHandler(bot))
-    server.serve_forever()
+    ip = getenv("FRED_IP")
+    port = int(getenv("FRED_PORT"))
+    try:
+        server = HTTPServerV6((ip, port), MakeGithookHandler(bot))
+        server.serve_forever()
+    except PermissionError as pe:
+        logger.error(f"Cannot handle githooks! Permission denied to listen to {ip=} {port=}.")
+        logger.exception(pe)
 
 
-class Githook(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+class Githook(common.FredCog):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # Run GitHub webhook handling server
         try:
-            botargs = [bot, bot]
-            daemon = threading.Thread(target=runServer, args=botargs)
+            daemon = threading.Thread(target=runServer, args=[self.bot, self.bot])
             daemon.daemon = True
             daemon.start()
-        except Exception:
-            type, value, tb = sys.exc_info()
+        except Exception:  # noqa
+            exc_type, value, tb = sys.exc_info()
             tbs = "".join(traceback.format_tb(tb))
-            logger.error(f"Failed to run the webserver:\n{tbs}")
+            self.logger.error(f"Failed to run the webserver:\n{tbs}")
 
 
 # handle POST events from GitHub server
@@ -43,7 +53,7 @@ CONTENT_LEN = "content-length"
 EVENT_TYPE = "x-github-event"
 
 
-def MakeGithookHandler(bot):
+def MakeGithookHandler(bot: Bot):
     class MyGithookHandler(BaseHTTPRequestHandler):
         def respond(self, code: int, message: str | None = None):
             self.send_response(code, message)
@@ -55,17 +65,17 @@ def MakeGithookHandler(bot):
                     case "/ready":
                         self.respond(200 if bot.isReady else 503)
                     case "/healthy":
-                        logging.info("handling /healthy")
+                        logger.info("handling /healthy")
                         fut = asyncio.run_coroutine_threadsafe(bot.isAlive(), bot.loop)
-                        logging.info("waiting for result from healthcheck")
+                        logger.info("waiting for result from healthcheck")
                         healthy = fut.result(5)
-                        logging.info("responding")
+                        logger.info("responding")
                         self.respond(200 if healthy else 503)
                     case _:
                         self.respond(200)
             except Exception as e:
-                logging.error(f"Errored during check")
-                logging.exception(e)
+                logger.error(f"Errored during check")
+                logger.exception(e)
 
         def do_HEAD(self):
             self.handle_check()

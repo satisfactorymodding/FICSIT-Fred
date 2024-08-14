@@ -1,8 +1,6 @@
-from typing import Literal
-
 from ._baseclass import BaseCmds, commands, SearchFlags
 from ._command_utils import get_search
-import config
+from .. import config
 
 
 def _extract_prefix(string: str, prefix: str):
@@ -21,10 +19,10 @@ class CommandCmds(BaseCmds):
         """Usage: `add command (name) [response]`
         Purpose: Adds a simple command to the list of commands
         Notes: If response is not supplied you will be prompted for one with a timeout"""
-        if config.Commands.fetch(command_name):
+        if config.Commands.fetch(command_name) is not None:
             await self.bot.reply_to_msg(ctx.message, "This command already exists!")
             return
-        if config.ReservedCommands.fetch(command_name):
+        if config.ReservedCommands.check(command_name):
             await self.bot.reply_to_msg(ctx.message, "This command name is reserved")
             return
 
@@ -67,7 +65,7 @@ class CommandCmds(BaseCmds):
         """Usage: `modify command (name) [response]`
         Purpose: Modifies a command
         Notes: If response is not supplied you will be prompted for one with a timeout"""
-        if config.ReservedCommands.fetch(command_name):
+        if config.ReservedCommands.check(command_name):
             await self.bot.reply_to_msg(ctx.message, "This command is special and cannot be modified.")
             return
 
@@ -107,7 +105,7 @@ class CommandCmds(BaseCmds):
     def _valid_aliases(target: str, aliases: list[str]) -> dict[str, list[str | tuple[str, str]]]:
         rtn = {"valid": [], "overwrite": [], "failure": []}
         for alias in aliases:
-            if config.ReservedCommands.fetch(alias):
+            if config.ReservedCommands.check(alias):
                 rtn["failure"] += (alias, "reserved")
 
             elif cmd := config.Commands.fetch(name=alias):
@@ -158,7 +156,7 @@ class CommandCmds(BaseCmds):
         return user_info
 
     @BaseCmds.add.command(name="alias")
-    async def add_alias(self, ctx: commands.Context, target: str.lower, *aliases: str):
+    async def add_alias(self, ctx: commands.Context, target: str.lower, *aliases: str.lower):
         """Usage: `add alias (command) [aliases...]`
         Purpose: Adds one or more aliases to a command, checking first for overwriting stuff
         Notes: If an alias is not supplied you will be prompted for one with a timeout"""
@@ -184,7 +182,7 @@ class CommandCmds(BaseCmds):
 
         if not aliases:
             response, _ = await self.bot.reply_question(ctx.message, "Please input aliases, separated by spaces.")
-            aliases = response.split(" ")
+            aliases = response.lower().split(" ")
 
         response = await self._add_alias(ctx, target, aliases)
 
@@ -212,13 +210,13 @@ class CommandCmds(BaseCmds):
         """Usage: `rename command (name) (new_name)`
         Purpose: Renames a command.
         Notes: If response is not supplied you will be prompted for one with a timeout"""
-        if config.ReservedCommands.fetch(name):
+        if config.ReservedCommands.check(name):
             await self.bot.reply_to_msg(ctx.message, "This command is special and cannot be modified.")
             return
 
         results: list[config.Commands]
         if not (results := list(config.Commands.selectBy(name=name))):  # this command hasn't been created yet
-            await self.bot.reply_to_msg("Command could not be found!")
+            await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
             return
 
         if new_name is None:

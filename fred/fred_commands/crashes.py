@@ -1,6 +1,6 @@
-from ._baseclass import BaseCmds, commands, config, SearchFlags
 from regex import search, error as RegexError
-from typing import Literal
+
+from ._baseclass import BaseCmds, commands, config, SearchFlags
 from ._command_utils import get_search
 
 
@@ -15,7 +15,7 @@ class CrashCmds(BaseCmds):
             - `response` can be my command prefix and the name of a command, which will result in
             the response mirroring that of the command indicated."""
 
-        if config.Crashes.fetch(crash_name):
+        if config.Crashes.fetch(crash_name) is not None:
             await self.bot.reply_to_msg(ctx.message, "A crash with this name already exists")
             return
 
@@ -42,7 +42,7 @@ class CrashCmds(BaseCmds):
         """Usage: `remove crash (name)
         Purpose: Removes a crash from the list of known crashes.
         Notes: hi"""
-        if not config.Crashes.fetch(crash_name):
+        if config.Crashes.fetch(crash_name) is None:
             await self.bot.reply_to_msg(ctx.message, "Crash could not be found!")
             return
 
@@ -79,8 +79,8 @@ class CrashCmds(BaseCmds):
             if change_response := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the response?"):
                 response, _ = await self.bot.reply_question(
                     ctx.message,
-                    "What response do you want it to provide? Responding with "
-                    "a command will make the response that command",
+                    f"What response do you want it to provide? Responding with `{self.bot.command_prefix}command_name`"
+                    "will use the response of that command.",
                 )
         except ValueError:
             return
