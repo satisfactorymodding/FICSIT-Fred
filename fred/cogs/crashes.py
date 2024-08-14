@@ -347,10 +347,11 @@ class Crashes(FredCog):
             self.logger.info("Found file in message")
 
             try:
-                file = await message.attachments[0].to_file()
-                file = file.fp
-                name = message.attachments[0].filename
-                self.logger.info("Acquired file from discord API")
+                with message.channel.typing():
+                    file = await message.attachments[0].to_file()
+                    file = file.fp
+                    name = message.attachments[0].filename
+                    self.logger.info("Acquired file from discord API")
             except IndexError:
                 self.logger.info("Couldn't acquire file from discord API")
                 try:
@@ -358,7 +359,7 @@ class Crashes(FredCog):
                     att_url = cdn_link.group(1)
                     url_path = urlparse(att_url).path
                     _, name = split(url_path)
-                    async with self.bot.web_session.get(att_url) as response:
+                    async with self.bot.web_session.get(att_url) as response, message.channel.typing():
                         assert response.status == 200, f"the web request failed with status {response.status}"
                         file = io.BytesIO(await response.read())
                 except (AttributeError, AssertionError) as e:
@@ -369,7 +370,7 @@ class Crashes(FredCog):
 
             extension = name.rpartition(".")[-1]
 
-            if name.startswith("SMMDebug") or extension == "log":
+            if name.startswith("SMMDebug") or extension in ("log", "zip"):
                 async with message.channel.typing():
                     responses += await self.process_file(file, extension)
             else:
@@ -380,12 +381,12 @@ class Crashes(FredCog):
         # Pastebin links
         elif match := regex.search(r"(https://pastebin.com/\S+)", message.content):
             url = regex.sub(r"(?<=bin.com)/", "/raw/", match.group(1))
-            async with self.bot.web_session.get(url) as response:
+            async with self.bot.web_session.get(url) as response, message.channel.typing():
                 text: str = await response.text()
 
-            responses += await self.process_text(text)
-            maybe_log_info = await self.parse_factory_game_log(message.content)
-            responses += await self.complex_responses(maybe_log_info)
+                responses += await self.process_text(text)
+                maybe_log_info = await self.parse_factory_game_log(message.content)
+                responses += await self.complex_responses(maybe_log_info)
 
         else:
             responses += await self.process_text(message.content)
