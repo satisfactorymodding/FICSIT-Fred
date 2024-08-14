@@ -79,8 +79,8 @@ class CrashCmds(BaseCmds):
             if change_response := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the response?"):
                 response, _ = await self.bot.reply_question(
                     ctx.message,
-                    "What response do you want it to provide? Responding with "
-                    "a command will make the response that command",
+                    f"What response do you want it to provide? Responding with `{self.bot.command_prefix}command_name`"
+                    "will use the response of that command.",
                 )
         except ValueError:
             return
