@@ -19,7 +19,6 @@ WORKDIR /deps
 RUN pip --no-cache-dir install --progress-bar=off "poetry==1.8"
 
 COPY pyproject.toml .
-COPY poetry.lock .
 RUN poetry install -nvvv --only main --no-root; mv $(poetry env info --path) ./venv
 
 FROM runtime
