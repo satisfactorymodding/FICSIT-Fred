@@ -228,7 +228,7 @@ class Bot(commands.Bot):
             await self.reply_to_msg(message, "Invalid bool string. Aborting")
             raise ValueError(f"Could not convert {s} to bool")
 
-    async def on_message(self, message):
+    async def on_message(self, message: nextcord.Message):
         self.logger.info("Processing a message", extra=common.message_info(message))
         if (is_bot := message.author.bot) or not self.is_running():
             self.logger.info(
@@ -251,7 +251,9 @@ class Bot(commands.Bot):
 
         removed = await self.MediaOnly.process_message(message)
         if not removed:
-            if message.content.startswith(self.command_prefix):
+            before, space, after = message.content.partition(" ")
+            # if the prefix is the only thing before the space then this isn't a command
+            if before.startswith(self.command_prefix) and len(before) > 1:
                 self.logger.info("Processing commands")
                 await self.process_commands(message)
             else:
