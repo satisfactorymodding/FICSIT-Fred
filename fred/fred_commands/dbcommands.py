@@ -156,7 +156,7 @@ class CommandCmds(BaseCmds):
         return user_info
 
     @BaseCmds.add.command(name="alias")
-    async def add_alias(self, ctx: commands.Context, target: str.lower, *aliases: str):
+    async def add_alias(self, ctx: commands.Context, target: str.lower, *aliases: str.lower):
         """Usage: `add alias (command) [aliases...]`
         Purpose: Adds one or more aliases to a command, checking first for overwriting stuff
         Notes: If an alias is not supplied you will be prompted for one with a timeout"""
@@ -182,7 +182,7 @@ class CommandCmds(BaseCmds):
 
         if not aliases:
             response, _ = await self.bot.reply_question(ctx.message, "Please input aliases, separated by spaces.")
-            aliases = response.split(" ")
+            aliases = response.lower().split(" ")
 
         response = await self._add_alias(ctx, target, aliases)
 
