@@ -1427,21 +1427,6 @@ files = [
 dev = ["tox"]
 
 [[package]]
-name = "pyflame"
-version = "0.3.2"
-description = "A Flamegraph generator for Python"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "pyflame-0.3.2-py3-none-any.whl", hash = "sha256:b67abf9a9f9c0051b5468a3ff5f0e26376609f447c99cb0674e3eba8d5ce0d22"},
-    {file = "pyflame-0.3.2.tar.gz", hash = "sha256:8f5e5146781bddef387b33170b27cfc5be907fae0179516db564a723f30e5121"},
-]
-
-[package.extras]
-django = ["django (>=3.2)", "django-debug-toolbar"]
-jupyter = ["ipython", "traitlets (>=5)"]
-
-[[package]]
 name = "pytesseract"
 version = "0.3.10"
 description = "Python-tesseract is a python wrapper for Google's Tesseract-OCR"
@@ -1785,4 +1770,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "580144f3e8b3216955c4b98295e1152c03a678d5a727b6d01e06610fd9818f28"
+content-hash = "2ba465140ad741a0dde98112ca1e1828937c036a84171762f1a53318e8fdbfde"
