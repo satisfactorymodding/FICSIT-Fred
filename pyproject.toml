@@ -23,6 +23,9 @@ psycopg2-binary = "^2.9.9"
 black = {extras = ["d"], version = "^24.8.0"}
 jsonpickle = "^3.0.0"
 
+[tool.poetry.scripts]
+fred = "fred.__main__:main"
+
 [tool.black]
 line-length = 120
 target-version = ['py312']
