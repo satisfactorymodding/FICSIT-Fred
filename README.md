@@ -11,9 +11,8 @@ Want to contribute to Fred? Here's everything you need to know to get started.
 #### A Discord token
 
 First of all, you'll need a Discord bot token for Fred to connect to Discord with.
-To get one, you can go to <https://discord.com/developers/applications>, register a new application, add a bot to the application and **activate the "message content intent"**.
-This intent is needed to receive the content of messages.
-Fred doesn't use slash commands so this is simply needed for him to function.
+To get one, you can go to <https://discord.com/developers/applications>, register a new application, add a bot to the application and **activate the "message content intent" and the "server members intent"**.
+These intents are needed to receive the content of messages and receive member join events.
 
 #### Docker
 
@@ -35,15 +34,14 @@ Instead, in a hybrid setup, you'll use Docker for the postgres DB only and run F
 #### Docker-only
 
 Run `FRED_TOKEN=<your_token> docker compose up -d` and that's it! Fred should run.
-(Note: This command assumes you're using bash as your shell. For Powershell or other, set the environment variable differently).
+(Note: This command assumes you're using bash as your shell. For Powershell or other, set the environment variable differently. You can also use a `.env` file.).
 
 You can verify that the database was properly created and manage it by going to <http://localhost:8080> where pgadmin should show.
 You can use `fred@fred.com` for the user and `fred` for the password. All of this is customizable in `docker-compose.yml`.
 
 #### Hybrid
 
-For this, you'll need [poetry](https://python-poetry.org/) installed, as well as `libpq` for the connection to the postgres DB.
-For libpq, you can install `libpq-dev` (or equivalent) on linux and [install postgres](https://www.postgresql.org/download/windows/) on Windows (test without it first actually I'm not certain this is needed).
+For this, you'll need [poetry](https://python-poetry.org/) installed.
 
 Once Poetry is installed, run `poetry install`. This should create a `.venv` folder that contains the virtualenv with all the necessary packages. Activate it using `poetry shell` or manually.
 
@@ -64,9 +62,9 @@ Almost there! You'll now have to configure Fred. This just means setting the fol
 "FRED_SQL_PORT",
 ```
 
-For convenience, a `.env` file is included and Fred will load them automatically. It includes defaults that will work with the config of the docker-compose-deps.yml. You'll only have to set `FRED_TOKEN` and maybe change the others if the defaults don't suit you.
+For convenience, an `example.env` file is included. If you copy this into your `.env`, Fred will load them automatically. It includes defaults that will work with the config of the docker-compose-deps.yml. You'll only have to set `FRED_TOKEN` and maybe change the others if the defaults don't suit you.
 
-Finally, run `python fred/__main__.py`. Fred should run! You can now adapt this to your setup and run the script from your IDE instead. Don't forget to use the virtualenv python!
+Finally, run `python -m fred` or `poetry run fred`. Fred should run! You can now adapt this to your setup and run the script from your IDE instead. Don't forget to use the virtualenv python!
 
 ## Thanks
 
