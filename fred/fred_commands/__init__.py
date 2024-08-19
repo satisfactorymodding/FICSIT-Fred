@@ -81,6 +81,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
                     and (linked_command := config.Commands.fetch(content.lstrip(prefix)))
                 ):
                     command = linked_command
+                    content = linked_command["content"]
 
                 if (attachment := command["attachment"]) is not None:
                     async with self.bot.web_session.get(attachment) as resp:
