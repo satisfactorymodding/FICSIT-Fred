@@ -4,6 +4,7 @@ from ._baseclass import BaseCmds, commands, config, common
 
 
 class ChannelCmds(BaseCmds):
+
     @BaseCmds.add.command(name="mediaonly")
     async def add_mediaonly(self, ctx: commands.Context, channel: commands.TextChannelConverter):
         """Usage: `add mediaonly (channel)`

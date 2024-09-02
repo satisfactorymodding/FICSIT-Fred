@@ -6,9 +6,10 @@ from ..libraries import createembed
 
 
 class EXPCmds(BaseCmds):
+
     @commands.group()
     @commands.check(common.mod_only)
-    async def xp(self, ctx):
+    async def xp(self, ctx: commands.Context):
         """Usage: `set (subcommand) [args]`
         Purpose: Xp stuff. Check individual subcommands for specifics.
         Notes: Limited to moderators and above"""
@@ -142,7 +143,7 @@ class EXPCmds(BaseCmds):
             await self.bot.reply_to_msg(ctx.message, "The levelling system is now active!")
 
     @commands.command()
-    async def leaderboard(self, ctx):
+    async def leaderboard(self, ctx: commands.Context):
         """Usage: `leaderboard`
         Response: Shows the top 10 most talkative members and their xp"""
         query = config.Users.select().orderBy("-xp_count").limit(10)

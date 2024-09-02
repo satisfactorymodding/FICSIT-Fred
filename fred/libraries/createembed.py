@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from datetime import datetime
 from io import BytesIO
+from typing import TYPE_CHECKING
 from urllib.parse import quote as url_safe
 
 import nextcord
@@ -7,6 +10,9 @@ from PIL import Image
 from nextcord.utils import format_dt
 
 from .. import config
+
+if TYPE_CHECKING:
+    from ..fred import Bot
 from ..libraries import common
 
 logger = common.new_logger(__name__)
@@ -318,7 +324,7 @@ def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.
     )
 
 
-async def webp_icon_as_png(url: str, bot) -> tuple[nextcord.File, str]:
+async def webp_icon_as_png(url: str, bot: Bot) -> tuple[nextcord.File, str]:
     with BytesIO(await bot.async_url_get(url, get=bytes)) as virtual_webp, BytesIO() as virtual_png:
         webp_dat = Image.open(virtual_webp).convert("RGB")
         webp_dat.save(virtual_png, "png")
@@ -329,7 +335,7 @@ async def webp_icon_as_png(url: str, bot) -> tuple[nextcord.File, str]:
 
 
 # SMR Lookup Embed Formats
-async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.File | None, list[dict] | None]:
+async def mod_embed(name: str, bot: Bot) -> tuple[nextcord.Embed | None, nextcord.File | None, list[dict] | None]:
     # GraphQL Queries
     # fmt: off
     query = '''{

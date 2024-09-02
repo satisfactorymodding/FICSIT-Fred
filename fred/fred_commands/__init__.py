@@ -7,6 +7,7 @@ import logging
 import re
 
 import nextcord
+from algoliasearch.http.request_options import RequestOptions
 from algoliasearch.search_client import SearchClient
 from nextcord.ext.commands.view import StringView
 
@@ -150,9 +151,14 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
     async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
         """Usage: `docsearch (search: str)`
         Response: Equivalent to using the search function on the SMR docs page; links the first search result"""
-        client = SearchClient.create("BH4D9OD16A", "53b3a8362ea7b391f63145996cfe8d82")
+        self.logger.info(f"Searching the documentation. {search =}")
+        client: SearchClient = SearchClient.create("BH4D9OD16A", "53b3a8362ea7b391f63145996cfe8d82")
         index = client.init_index("ficsit")
+        index.set_settings({"searchableAttributes": ["url"]})
         query = index.search(search, {"attributesToRetrieve": "*"})
+        import json
+
+        self.logger.debug(json.dumps(query, indent=2))
         for hit in query["hits"]:
             if hit["hierarchy"]["lvl0"].endswith("latest"):
                 await self.bot.reply_to_msg(ctx.message, f"This is the best result I got from the SMD :\n{hit['url']}")
