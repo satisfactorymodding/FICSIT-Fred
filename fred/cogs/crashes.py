@@ -226,12 +226,12 @@ class Crashes(FredCog):
             self.logger.exception(oops)
             return []
 
-    def _create_debug_messages(self, debug_zip: ZipFile) -> Optional[CrashJob]:
+    def _create_debug_messages(self, debug_zip: ZipFile, filename: str) -> Optional[CrashJob]:
         files = debug_zip.namelist()
         info: Optional[InstallInfo] = None
         if "metadata.json" in files:
             with debug_zip.open("metadata.json") as f:
-                info = InstallInfo.from_metadata_json(f)
+                info = InstallInfo.from_metadata_json(f, filename)
 
         if info is None:
             return
@@ -250,7 +250,7 @@ class Crashes(FredCog):
             case "zip":
                 self.logger.info(f"Adding jobs from zip file {filename}")
                 zip_file = ZipFile(file)
-                if res := self._create_debug_messages(zip_file):
+                if res := self._create_debug_messages(zip_file, filename):
                     yield res
                 for zipped_item_filename in zip_file.namelist():
                     with zip_file.open(zipped_item_filename) as zip_item:
@@ -360,16 +360,16 @@ class Crashes(FredCog):
             self.logger.info("Removing reaction")
             await message.remove_reaction("👀", self.bot.user)
 
-        if responses:
-            if len(responses) == 1:
+        if filtered_responses := list(set(responses)):  # remove dupes
+            if len(filtered_responses) == 1:
                 self.logger.info("Found only one response to message, sending.")
                 await self.bot.reply_to_msg(
                     message,
-                    f"{responses[0].value}\n-# Responding to `{responses[0].name}` triggered by {message.author.mention}",
+                    f"{filtered_responses[0].value}\n-# Responding to `{filtered_responses[0].name}` triggered by {message.author.mention}",
                 )
             else:
                 self.logger.info("Found responses to message, sending.")
-                embed = createembed.crashes(responses)
+                embed = createembed.crashes(filtered_responses)
                 embed.set_author(
                     name=f"Automated responses for {message.author.global_name or message.author.display_name} ({message.author.id})",
                     icon_url=message.author.avatar.url,
@@ -390,6 +390,7 @@ class InstallInfo:
 
     type InstalledMods = dict[str, str]  # key: mod reference, value: mod version
 
+    filename: str
     game_version: str = ""
     game_type: str = ""
     smm_version: str = ""
@@ -401,7 +402,7 @@ class InstallInfo:
     mismatches: list[str] = []
 
     @classmethod
-    def from_metadata_json(cls: Type[InstallInfo], file: IO[bytes]) -> Optional[InstallInfo]:
+    def from_metadata_json(cls: Type[InstallInfo], file: IO[bytes], filename: str) -> Optional[InstallInfo]:
         metadata: dict = json.load(file)
         match metadata:
             case {
@@ -418,6 +419,7 @@ class InstallInfo:
                 # if there is no install everything can default to None
                 selected_installation = selected_installation or {}
                 return cls(
+                    filename,
                     smm_version=smm_version,
                     sml_version=sml_version or "",
                     game_version=selected_installation.get("version", ""),
@@ -441,6 +443,7 @@ class InstallInfo:
                 # if there is no install everything can default to None
                 selected_installation = selected_installation or {}
                 return cls(
+                    filename,
                     smm_version=smm_version,
                     sml_version=sml_version or "",
                     game_version=selected_installation.get("version", ""),
@@ -562,6 +565,6 @@ class InstallInfo:
 
     def format(self) -> CrashResponse:
         return CrashResponse(
-            name="Key Details",
+            name=f"Key Details for {self.filename}",
             value=self._version_info(),
         )
