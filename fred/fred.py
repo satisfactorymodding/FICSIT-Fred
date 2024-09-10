@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import asyncio
 import sys
 import time
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from os import getenv
+from typing import Optional
 
 import aiohttp
 import nextcord
@@ -14,11 +18,12 @@ from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, leve
 from .fred_commands import Commands, FredHelpEmbed
 from .libraries import createembed, common
 
-__version__ = "2.21.1"
+__version__ = "2.22.0"
 
 
 class Bot(commands.Bot):
-    async def isAlive(self):
+
+    async def isAlive(self: Bot):
         try:
             self.logger.info("Healthcheck: Attempting DB fetch")
             _ = config.Misc.get(1)
@@ -41,13 +46,14 @@ class Bot(commands.Bot):
         self.version = __version__
         FredHelpEmbed.setup()
         self.owo = False
-
-        self.loop = asyncio.new_event_loop()
+        self.web_session: aiohttp.ClientSession = ...
+        self.loop = asyncio.get_event_loop()
+        self.executor = ThreadPoolExecutor()
         self._error_channel = int(chan) if (chan := config.Misc.fetch("error_channel")) else 748229790825185311
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
-            self.web_session = session  # noqa
+            self.web_session = session
             return await super().start(*args, **kwargs)
 
     @staticmethod
@@ -112,9 +118,9 @@ class Bot(commands.Bot):
     def DialogFlow(self) -> dialogflow.DialogFlow:
         return self.get_cog("DialogFlow")  # noqa
 
-    async def on_error(self, event, *args, **kwargs):
+    async def on_error(self, event_method: str, *args, **kwargs):
         exc_type, value, tb = sys.exc_info()
-        if event == "on_message":
+        if event_method == "on_message":
             channel: nextcord.TextChannel | nextcord.DMChannel = args[0].channel
             if isinstance(channel, nextcord.DMChannel):
                 channel_str = f" in {channel.recipient}'s DMs"
@@ -124,7 +130,7 @@ class Bot(commands.Bot):
             channel_str = ""
 
         fred_str = f"Fred v{self.version}"
-        error_meta = f"{exc_type.__name__} exception handled in `{event}` {channel_str}"
+        error_meta = f"{exc_type.__name__} exception handled in `{event_method}` {channel_str}"
         full_error = f"\n{value}\n\n{''.join(traceback.format_tb(tb))}"
         self.logger.error(f"{fred_str}\n{error_meta}\n{full_error}")
 
@@ -133,7 +139,7 @@ class Bot(commands.Bot):
 
         await self.get_channel(self._error_channel).send(f"**{fred_str}**\n{error_meta}\n```py\n{full_error}```")
 
-    async def githook_send(self, data):
+    async def githook_send(self, data: dict):
         self.logger.info("Handling GitHub payload", extra={"data": data})
 
         embed: nextcord.Embed | None = await createembed.run(data)
@@ -191,7 +197,9 @@ class Bot(commands.Bot):
             # user has blocked bot or does not take mutual-server DMs
             return False
 
-    async def reply_to_msg(self, message: nextcord.Message, content=None, propagate_reply=True, **kwargs):
+    async def reply_to_msg(
+        self, message: nextcord.Message, content: Optional[str] = None, propagate_reply=True, **kwargs
+    ) -> nextcord.Message:
         self.logger.info("Replying to a message", extra=common.message_info(message))
         # use this line if you're trying to debug discord throwing code 400s
         # self.logger.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
@@ -203,21 +211,24 @@ class Bot(commands.Bot):
 
         return await message.channel.send(content, reference=reference, **kwargs)
 
-    async def reply_question(self, message, question, **kwargs):
+    async def reply_question(
+        self, message: nextcord.Message, question: Optional[str] = None, **kwargs
+    ) -> tuple[str, Optional[nextcord.Attachment]]:
         await self.reply_to_msg(message, question, **kwargs)
 
-        def check(message2):
+        def check(message2: nextcord.Message):
+            nonlocal message
             return message2.author == message.author
 
         try:
-            response = await self.wait_for("message", timeout=60.0, check=check)
+            response: nextcord.Message = await self.wait_for("message", timeout=60.0, check=check)
         except asyncio.TimeoutError:
             await self.reply_to_msg(message, "Timed out and aborted after 60 seconds.")
             raise asyncio.TimeoutError
 
         return response.content, response.attachments[0] if response.attachments else None
 
-    async def reply_yes_or_no(self, message, question, **kwargs):
+    async def reply_yes_or_no(self, message: nextcord.Message, question: Optional[str] = None, **kwargs) -> bool:
         response, _ = await self.reply_question(message, question, **kwargs)
         s = response.strip().lower()
         if s in ("1", "true", "yes", "y", "on", "oui"):
@@ -232,7 +243,7 @@ class Bot(commands.Bot):
         self.logger.info("Processing a message", extra=common.message_info(message))
         if (is_bot := message.author.bot) or not self.is_running():
             self.logger.info(
-                "OnMessage: Didn't read message because " f"{'the sender was a bot' if is_bot else 'I am dead'}."
+                f"OnMessage: Didn't read message because {'the sender was a bot' if is_bot else 'I am dead'}."
             )
             return
 

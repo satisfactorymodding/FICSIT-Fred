@@ -2,6 +2,7 @@ from ._baseclass import BaseCmds, commands, config, common
 
 
 class BotCmds(BaseCmds):
+
     @commands.command()
     async def version(self, ctx: commands.Context):
         """Usage: `version`
@@ -44,8 +45,8 @@ class BotCmds(BaseCmds):
         config.Misc.change("main_guild_id", guild_id)
         await self.bot.reply_to_msg(ctx.message, "The main guild is now this one!")
 
-    @BaseCmds.set.command(name="prefix")
     @commands.check(common.mod_only)
+    @BaseCmds.set.command(name="prefix")
     async def prefix(self, ctx: commands.Context, *, prefix: str):
         """Usage: `set prefix (prefix: str)`
         Purpose: changes what prefix is used to call commands

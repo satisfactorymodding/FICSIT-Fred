@@ -10,7 +10,7 @@ class BaseCmds(common.FredCog):
 
     @commands.group()
     @commands.check(common.l4_only)
-    async def add(self, ctx):
+    async def add(self, ctx: commands.Context):
         """Usage: `add (subcommand) [args]`
         Purpose: Adds something (duh). Check individual subcommands for specifics.
         Notes: Limited to permission level 4 and above"""
@@ -20,7 +20,7 @@ class BaseCmds(common.FredCog):
 
     @commands.group()
     @commands.check(common.l4_only)
-    async def remove(self, ctx):
+    async def remove(self, ctx: commands.Context):
         """Usage: `remove (subcommand) [args]`
         Purpose: Removes something (duh). Check individual subcommands for specifics.
         Notes: Limited to permission level 4 and above"""
@@ -30,7 +30,7 @@ class BaseCmds(common.FredCog):
 
     @commands.group()
     @commands.check(common.l4_only)
-    async def rename(self, ctx):
+    async def rename(self, ctx: commands.Context):
         """Usage: `rename (subcommand) (name) (new name)`
         Purpose: Renames a configurable interaction. Check individual subcommands for specifics.
         Notes: Limited to permission level 4 and above"""
@@ -39,7 +39,7 @@ class BaseCmds(common.FredCog):
             return
 
     @commands.group()  # no checks needed because it doesn't change anything
-    async def search(self, ctx):
+    async def search(self, ctx: commands.Context):
         """Usage: `search (category) (pattern) [options]`
         Purpose: Searches things like crashes and commands for the stuff requested.
         Notes: Uses fuzzy matching!"""
@@ -49,7 +49,7 @@ class BaseCmds(common.FredCog):
 
     @commands.group()
     @commands.check(common.l4_only)
-    async def set(self, ctx):
+    async def set(self, ctx: commands.Context):
         """Usage: `set (subcommand) [args]`
         Purpose: Sets something (duh). Check individual subcommands for specifics.
         Notes: Limited to permission level 4 and above"""
@@ -59,7 +59,7 @@ class BaseCmds(common.FredCog):
 
     @commands.group()
     @commands.check(common.l4_only)
-    async def modify(self, ctx):
+    async def modify(self, ctx: commands.Context):
         """Usage: `modify (subcommand) [args]`
         Purpose: Modifies something (duh). Check individual subcommands for specifics.
         Notes: Limited to permission level 4 and above"""

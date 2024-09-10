@@ -6,9 +6,10 @@ from ..libraries import createembed
 
 
 class EXPCmds(BaseCmds):
+
     @commands.group()
     @commands.check(common.mod_only)
-    async def xp(self, ctx):
+    async def xp(self, ctx: commands.Context):
         """Usage: `set (subcommand) [args]`
         Purpose: Xp stuff. Check individual subcommands for specifics.
         Notes: Limited to moderators and above"""
@@ -22,7 +23,7 @@ class EXPCmds(BaseCmds):
         Purpose: gives the indicated user the specified xp
         Notes: don't give negative xp, use take"""
         target: User
-        profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
+        profile = levelling.UserProfile(target.id, ctx.guild)
         if amount < 0:
             await self.bot.reply_to_msg(
                 ctx.message,
@@ -42,7 +43,7 @@ class EXPCmds(BaseCmds):
         Purpose: takes the specified xp from the indicated user
         Notes: don't take negative xp, use give"""
         target: User
-        profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
+        profile = levelling.UserProfile(target.id, ctx.guild)
         if amount < 0:
             await self.bot.reply_to_msg(
                 ctx.message,
@@ -80,7 +81,7 @@ class EXPCmds(BaseCmds):
         Purpose: sets the user's xp amount to the specified amount
         Notes: don't try negative values, it won't work"""
         target: User
-        profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
+        profile = levelling.UserProfile(target.id, ctx.guild)
 
         if amount < 0:
             await self.bot.reply_to_msg(ctx.message, "Negative numbers for xp are not allowed!")
@@ -142,7 +143,7 @@ class EXPCmds(BaseCmds):
             await self.bot.reply_to_msg(ctx.message, "The levelling system is now active!")
 
     @commands.command()
-    async def leaderboard(self, ctx):
+    async def leaderboard(self, ctx: commands.Context):
         """Usage: `leaderboard`
         Response: Shows the top 10 most talkative members and their xp"""
         query = config.Users.select().orderBy("-xp_count").limit(10)

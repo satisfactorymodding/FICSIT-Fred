@@ -6,6 +6,7 @@ from os import getenv
 import nextcord
 from google.cloud import dialogflow
 from google.oauth2 import service_account
+from nextcord import Message
 
 from .. import config
 from ..libraries import common
@@ -28,7 +29,7 @@ class DialogFlow(common.FredCog):
         super().__init__(*args, **kwargs)
         self.session_ids = {}
 
-    async def process_message(self, message):
+    async def process_message(self, message: Message):
         self.bot.logger.info("Processing NLP")
         if message.content.startswith(self.bot.command_prefix):
             return

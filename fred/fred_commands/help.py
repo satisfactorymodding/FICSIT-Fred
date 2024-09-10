@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import regex
 from functools import lru_cache
-from typing import Coroutine
+from typing import Coroutine, Type
 
 import attrs
 import nextcord
+import regex
 
 from ._baseclass import BaseCmds, commands, config
 from ..libraries import common
@@ -14,6 +14,7 @@ logger = common.new_logger(__name__)
 
 
 class HelpCmds(BaseCmds):
+
     @commands.group()
     async def help(self, ctx: commands.Context) -> None:
         """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
@@ -137,7 +138,7 @@ class FredHelpEmbed(nextcord.Embed):
         self.set_footer(text=f"Usage: `{self.prefix}help {usage}`")
 
     @classmethod
-    def setup(cls: type(FredHelpEmbed)) -> None:
+    def setup(cls: Type[FredHelpEmbed]) -> None:
         """This is called after the DB has been set up"""
         cls.help_colour = config.ActionColours.fetch("Light Blue")
         cls.prefix = config.Misc.fetch("prefix")
@@ -158,7 +159,7 @@ class FredHelpEmbed(nextcord.Embed):
         return f"{start}-{end}"
 
     @classmethod
-    def git_webhooks(cls) -> FredHelpEmbed:
+    def git_webhooks(cls: Type[FredHelpEmbed]) -> FredHelpEmbed:
         return cls(
             "GitHub webhooks",
             "I am sent updates from GitHub about the most important modding repositories, "
@@ -178,7 +179,7 @@ class FredHelpEmbed(nextcord.Embed):
         return specials
 
     @classmethod
-    def all_special_commands(cls, commands_class: commands.Cog) -> FredHelpEmbed:
+    def all_special_commands(cls: Type[FredHelpEmbed], commands_class: commands.Cog) -> FredHelpEmbed:
         desc = "*These are special commands doing something else than just replying with a predetermined answer.*"
 
         cmds = cls._get_specials(commands_class)
@@ -195,7 +196,7 @@ class FredHelpEmbed(nextcord.Embed):
         return embed
 
     @classmethod
-    def specific_special(cls, commands_class: commands.Cog, name: str) -> FredHelpEmbed:
+    def specific_special(cls: Type[FredHelpEmbed], commands_class: commands.Cog, name: str) -> FredHelpEmbed:
         commands_by_name = cls._get_specials(commands_class)
         super_cmd, *sub_cmd = name.split()
         if cmd := commands_by_name.get(super_cmd):
@@ -214,7 +215,7 @@ class FredHelpEmbed(nextcord.Embed):
         return cls(f'Help using special command "{name}"', desc, usage="special [name]")
 
     @classmethod
-    def media_only(cls) -> FredHelpEmbed:
+    def media_only(cls: Type[FredHelpEmbed]) -> FredHelpEmbed:
         desc = "**These channels only allow users to post files (inc. images): **\n"
         for chan in config.MediaOnlyChannels.selectBy():
             desc += f"- <#{chan.channel_id}>\n"
@@ -224,7 +225,7 @@ class FredHelpEmbed(nextcord.Embed):
         return cls("Media-Only Channels", desc, usage="media_only")
 
     @classmethod
-    def crashes(cls, index: int = 0) -> FredHelpEmbed:
+    def crashes(cls: Type[FredHelpEmbed], index: int = 0) -> FredHelpEmbed:
         title = "List of Known Crashes"
         desc = (
             "*The bot responds when a common issues are present "
@@ -255,7 +256,7 @@ class FredHelpEmbed(nextcord.Embed):
             return FredHelpEmbed(title, desc, usage="crashes [page]")
 
     @classmethod
-    def specific_crash(cls, name: str) -> FredHelpEmbed:
+    def specific_crash(cls: Type[FredHelpEmbed], name: str) -> FredHelpEmbed:
         if answer := list(config.Crashes.selectBy(name=name.lower())):
             crash = answer[0].as_dict()
         else:
@@ -274,7 +275,7 @@ class FredHelpEmbed(nextcord.Embed):
         return cls(f"Crash - {name}", desc, usage="crash [name]")
 
     @classmethod
-    def commands(cls, index: int = 0) -> FredHelpEmbed:
+    def commands(cls: Type[FredHelpEmbed], index: int = 0) -> FredHelpEmbed:
         title = "List of Fred Commands"
         desc = "*These are normal commands that can be called by stating their name.*\n"
 

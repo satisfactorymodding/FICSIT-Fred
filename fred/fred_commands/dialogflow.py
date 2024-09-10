@@ -6,6 +6,7 @@ from ._baseclass import BaseCmds, commands, config
 
 
 class DialogflowCmds(BaseCmds):
+
     @BaseCmds.add.command(name="dialogflow")
     async def add_dialogflow(self, ctx: commands.Context, intent_id: str, response: bool | str, followup: bool, *args):
         """Usage: `add dialogflow (intent_id: str) (response: bool/str) (has_followup: bool)`

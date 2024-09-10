@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import math
 from datetime import *
 
@@ -31,10 +30,10 @@ class UserProfile:
             self.DB_user = config.Users(user_id=user_id)
 
         self._rank: int = DB_user.rank
-        self._xp_count: int = DB_user.xp_count
+        self._xp_count: float = DB_user.xp_count
 
     @property
-    def rank(self):
+    def rank(self) -> int:
         return self._rank
 
     @rank.setter
@@ -43,11 +42,11 @@ class UserProfile:
         self.DB_user.rank = value
 
     @property
-    def xp_count(self):
+    def xp_count(self) -> float:
         return self._xp_count
 
     @xp_count.setter
-    def xp_count(self, value: int):
+    def xp_count(self, value: float):
         self._xp_count = value
         self.DB_user.xp_count = value
 
@@ -121,9 +120,9 @@ class UserProfile:
         logger.info("Incrementing someone's xp", logpayload)
         await self.give_xp(xp_gain)
 
-    async def give_xp(self, xp):
+    async def give_xp(self, xp: float) -> bool:
         if xp <= 0:
-            return
+            return False
         logpayload = common.user_info(self.member)
         logpayload["xp_gain"] = xp
         logger.info("Giving someone xp", logpayload)
@@ -131,7 +130,7 @@ class UserProfile:
         await self.validate_level()
         return True
 
-    async def take_xp(self, xp):
+    async def take_xp(self, xp: float) -> bool:
         if xp > self.xp_count:
             return False  # can't take more than a user has
 
@@ -142,7 +141,7 @@ class UserProfile:
         await self.validate_level()
         return True
 
-    async def set_xp(self, xp):
+    async def set_xp(self, xp: float) -> bool:
         logpayload = common.user_info(self.member)
         logpayload["new_xp"] = xp
         logger.info("Setting someone's xp", logpayload)
