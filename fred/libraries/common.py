@@ -27,11 +27,13 @@ logger = new_logger(__name__)
 
 class FredCog(commands.Cog):
     bot: Bot = ...  # we can assume any cog will have a bot by the time it needs to be accessed
+    logger: logging.Logger = ...
 
     def __init__(self, bot: Bot):
         self.__class__.bot = bot
         self.bot = bot
         self.logger = new_logger(self.__class__.__name__)
+        self.__class__.logger = self.logger
         self.logger.debug("Cog loaded.")
 
 

@@ -1,4 +1,4 @@
-from regex import search, error as RegexError
+from re2 import search, RegexError
 
 from ._baseclass import BaseCmds, commands, config, SearchFlags
 from ._command_utils import get_search
