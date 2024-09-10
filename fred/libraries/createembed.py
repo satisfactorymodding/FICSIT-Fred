@@ -395,7 +395,7 @@ async def mod_embed(name: str, bot: Bot) -> tuple[nextcord.Embed | None, nextcor
     return embed, file, multiple_mods
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class CrashResponse:
 
     name: str
@@ -407,12 +407,12 @@ class CrashResponse:
         logger.debug(self.value)
         embed.add_field(name=self.name, value=self.value, inline=self.inline)
 
+    def __hash__(self):
+        return hash(self.name)
+
 
 def crashes(responses: list[CrashResponse]) -> nextcord.Embed:
-    embed = nextcord.Embed(
-        # title=f"{len(responses)} automated responses found: ",
-        colour=config.ActionColours.fetch("Purple")
-    )
+    embed = nextcord.Embed(colour=config.ActionColours.fetch("Purple"))
     # sort the responses by size, so they display in a more efficient order
     responses = sorted(responses, key=lambda r: len(r.value), reverse=True)  # smaller = less important, can be cut
 
