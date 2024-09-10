@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fred"
-version = "2.22.1"
+version = "2.22.2"
 description = "A Discord bot for the Satisfactory Modding Discord "
 authors = ["Feyko <feykook@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>", "Borketh <does.not.kompute@gmail.com>"]
 license = "MIT License"
@@ -19,6 +19,7 @@ setuptools = "^72.1.0"
 psycopg2-binary = "^2.9.9"
 semver = "^3.0.2"
 pyre2-updated = "^0.3.8"
+regex = "^2024.7.24"
 
 [tool.poetry.group.dev.dependencies]
 black = {extras = ["d"], version = "^24.8.0"}
