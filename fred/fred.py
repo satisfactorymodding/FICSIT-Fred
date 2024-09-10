@@ -4,6 +4,7 @@ import asyncio
 import sys
 import time
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from os import getenv
 from typing import Optional
 
@@ -45,13 +46,14 @@ class Bot(commands.Bot):
         self.version = __version__
         FredHelpEmbed.setup()
         self.owo = False
-
-        self.loop = asyncio.new_event_loop()
+        self.web_session: aiohttp.ClientSession = ...
+        self.loop = asyncio.get_event_loop()
+        self.executor = ThreadPoolExecutor()
         self._error_channel = int(chan) if (chan := config.Misc.fetch("error_channel")) else 748229790825185311
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
-            self.web_session = session  # noqa
+            self.web_session = session
             return await super().start(*args, **kwargs)
 
     @staticmethod

@@ -7,7 +7,6 @@ import logging
 import re
 
 import nextcord
-from algoliasearch.http.request_options import RequestOptions
 from algoliasearch.search_client import SearchClient
 from nextcord.ext.commands.view import StringView
 

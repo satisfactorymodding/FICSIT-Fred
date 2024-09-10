@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import regex
 from functools import lru_cache
 from typing import Coroutine, Type
 
 import attrs
 import nextcord
+import regex
 
 from ._baseclass import BaseCmds, commands, config
 from ..libraries import common
