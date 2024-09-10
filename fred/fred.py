@@ -18,7 +18,7 @@ from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, leve
 from .fred_commands import Commands, FredHelpEmbed
 from .libraries import createembed, common
 
-__version__ = "2.21.1"
+__version__ = "2.22.0"
 
 
 class Bot(commands.Bot):
