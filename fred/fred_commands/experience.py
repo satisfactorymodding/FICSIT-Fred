@@ -23,7 +23,7 @@ class EXPCmds(BaseCmds):
         Purpose: gives the indicated user the specified xp
         Notes: don't give negative xp, use take"""
         target: User
-        profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
+        profile = levelling.UserProfile(target.id, ctx.guild)
         if amount < 0:
             await self.bot.reply_to_msg(
                 ctx.message,
@@ -43,7 +43,7 @@ class EXPCmds(BaseCmds):
         Purpose: takes the specified xp from the indicated user
         Notes: don't take negative xp, use give"""
         target: User
-        profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
+        profile = levelling.UserProfile(target.id, ctx.guild)
         if amount < 0:
             await self.bot.reply_to_msg(
                 ctx.message,
@@ -81,7 +81,7 @@ class EXPCmds(BaseCmds):
         Purpose: sets the user's xp amount to the specified amount
         Notes: don't try negative values, it won't work"""
         target: User
-        profile = levelling.UserProfile(target.id, ctx.guild, self.bot)
+        profile = levelling.UserProfile(target.id, ctx.guild)
 
         if amount < 0:
             await self.bot.reply_to_msg(ctx.message, "Negative numbers for xp are not allowed!")
