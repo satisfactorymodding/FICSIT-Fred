@@ -255,7 +255,7 @@ class Crashes(FredCog):
                 for zipped_item_filename in zip_file.namelist():
                     with zip_file.open(zipped_item_filename) as zip_item:
                         yield from self._get_file_jobs(f"{filename}/{zipped_item_filename}", zip_item)
-            case "log" | "txt":
+            case "log" | "txt" | "json":
                 self.logger.info(f"Adding job for log/text file {filename}")
                 yield self.process_text(str(file.read()))
             case "png":
@@ -270,7 +270,7 @@ class Crashes(FredCog):
 
     @staticmethod
     def _ext_filter(ext: str) -> bool:
-        return ext in ("png", "log", "txt", "zip")
+        return ext in ("png", "log", "txt", "zip", "json")
 
     async def _obtain_attachments(self, message: Message) -> AsyncGenerator[tuple[str, IO | Exception], None, None]:
         cdn_links = regex.findall(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
