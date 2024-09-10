@@ -10,7 +10,10 @@ from typing import AsyncIterator, IO, Type, Coroutine, Generator, Optional, Any,
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
-import regex
+import re2
+
+re2.set_fallback_notification(re2.FALLBACK_WARNING)
+
 from PIL import Image, ImageEnhance
 from aiohttp import ClientResponseError
 from attr import dataclass
@@ -23,16 +26,17 @@ from ..libraries import createembed
 from ..libraries.common import FredCog, new_logger
 from ..libraries.createembed import CrashResponse
 
-REGEX_LIMIT: float = 6.9
+REGEX_LIMIT: float = 0.002
 DOWNLOAD_SIZE_LIMIT = 104857600  # 100 MiB
-
+EMOJI_CRASHES_ANALYZING = "<:FredAnalyzingFile:1283182945019891712>"
+EMOJI_CRASHES_TIMEOUT = "<:FredAnalyzingTimedOut:1283183010967195730>"
 
 logger = new_logger(__name__)
 
 
 async def regex_with_timeout(*args, **kwargs):
     try:
-        return await asyncio.wait_for(asyncio.to_thread(regex.search, *args, **kwargs), REGEX_LIMIT)
+        return await asyncio.wait_for(asyncio.to_thread(re2.search, *args, **kwargs), REGEX_LIMIT)
     except asyncio.TimeoutError:
         raise TimeoutError(
             f"A regex timed out after {REGEX_LIMIT} seconds! \n"
@@ -40,6 +44,8 @@ async def regex_with_timeout(*args, **kwargs):
             f"flags: {kwargs['flags']} \n"
             f"on text of length {len(args[1])}"
         )
+    except re2.RegexError as e:
+        raise ValueError(args[0]) from e
 
 
 class Crashes(FredCog):
@@ -169,7 +175,7 @@ class Crashes(FredCog):
 
     async def mass_regex(self, text: str) -> AsyncIterator[CrashResponse]:
         for crash in config.Crashes.fetch_all():
-            if match := await regex_with_timeout(crash["crash"], text, flags=regex.IGNORECASE | regex.S):
+            if match := await regex_with_timeout(crash["crash"], text, flags=re2.IGNORECASE | re2.S):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
                         command_response = command["content"]
@@ -182,13 +188,13 @@ class Crashes(FredCog):
                             inline=True,
                         )
                 else:
-                    response = regex.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
+                    response = re2.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
                     yield CrashResponse(name=crash["name"], value=response, inline=True)
 
     async def detect_and_fetch_pastebin_content(self, text: str) -> str:
-        if match := regex.search(r"(https://pastebin.com/\S+)", text):
+        if match := re2.search(r"(https://pastebin.com/\S+)", text):
             self.logger.info("Found a pastebin link! Fetching text.")
-            url = regex.sub(r"(?<=bin.com)/", "/raw/", match.group(1))
+            url = re2.sub(r"(?<=bin.com)/", "/raw/", match.group(1))
             async with self.bot.web_session.get(url) as response:
                 return await response.text()
         else:
@@ -273,7 +279,7 @@ class Crashes(FredCog):
         return ext in ("png", "log", "txt", "zip", "json")
 
     async def _obtain_attachments(self, message: Message) -> AsyncGenerator[tuple[str, IO | Exception], None, None]:
-        cdn_links = regex.findall(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
+        cdn_links = re2.findall(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
 
         yield bool(cdn_links or message.attachments)
 
@@ -322,7 +328,7 @@ class Crashes(FredCog):
         # get the first yield, which is just whether there's anything to do
         if there_were_files := await file_getter.asend(None):
             self.logger.info("Indicating interest in message")
-            await message.add_reaction("👀")
+            await message.add_reaction(EMOJI_CRASHES_ANALYZING)
 
         responses: list[CrashResponse] = []
         files: list[IO] = []
@@ -346,28 +352,40 @@ class Crashes(FredCog):
                     files.append(file)
                     jobs.extend((task_group.create_task(job) for job in self._get_file_jobs(name, file)))
         except ExceptionGroup as eg:
-            raise eg.exceptions[0]
+            for ex in eg.exceptions:
+                if isinstance(ex, TimeoutError):
+                    self.logger.exception(ex)
+                    await message.remove_reaction(EMOJI_CRASHES_ANALYZING, self.bot.user)
+                    await message.add_reaction(EMOJI_CRASHES_TIMEOUT)
+                    for j in jobs:
+                        j.cancel()
+                else:
+                    raise ex
 
         self.logger.info("Collecting job results")
         for job in jobs:
             responses.extend(job.result())
 
-        self.logger.info("Closing files")
-        for file in files:
-            file.close()
+        if files:
+            self.logger.info("Closing files")
+            for file in files:
+                file.close()
 
         if there_were_files:
             self.logger.info("Removing reaction")
             await message.remove_reaction("👀", self.bot.user)
 
         if filtered_responses := list(set(responses)):  # remove dupes
+
             if len(filtered_responses) == 1:
                 self.logger.info("Found only one response to message, sending.")
                 await self.bot.reply_to_msg(
                     message,
                     f"{filtered_responses[0].value}\n-# Responding to `{filtered_responses[0].name}` triggered by {message.author.mention}",
                 )
+
             else:
+
                 self.logger.info("Found responses to message, sending.")
                 embed = createembed.crashes(filtered_responses)
                 embed.set_author(
@@ -376,6 +394,7 @@ class Crashes(FredCog):
                 )
                 await self.bot.reply_to_msg(message, embed=embed)
             return True
+
         else:
             self.logger.info("No responses to message, skipping.")
             return False
@@ -498,14 +517,14 @@ class InstallInfo:
     def _get_fg_log_details(log_file: IO[bytes]):
         lines = log_file.readlines()
 
-        vanilla_info_search_area = filter(lambda l: regex.match("^LogInit", str(l)), lines)
+        vanilla_info_search_area = filter(lambda l: re2.match("^LogInit", str(l)), lines)
 
         info = {}
         patterns = [
-            regex.compile(r"Net CL: (?P<game_version>\d+)"),
-            regex.compile(r"Command Line: (?P<cli>.*)"),
-            regex.compile(r"Base Directory: (?P<path>.+)"),
-            regex.compile(r"Launcher ID: (?P<launcher>\w+)"),
+            re2.compile(r"Net CL: (?P<game_version>\d+)"),
+            re2.compile(r"Command Line: (?P<cli>.*)"),
+            re2.compile(r"Base Directory: (?P<path>.+)"),
+            re2.compile(r"Launcher ID: (?P<launcher>\w+)"),
         ]
 
         # This loop sequentially finds information,
@@ -516,15 +535,15 @@ class InstallInfo:
         for line in vanilla_info_search_area:
             if not patterns:
                 break
-            elif match := regex.search(patterns[0], line):
+            elif match := re2.search(patterns[0], line):
                 info |= match.groupdict()
                 patterns.pop(0)
         else:
             logger.info("Didn't find all four pieces of information normally found in a log")
 
-        mod_loader_logs = filter(lambda l: regex.match("LogSatisfactoryModLoader", str(l)), lines)
+        mod_loader_logs = filter(lambda l: re2.match("LogSatisfactoryModLoader", str(l)), lines)
         for line in mod_loader_logs:
-            if match := regex.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):
+            if match := re2.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):
                 info |= match.groupdict()
                 break
 
