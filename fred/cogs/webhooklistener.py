@@ -27,7 +27,6 @@ def runServer(self, bot):
         server.serve_forever()
     except PermissionError as pe:
         logger.error(f"Cannot handle githooks! Permission denied to listen to {ip=} {port=}.")
-        logger.exception(pe)
 
 
 class Githook(common.FredCog):

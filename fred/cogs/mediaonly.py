@@ -1,3 +1,5 @@
+from nextcord import Message
+
 from .. import config
 from ..libraries import common
 from ..libraries.common import FredCog
@@ -5,15 +7,20 @@ from ..libraries.common import FredCog
 
 class MediaOnly(FredCog):
 
-    async def process_message(self, message):
+    async def process_message(self, message: Message) -> bool:
+        """Returns whether the message was removed."""
         self.logger.info("Processing a message", extra=common.message_info(message))
+
         if len(message.embeds) > 0 or len(message.attachments) > 0:
             self.logger.info("Message contains media", extra=common.message_info(message))
-            return
+            return False
+
         ctx = await self.bot.get_context(message)
+
         if await common.l4_only(ctx):
             self.logger.info("Message doesn't contain media but the author is a T3", extra=common.message_info(message))
             return False
+
         if config.MediaOnlyChannels.check(message.channel.id):
             self.logger.info("Removing a message", extra=common.message_info(message))
             await message.delete()
@@ -26,4 +33,5 @@ class MediaOnly(FredCog):
                 f"```\n{message.content}\n```",
             )
             return True
+
         return False

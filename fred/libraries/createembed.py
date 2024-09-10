@@ -1,12 +1,19 @@
+from __future__ import annotations
+
 from datetime import datetime
 from io import BytesIO
+from typing import TYPE_CHECKING, Optional
 from urllib.parse import quote as url_safe
 
 import nextcord
 from PIL import Image
+from attr import dataclass
 from nextcord.utils import format_dt
 
 from .. import config
+
+if TYPE_CHECKING:
+    from ..fred import Bot
 from ..libraries import common
 
 logger = common.new_logger(__name__)
@@ -318,7 +325,7 @@ def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.
     )
 
 
-async def webp_icon_as_png(url: str, bot) -> tuple[nextcord.File, str]:
+async def webp_icon_as_png(url: str, bot: Bot) -> tuple[nextcord.File, str]:
     with BytesIO(await bot.async_url_get(url, get=bytes)) as virtual_webp, BytesIO() as virtual_png:
         webp_dat = Image.open(virtual_webp).convert("RGB")
         webp_dat.save(virtual_png, "png")
@@ -329,7 +336,7 @@ async def webp_icon_as_png(url: str, bot) -> tuple[nextcord.File, str]:
 
 
 # SMR Lookup Embed Formats
-async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.File | None, list[dict] | None]:
+async def mod_embed(name: str, bot: Bot) -> tuple[nextcord.Embed | None, nextcord.File | None, list[dict] | None]:
     # GraphQL Queries
     # fmt: off
     query = '''{
@@ -388,20 +395,34 @@ async def mod_embed(name: str, bot) -> tuple[nextcord.Embed | None, nextcord.Fil
     return embed, file, multiple_mods
 
 
-def crashes(responses: list[dict]) -> nextcord.Embed:
+@dataclass
+class CrashResponse:
+
+    name: str
+    value: str
+    attachment: Optional[str] = None
+    inline: bool = False
+
+    def add_self_as_field(self, embed: nextcord.Embed):
+        logger.debug(self.value)
+        embed.add_field(name=self.name, value=self.value, inline=self.inline)
+
+
+def crashes(responses: list[CrashResponse]) -> nextcord.Embed:
     embed = nextcord.Embed(
-        title=f"{len(responses)} automated responses found: ", colour=config.ActionColours.fetch("Purple")
+        # title=f"{len(responses)} automated responses found: ",
+        colour=config.ActionColours.fetch("Purple")
     )
     # sort the responses by size, so they display in a more efficient order
-    responses = sorted(responses, key=lambda r: len(r["value"]), reverse=True)  # smaller = less important, can be cut
+    responses = sorted(responses, key=lambda r: len(r.value), reverse=True)  # smaller = less important, can be cut
 
     for response in responses[:24]:
-        embed.add_field(**response)
+        response.add_self_as_field(embed)
 
     if unsaid := responses[24:]:
         embed.add_field(
             name=f"And {len(unsaid)} more that don't fit here...",
-            value=", ".join(r["name"] for r in unsaid) + "\nuse `help crash [name]` to see what they are",
+            value=", ".join(r.name for r in unsaid) + "\nuse `help crash [name]` to see what they are",
         )
 
     return embed
