@@ -26,7 +26,7 @@ from ..libraries import createembed
 from ..libraries.common import FredCog, new_logger
 from ..libraries.createembed import CrashResponse
 
-REGEX_LIMIT: float = 0.002
+REGEX_LIMIT: float = 6.9
 DOWNLOAD_SIZE_LIMIT = 104857600  # 100 MiB
 EMOJI_CRASHES_ANALYZING = "<:FredAnalyzingFile:1283182945019891712>"
 EMOJI_CRASHES_TIMEOUT = "<:FredAnalyzingTimedOut:1283183010967195730>"
