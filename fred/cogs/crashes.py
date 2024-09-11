@@ -373,7 +373,7 @@ class Crashes(FredCog):
 
         if there_were_files:
             self.logger.info("Removing reaction")
-            await message.remove_reaction("👀", self.bot.user)
+            await message.remove_reaction(EMOJI_CRASHES_ANALYZING, self.bot.user)
 
         if filtered_responses := list(set(responses)):  # remove dupes
 

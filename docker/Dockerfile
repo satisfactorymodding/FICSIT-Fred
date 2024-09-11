@@ -4,7 +4,7 @@ FROM python:3.12-alpine AS runtime
 VOLUME /config
 WORKDIR /app
 
-RUN apk update; apk add --no-cache tesseract-ocr-data-eng re2
+RUN apk update; apk add --no-cache tesseract-ocr-data-eng re2-dev
 #ENV DEBIAN_FRONTEND=noninteractive APT="apt-get -qq"
 #RUN $APT update;  \
 #    $APT install tesseract-ocr;  \
