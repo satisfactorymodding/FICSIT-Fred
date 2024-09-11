@@ -49,7 +49,7 @@ class Bot(commands.Bot):
         self.web_session: aiohttp.ClientSession = ...
         self.loop = asyncio.get_event_loop()
         self.executor = ThreadPoolExecutor()
-        self._error_channel = int(chan) if (chan := config.Misc.fetch("error_channel")) else 748229790825185311
+        self.error_channel = int(chan) if (chan := config.Misc.fetch("error_channel")) else 748229790825185311
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
@@ -137,7 +137,7 @@ class Bot(commands.Bot):
         # error_embed = nextcord.Embed(colour=nextcord.Colour.red(), title=error_meta, description=full_error)
         # error_embed.set_author(name=fred_str)
 
-        await self.get_channel(self._error_channel).send(f"**{fred_str}**\n{error_meta}\n```py\n{full_error}```")
+        await self.get_channel(self.error_channel).send(f"**{fred_str}**\n{error_meta}\n```py\n{full_error}```")
 
     async def githook_send(self, data: dict):
         self.logger.info("Handling GitHub payload", extra={"data": data})
