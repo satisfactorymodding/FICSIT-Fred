@@ -52,7 +52,7 @@ class UserProfile:
 
     async def try_resolve_member(self):
         if self.member is None:
-            if (member := await self.guild.fetch_member(self.user_id)) is not None:
+            if (member := await common.get_guild_member(self.guild, self.user_id)) is not None:
                 self.member = member
             else:
                 logger.warning(f"Still unable to resolve user {self.user_id}")

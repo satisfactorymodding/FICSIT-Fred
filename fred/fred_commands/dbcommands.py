@@ -100,7 +100,7 @@ class CommandCmds(BaseCmds):
 
         # this just works, don't touch it. trying to use config.Commands.fetch makes a duplicate command.
         results[0].content = new_response
-        results[0].attachment = attachment or attachment.url
+        results[0].attachment = attachment and attachment.url
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' modified!")
         self.logger.info(f"Command {command_name} modified. New response: '{new_response}'")
