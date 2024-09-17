@@ -50,10 +50,11 @@ class UserProfile:
         self.DB_user.xp_count = value
 
     async def try_resolve_member(self):
-        if (member := await self.guild.fetch_member(self.user_id)) is not None:
-            self.member = member
-        else:
-            logger.warning(f"Still unable to resolve user {self.user_id}")
+        if self.member is None:
+            if (member := await self.guild.fetch_member(self.user_id)) is not None:
+                self.member = member
+            else:
+                logger.warning(f"Still unable to resolve user {self.user_id}")
 
     async def validate_role(self):
         await self.try_resolve_member()
@@ -86,6 +87,7 @@ class UserProfile:
                 await self.member.add_roles(role)
 
     async def validate_level(self):
+        await self.try_resolve_member()
         if not self.member:
             logger.info(
                 "Could not validate someone's level because they aren't in the main guild",
