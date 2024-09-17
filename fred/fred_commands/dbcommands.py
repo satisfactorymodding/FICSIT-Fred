@@ -101,6 +101,7 @@ class CommandCmds(BaseCmds):
         results[0].attachment = attachment.url if attachment else None
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' modified!")
+        self.logger.info(f"Command {command_name} modified. New response: '{new_response}'")
 
     @staticmethod
     def _valid_aliases(target: str, aliases: list[str]) -> dict[str, list[str | tuple[str, str]]]:

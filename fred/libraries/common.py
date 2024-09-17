@@ -44,61 +44,71 @@ def is_bot_author(user_id: int) -> bool:
 
 async def l4_only(ctx: Context) -> bool:
     logger.info("Checking if someone is a T3", extra=user_info(ctx.author))
-    return is_bot_author(ctx.author.id) or permission_check(ctx, level=4)
+    return is_bot_author(ctx.author.id) or await permission_check(ctx, level=4)
 
 
 async def mod_only(ctx: Context) -> bool:
     logger.info("Checking if someone is a Moderator", extra=user_info(ctx.author))
-    return is_bot_author(ctx.author.id) or permission_check(ctx, level=6)
+    return is_bot_author(ctx.author.id) or await permission_check(ctx, level=6)
 
 
 @singledispatch
-def permission_check(_, *, level: int) -> bool:
+async def permission_check(_ctx_or_member, *, level: int) -> bool:
     pass
 
 
 @permission_check.register
-def _permission_check_ctx(ctx: Context, *, level: int) -> bool:
+async def _permission_check_ctx(ctx: Context, *, level: int) -> bool:
     main_guild_id = config.Misc.fetch("main_guild_id")
-    main_guild = ctx.bot.get_guild(main_guild_id)
+    main_guild = await ctx.bot.fetch_guild(main_guild_id)
 
     if main_guild is None:
         raise LookupError(f"Unable to retrieve the guild {main_guild_id}. Is this the guild you meant?")
 
-    if (main_guild_member := main_guild.get_member(ctx.author.id)) is None:
+    if (main_guild_member := await main_guild.fetch_member(ctx.author.id)) is None:
         logger.warning(
             "Checked permissions for someone but they weren't in the main guild", extra=user_info(ctx.author)
         )
         return False
 
-    return _permission_check_member(main_guild_member, level=level)
+    return await _permission_check_member(main_guild_member, threshold_level=level)
 
 
 @permission_check.register
-def _permission_check_member(member: Member, *, level: int) -> bool:
+async def _permission_check_member(member: Member, *, threshold_level: int) -> bool:
     """Checks permissions for a member assuming they are in the main guild."""
     logpayload = user_info(member)
-    logpayload["level"] = level
+    logpayload["level"] = threshold_level
 
     if member.guild.id != config.Misc.fetch("main_guild_id"):
         logger.warning("Checked permissions for a member of the wrong guild", extra=logpayload)
         return False
 
-    logger.info("Checking permissions for someone", extra=logpayload)
-    perms = config.PermissionRoles.fetch_by_lvl(level)
+    logger.info(f"Checking permissions for {member.display_name} ({member.id})", extra=logpayload)
+    perms = config.PermissionRoles.fetch_by_lvl(threshold_level)
 
     user_roles = [role.id for role in member.roles]
     if (
         # it shouldn't be possible to request a level above the defined levels but check anyway
         role := next(
-            (permission for permission in perms if permission.perm_lvl >= level and permission.role_id in user_roles),
+            (
+                permission
+                for permission in perms
+                if permission.perm_lvl >= threshold_level and permission.role_id in user_roles
+            ),
             False,
         )  # checks for the first occurring, if any
     ):
-        logger.info(f"A permission check was positive with level {role.perm_lvl}", extra=logpayload)
+        logger.info(
+            f"Permission granted for {member.display_name} (lvl {role.perm_lvl}, threshold {threshold_level})",
+            extra=logpayload,
+        )
         return True  # user has a role that is above the requested level
 
-    logger.info(f"A permission check was negative with level less than required ({level})", extra=logpayload)
+    logger.info(
+        f"Permission denied for {member.display_name} (lvl {role.perm_lvl}, threshold {threshold_level})",
+        extra=logpayload,
+    )
     return False
 
 

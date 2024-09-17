@@ -26,7 +26,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
     @BaseCmds.listener()
     async def on_command_error(self, ctx: commands.Context, error):
         # We get an error about commands being found when using "runtime" commands, so we have to ignore that
-        self.logger.error(f"Caught {error!r}, {dir(error)}")
+        self.logger.error(f"Caught {error!r}")
         if isinstance(error, commands.CommandNotFound):
             command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if config.Commands.fetch(command) is not None:
