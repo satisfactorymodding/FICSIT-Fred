@@ -19,6 +19,7 @@ class UserProfile:
         self.member = guild.get_member(user_id)
         if self.member is None:
             logger.warning(f"Unable to retrieve information about user {user_id}")
+            # Silencing error about this, Later™ problem -Borketh
             # raise MemberNotFound(f"Unable to retrieve information about user {user_id}")
 
         logger.info(f"Found member id {self.member}")
