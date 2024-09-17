@@ -4,7 +4,6 @@ import math
 from datetime import *
 
 from nextcord import DMChannel, Message, Guild
-from nextcord.ext.commands import MemberNotFound
 
 from .. import config
 from ..libraries import common
@@ -20,7 +19,8 @@ class UserProfile:
         self.member = guild.get_member(user_id)
         if self.member is None:
             logger.warning(f"Unable to retrieve information about user {user_id}")
-            raise MemberNotFound(f"Unable to retrieve information about user {user_id}")
+            # Silencing error about this, Later™ problem -Borketh
+            # raise MemberNotFound(f"Unable to retrieve information about user {user_id}")
 
         logger.info(f"Found member id {self.member}")
 
@@ -50,7 +50,15 @@ class UserProfile:
         self._xp_count = value
         self.DB_user.xp_count = value
 
+    async def try_resolve_member(self):
+        if self.member is None:
+            if (member := await common.get_guild_member(self.guild, self.user_id)) is not None:
+                self.member = member
+            else:
+                logger.warning(f"Still unable to resolve user {self.user_id}")
+
     async def validate_role(self):
+        await self.try_resolve_member()
         if not self.member:
             logger.info(
                 "Could not validate someone's level role because they aren't in the main guild",
@@ -69,7 +77,7 @@ class UserProfile:
             self.DB_user.rank_role_id = role_id
 
             # if not self.guild.get_channel(config.Misc.fetch("mod_channel")).permissions_for(self.member).send_messages:
-            if not common.permission_check(self.member, level=6):
+            if not await common.permission_check(self.member, level=6):
                 for member_role in self.member.roles:
                     if config.RankRoles.fetch_by_role(member_role.id) is not None:  # i.e. member_role is a rank role
                         logpayload["role_id"] = member_role.id
@@ -80,6 +88,7 @@ class UserProfile:
                 await self.member.add_roles(role)
 
     async def validate_level(self):
+        await self.try_resolve_member()
         if not self.member:
             logger.info(
                 "Could not validate someone's level because they aren't in the main guild",
