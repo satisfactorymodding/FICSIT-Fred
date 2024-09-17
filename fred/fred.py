@@ -203,7 +203,14 @@ class Bot(commands.Bot):
         self.logger.info("Replying to a message", extra=common.message_info(message))
         # use this line if you're trying to debug discord throwing code 400s
         # self.logger.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
-        reference = (message.reference if propagate_reply else None) or message
+        if propagate_reply and message.reference is not None:
+            reference = message.reference
+            if (referenced_message := message.reference.cached_message) is not None:
+                if referenced_message.author == self.user:
+                    reference = message
+        else:
+            reference = message
+
         if self.owo and content is not None:
             content = common.owoize(content)
         if isinstance(reference, nextcord.MessageReference):
