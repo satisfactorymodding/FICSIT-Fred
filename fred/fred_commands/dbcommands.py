@@ -27,7 +27,7 @@ class CommandCmds(BaseCmds):
             await self.bot.reply_to_msg(ctx.message, "This command name is reserved")
             return
 
-        attachment = ctx.message.attachments[0].url if ctx.message.attachments else None
+        attachment = ctx.message.attachments[0] if ctx.message.attachments else None
 
         if not response and not attachment:
             response, attachment = await self.bot.reply_question(ctx.message, "What should the response be?")
@@ -38,9 +38,10 @@ class CommandCmds(BaseCmds):
             if not await self.bot.reply_yes_or_no(ctx.message, msg):
                 return
 
-        config.Commands(name=command_name, content=response, attachment=attachment)
+        config.Commands(name=command_name, content=response, attachment=attachment.url)
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' added!")
+        self.logger.info("Command {command_name} added with response '{response}'")
 
     @BaseCmds.remove.command(name="command")
     async def remove_command(self, ctx: commands.Context, command_name: str.lower):
@@ -60,6 +61,7 @@ class CommandCmds(BaseCmds):
         config.Commands.deleteBy(name=command_name)
 
         await self.bot.reply_to_msg(ctx.message, "Command removed!")
+        self.logger.info(f"Command {command_name} removed!")
 
     @BaseCmds.modify.command(name="command")
     async def modify_command(self, ctx: commands.Context, command_name: str.lower, *, new_response: str = None):
@@ -98,9 +100,10 @@ class CommandCmds(BaseCmds):
 
         # this just works, don't touch it. trying to use config.Commands.fetch makes a duplicate command.
         results[0].content = new_response
-        results[0].attachment = attachment.url if attachment else None
+        results[0].attachment = attachment and attachment.url
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' modified!")
+        self.logger.info(f"Command {command_name} modified. New response: '{new_response}'")
 
     @staticmethod
     def _valid_aliases(target: str, aliases: list[str]) -> dict[str, list[str | tuple[str, str]]]:

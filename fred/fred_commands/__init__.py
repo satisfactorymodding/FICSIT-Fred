@@ -5,9 +5,12 @@ import inspect
 import io
 import logging
 import re
+from os.path import split
+from urllib.parse import urlparse
 
 import nextcord
 from algoliasearch.search_client import SearchClient
+from nextcord import Attachment
 from nextcord.ext.commands.view import StringView
 
 from ._baseclass import BaseCmds, common, config, commands
@@ -26,7 +29,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
     @BaseCmds.listener()
     async def on_command_error(self, ctx: commands.Context, error):
         # We get an error about commands being found when using "runtime" commands, so we have to ignore that
-        self.logger.error(f"Caught {error!r}, {dir(error)}")
+        self.logger.error(f"Caught {error!r}")
         if isinstance(error, commands.CommandNotFound):
             command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if config.Commands.fetch(command) is not None:
@@ -86,7 +89,8 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
                 if (attachment := command["attachment"]) is not None:
                     async with self.bot.web_session.get(attachment) as resp:
                         buff = io.BytesIO(await resp.read())
-                        attachment = nextcord.File(filename=attachment.split("/")[-1], fp=buff)
+                        _, filename = split(urlparse(attachment).path)
+                        attachment = nextcord.File(filename=filename, fp=buff)
                 args = []
                 view = StringView(message.content.lstrip(prefix))
                 view.get_word()  # command name

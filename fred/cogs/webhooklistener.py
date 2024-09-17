@@ -25,7 +25,7 @@ def runServer(self, bot):
     try:
         server = HTTPServerV6((ip, port), MakeGithookHandler(bot))
         server.serve_forever()
-    except PermissionError as pe:
+    except PermissionError:
         logger.error(f"Cannot handle githooks! Permission denied to listen to {ip=} {port=}.")
 
 
