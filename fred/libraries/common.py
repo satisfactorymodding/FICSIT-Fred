@@ -89,31 +89,24 @@ async def _permission_check_member(member: Member, *, threshold_level: int) -> b
         return False
 
     logger.info(f"Checking permissions for {member.display_name} ({member.id})", extra=logpayload)
-    perms = config.PermissionRoles.fetch_by_lvl(threshold_level)
 
-    user_roles = [role.id for role in member.roles]
-    if (
-        # it shouldn't be possible to request a level above the defined levels but check anyway
-        role := next(
-            (
-                permission
-                for permission in perms
-                if permission.perm_lvl >= threshold_level and permission.role_id in user_roles
-            ),
-            False,
-        )  # checks for the first occurring, if any
-    ):
+    perm_roles = config.PermissionRoles.fetch_ge_lvl(threshold_level)
+    user_roles = {role.id for role in member.roles}
+    user_roles_above_threshold = {role for role in perm_roles if role.role_id in user_roles}
+
+    if user_roles_above_threshold:
+        user_max_perm = max(user_roles_above_threshold, key=lambda role: role.perm_lvl)
         logger.info(
-            f"Permission granted for {member.display_name} (lvl {role.perm_lvl}, threshold {threshold_level})",
+            f"Permission granted for {member.display_name} (lvl {user_max_perm.perm_lvl}, threshold {threshold_level})",
             extra=logpayload,
         )
         return True  # user has a role that is above the requested level
-
-    logger.info(
-        f"Permission denied for {member.display_name} (lvl {role.perm_lvl}, threshold {threshold_level})",
-        extra=logpayload,
-    )
-    return False
+    else:
+        logger.info(
+            f"Permission denied for {member.display_name} - does not have any permission roles above the required level.",
+            extra=logpayload,
+        )
+        return False
 
 
 @lru_cache(15)
