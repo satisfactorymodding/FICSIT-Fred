@@ -19,7 +19,7 @@ class PermissionRoles(SQLObject):
     role_name = StringCol()
 
     @staticmethod
-    def fetch_by_lvl(perm_lvl: int) -> list[PermissionRoles]:
+    def fetch_ge_lvl(perm_lvl: int) -> list[PermissionRoles]:
         query = PermissionRoles.select(PermissionRoles.q.perm_lvl >= perm_lvl).orderBy("-perm_lvl")
         return list(query)
 
