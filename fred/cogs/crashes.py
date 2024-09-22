@@ -382,6 +382,7 @@ class Crashes(FredCog):
                 await self.bot.reply_to_msg(
                     message,
                     f"{filtered_responses[0].value}\n-# Responding to `{filtered_responses[0].name}` triggered by {message.author.mention}",
+                    propagate_reply=False,
                 )
 
             else:
@@ -392,7 +393,7 @@ class Crashes(FredCog):
                     name=f"Automated responses for {message.author.global_name or message.author.display_name} ({message.author.id})",
                     icon_url=message.author.avatar.url,
                 )
-                await self.bot.reply_to_msg(message, embed=embed)
+                await self.bot.reply_to_msg(message, embed=embed, propagate_reply=False)
             return True
 
         else:

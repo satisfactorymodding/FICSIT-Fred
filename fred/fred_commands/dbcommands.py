@@ -38,7 +38,7 @@ class CommandCmds(BaseCmds):
             if not await self.bot.reply_yes_or_no(ctx.message, msg):
                 return
 
-        config.Commands(name=command_name, content=response, attachment=attachment.url)
+        config.Commands(name=command_name, content=response, attachment=attachment and attachment.url)
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' added!")
         self.logger.info("Command {command_name} added with response '{response}'")
