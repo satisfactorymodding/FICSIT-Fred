@@ -5,7 +5,7 @@ import re
 from functools import lru_cache, singledispatch
 from typing import TYPE_CHECKING, Optional
 
-from nextcord import User, Message, Member, Guild
+from nextcord import User, Message, Member, Guild, NotFound
 from nextcord.ext import commands
 from nextcord.ext.commands import Context
 
@@ -37,8 +37,11 @@ class FredCog(commands.Cog):
         self.logger.debug("Cog loaded.")
 
 
-async def get_guild_member(guild: Guild, user_id: int) -> Member:
-    return guild.get_member(user_id) or await guild.fetch_member(user_id)
+async def get_guild_member(guild: Guild, user_id: int) -> Optional[Member]:
+    try:
+        return guild.get_member(user_id) or await guild.fetch_member(user_id)
+    except NotFound:
+        return None
 
 
 def is_bot_author(user_id: int) -> bool:

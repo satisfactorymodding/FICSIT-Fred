@@ -64,7 +64,10 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
                 # this is raised to escape a bunch of value passing if timed out, but should not raise big errors.
                 return
 
-        await ctx.send("I encountered an error while trying to call this command. Feyko has been notified")
+        await ctx.send(
+            "I encountered an error while trying to call this command. "
+            "The error has been logged, sorry for the inconvenience."
+        )
         raise (error.original if hasattr(error, "original") else error)
 
     @BaseCmds.listener()
