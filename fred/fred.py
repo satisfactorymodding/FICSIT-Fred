@@ -5,6 +5,7 @@ import sys
 import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
+from importlib.metadata import version
 from os import getenv
 from typing import Optional
 
@@ -18,7 +19,7 @@ from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, leve
 from .fred_commands import Commands, FredHelpEmbed
 from .libraries import createembed, common
 
-__version__ = "2.22.7"
+__version__ = version("fred")
 
 
 class Bot(commands.Bot):
@@ -40,10 +41,11 @@ class Bot(commands.Bot):
         super().__init__(*args, **kwargs)
         self.isReady = False
         self.logger = common.new_logger(self.__class__.__name__)
+        self.version = __version__
+        self.logger.info(f"Starting Fred v{self.version}")
         self.setup_DB()
         self.command_prefix = config.Misc.fetch("prefix")
         self.setup_cogs()
-        self.version = __version__
         FredHelpEmbed.setup()
         self.owo = False
         self.web_session: aiohttp.ClientSession = ...

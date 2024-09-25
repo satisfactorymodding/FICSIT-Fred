@@ -3,12 +3,12 @@ from os import getenv
 
 from dotenv import load_dotenv
 
+load_dotenv()
+
 logging.root = logging.getLogger("FRED")
 logging.basicConfig(level=getenv("FRED_LOG_LEVEL", logging.DEBUG))
 
 from .fred import __version__  # noqa
-
-logging.root.debug(f"HELLO WORLD!!! FRED version: {__version__}")
 
 ENVVARS = (
     "FRED_IP",
@@ -21,8 +21,6 @@ ENVVARS = (
     "FRED_SQL_PORT",
     # "DIALOGFLOW_AUTH",
 )
-
-load_dotenv()
 
 for var in ENVVARS:
     if getenv(var) is None:
