@@ -50,10 +50,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          env: 
-            FRED_VERSION = ${{ steps.poetry-version.outputs.FRED_VERSION }}
           tags: |
-            type=semver,pattern={{version}},value=$FRED_VERSION
+            type=semver,pattern={{version}},value=${{ steps.poetry-version.outputs.FRED_VERSION }}
 
       - uses: docker/setup-buildx-action@v3
       
