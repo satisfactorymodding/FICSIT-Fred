@@ -118,6 +118,10 @@ class Bot(commands.Bot):
     def DialogFlow(self) -> dialogflow.DialogFlow:
         return self.get_cog("DialogFlow")  # noqa
 
+    @property
+    def Welcome(self) -> welcome.Welcome:
+        return self.get_cog("Welcome")  # noqa
+
     async def on_error(self, event_method: str, *args, **kwargs):
         exc_type, value, tb = sys.exc_info()
         if event_method == "on_message":

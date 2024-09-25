@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from ._baseclass import BaseCmds, commands, config, common
+
+if TYPE_CHECKING:
+    from ..fred import Bot
 
 
 class BotCmds(BaseCmds):
@@ -34,6 +41,11 @@ class BotCmds(BaseCmds):
             config.Misc.change("latest_info", latest_info)
             await self.bot.reply_to_msg(ctx.message, "The latest info message has been changed!")
 
+    @BaseCmds.get.command(name="welcome")
+    async def get_welcome(self, ctx: commands.Context):
+        bot: Bot = ctx.bot
+        await bot.Welcome.send_welcome_message(ctx.author)
+
     @commands.check(common.mod_only)
     @BaseCmds.set.command(name="main_guild")
     async def set_main_guild(self, ctx: commands.Context, guild_id: int = None):
@@ -56,10 +68,11 @@ class BotCmds(BaseCmds):
         await self.bot.reply_to_msg(ctx.message, f"Prefix changed to {prefix}.")
 
     @BaseCmds.set.command(name="owo")
+    @commands.check(common.mod_only)
     async def owo(self, ctx: commands.Context):
         """Usage: `set owo`
         Purpose: toggle owo
-        Notes: owo what's this? you need to be engineer or above to use this"""
+        Notes: owo what's this? you need to be a mod to use this :3"""
         self.bot.owo = not self.bot.owo
         await ctx.reply("OwO" if self.bot.owo else "no owo :(")
 
