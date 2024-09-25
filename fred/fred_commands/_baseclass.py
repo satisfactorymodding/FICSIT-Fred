@@ -67,6 +67,16 @@ class BaseCmds(common.FredCog):
             await self.bot.reply_to_msg(ctx.message, "Invalid sub command passed...")
             return
 
+    @commands.group()
+    @commands.check(common.l4_only)
+    async def get(self, ctx: commands.Context):
+        """Usage: `get (subcommand) [args]`
+        Purpose: Gets something (duh). Check individual subcommands for specifics.
+        Notes: Limited to permission level 4 and above."""
+        if ctx.invoked_subcommand is None:
+            await self.bot.reply_to_msg(ctx.message, "Invalid sub command passed...")
+            return
+
 
 class SearchFlags(commands.FlagConverter, delimiter="=", prefix="-"):
     column: str = "name"

@@ -10,6 +10,9 @@ class Welcome(common.FredCog):
 
         self.logger.info("Processing a member joining", extra=common.user_info(member))
 
+        await self.send_welcome_message(member)
+
+    async def send_welcome_message(self, member: Member):
         if welcome := config.Misc.fetch("welcome_message"):
             self.logger.info("Sending the welcome message to a new member", extra=common.user_info(member))
             await self.bot.send_DM(member, welcome)

@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 
 import nextcord
 from algoliasearch.search_client import SearchClient
-from nextcord import Attachment
 from nextcord.ext.commands.view import StringView
 
 from ._baseclass import BaseCmds, common, config, commands
