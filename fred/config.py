@@ -8,6 +8,7 @@ from typing import Optional, Any
 
 import nextcord
 from sqlobject import SQLObject, IntCol, BoolCol, JSONCol, BigIntCol, StringCol, FloatCol, sqlhub
+from sqlobject.dberrors import DuplicateEntryError
 
 
 class PermissionRoles(SQLObject):
@@ -282,7 +283,10 @@ def migrate():
     for migration in valid_migrations:
         sqlhub.processConnection.query(migration.read_text())
 
-    Misc.create_or_change("migration_rev", _migration_rev(migrations_filenames[0]))
+    try:
+        Misc.create_or_change("migration_rev", _migration_rev(migrations_filenames[0]))
+    except DuplicateEntryError as e:
+        print(f"UNABLE TO RUN MIGRATION DUE TO {e}")
 
 
 def _migration_rev(filepath: pathlib.Path) -> int:

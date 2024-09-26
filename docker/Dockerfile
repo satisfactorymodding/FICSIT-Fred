@@ -17,10 +17,13 @@ FROM python:3.12-alpine AS build
 WORKDIR /deps
 
 RUN pip --no-cache-dir install --progress-bar=off "poetry==1.8"
-RUN apk update; apk add g++ git re2-dev
+RUN apk update
+RUN apk add g++ git re2-dev
 COPY pyproject.toml .
 COPY poetry.lock .
-RUN poetry install -nvvv --only main --no-root
+RUN poetry install -nvvv --only main --no-root --compile
+COPY fred ./fred/
+RUN poetry install -nvvv --only-root --compile
 RUN mv $(poetry env info --path) ./venv
 
 FROM runtime
