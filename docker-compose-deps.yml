@@ -1,6 +1,6 @@
 services:
     postgres:
-        image: postgres:14.0-alpine
+        image: postgres:14-alpine
         environment:
             POSTGRES_PASSWORD: fred
             POSTGRES_USER: fred
@@ -14,7 +14,7 @@ services:
     pgadmin:
         depends_on:
             - postgres
-        image: dpage/pgadmin4:6
+        image: dpage/pgadmin4:8
         environment:
             PGADMIN_DEFAULT_EMAIL: 'fred@fred.com'
             PGADMIN_DEFAULT_PASSWORD: 'fred'
