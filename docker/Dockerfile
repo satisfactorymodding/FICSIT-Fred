@@ -16,20 +16,19 @@ FROM python:3.12-alpine AS build
 
 WORKDIR /deps
 
-RUN pip --no-cache-dir install --progress-bar=off "poetry==1.8"
+#RUN pip --no-cache-dir install --progress-bar=off "poetry==1.8"
 RUN apk update
-RUN apk add g++ git re2-dev
-COPY pyproject.toml .
-COPY poetry.lock .
-RUN poetry install -nvvv --only main --no-root --compile
+RUN apk add g++ git re2-dev poetry python3-dev
+COPY pyproject.toml poetry.lock poetry.toml ./
+RUN poetry env use $(which python)  # needed because installing through apk makes path not work
+RUN poetry install -nvvv --no-root --compile --only main
 COPY fred ./fred/
 RUN poetry install -nvvv --only-root --compile
-RUN mv $(poetry env info --path) ./venv
 
 FROM runtime
 
-COPY --from=build /deps/venv ./venv
+COPY --from=build /deps/.venv ./venv
 COPY fred ./fred/
 COPY *.env .
-
-CMD ./venv/bin/python3 -m fred
+RUN pwd
+CMD ./venv/bin/python -m fred
