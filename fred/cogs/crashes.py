@@ -472,6 +472,29 @@ class InstallInfo:
                     game_command_line=selected_installation.get("launchPath", ""),
                     installed_mods=installed_mods,
                 )
+
+            case {
+                # SMM 2 format - keys missing when generated when no installs found
+                "installsFound": _installations,
+                "selectedInstall": selected_installation,
+                "profiles": _profiles,
+                "selectedProfile": _selected_profile,
+                "smmVersion": smm_version,
+                "modsEnabled": _mods_enabled,
+            }:
+                # if there is no install everything can default to None
+                selected_installation = selected_installation or {}
+                return cls(
+                    filename,
+                    smm_version=smm_version,
+                    sml_version="",
+                    game_version=selected_installation.get("version", ""),
+                    game_type="WindowsClient",  # SMM 2 only supports this one and therefore doesn't specify otherwise
+                    game_path=selected_installation.get("installLocation", ""),
+                    game_command_line=selected_installation.get("launchPath", ""),
+                    installed_mods={},
+                )
+
             case _:
                 logger.exception(ValueError("Invalid SMM metadata json"))
                 return None
@@ -516,15 +539,17 @@ class InstallInfo:
 
     @staticmethod
     def _get_fg_log_details(log_file: IO[bytes]):
-        lines = log_file.readlines()
+        # This function uses lazy evaluation to get the info we need without performing regex on the whole log
+        # It used to matter more when we were using slower regex libraries. - Borketh
 
-        vanilla_info_search_area = filter(lambda l: re2.match("^LogInit", str(l)), lines)
+        lines: list[bytes] = log_file.readlines()
+        vanilla_info_search_area = filter(lambda l: re2.match("^LogInit", l), map(bytes.decode, lines))
 
         info = {}
         patterns = [
             re2.compile(r"Net CL: (?P<game_version>\d+)"),
-            re2.compile(r"Command Line: (?P<cli>.*)"),
-            re2.compile(r"Base Directory: (?P<path>.+)"),
+            re2.compile(r"Command Line:(?P<cli>.*)"),
+            re2.compile(r"Base Directory:(?P<path>.+)"),
             re2.compile(r"Launcher ID: (?P<launcher>\w+)"),
         ]
 
@@ -540,9 +565,10 @@ class InstallInfo:
                 info |= match.groupdict()
                 patterns.pop(0)
         else:
-            logger.info("Didn't find all four pieces of information normally found in a log")
+            logger.info("Didn't find all four pieces of information normally found in a log!")
+            logger.debug(json.dumps(info, indent=2))
 
-        mod_loader_logs = filter(lambda l: re2.match("LogSatisfactoryModLoader", str(l)), lines)
+        mod_loader_logs = filter(lambda l: re2.match("LogSatisfactoryModLoader", l), map(bytes.decode, lines))
         for line in mod_loader_logs:
             if match := re2.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):
                 info |= match.groupdict()
@@ -557,7 +583,7 @@ class InstallInfo:
         return info
 
     def _version_info(self) -> str:
-        # note: (str that defaults to "") and (f-string) is shorthand for if str: f-string
+        # note: `(str that defaults to "") and (f-string)` is shorthand for if str: f-string
         version_info = (
             "```\n"
             + (self.smm_version and f"SMM Version: {self.smm_version}\n")
@@ -574,7 +600,7 @@ class InstallInfo:
                 + self.game_type
                 + f" CL {self.game_version}"
                 + (self.game_launcher_id and f" from {self.game_launcher_id}")
-                + (self.game_path and f"\nPath: `{self.game_path}`")
+                + (self.game_path and f"\nPath: `{self.game_path.strip()}`")
                 + "\n"
             )
 
