@@ -228,8 +228,6 @@ class Bot(commands.Bot):
         if isinstance(reference, nextcord.MessageReference):
             reference.fail_if_not_exists = False
 
-        await asyncio.sleep(2)  # DEBUG
-
         try:
             return await message.channel.send(content, reference=reference, **kwargs)
         except (nextcord.HTTPException, nextcord.Forbidden):
