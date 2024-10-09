@@ -77,3 +77,17 @@ class ChannelCmds(BaseCmds):
         await self.bot.reply_to_msg(
             ctx.message, f"The channel for the github hooks is now " f"{self.bot.get_channel(channel.id).mention}!"
         )
+
+    @commands.check(common.mod_only)
+    @BaseCmds.set.command(name="error_channel")
+    async def set_error_channel(self, ctx: commands.Context, error_channel_id: int):
+        """Usage: `set error_channel [error_channel]`
+        Purpose: changes what error channel is used to send errors to.
+        Notes: no touchy please!
+        """
+        if (chan := self.bot.get_channel(int(error_channel_id))) is None:
+            await self.bot.reply_to_msg(ctx.message, "I can't see that channel!")
+        else:
+            self.bot.error_channel = error_channel_id
+            config.Misc.create_or_change("error_channel", error_channel_id)
+            await self.bot.reply_to_msg(ctx.message, f"The error channel has been changed to {chan.mention}.")
