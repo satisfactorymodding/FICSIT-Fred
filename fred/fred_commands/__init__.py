@@ -45,11 +45,12 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXP
             return
         elif isinstance(error, commands.BadArgument):
             self.logger.info("Successfully deferred error of bad argument")
-            _, target_type, _, missing_argument_name, *_ = str(error).split('"')
-            output = f"At least one parameter for this command was entered incorrectly: '{missing_argument_name}'"
-            if target_type:
-                output += f" of type '{target_type}'"
-            await ctx.reply(output)
+            # self.logger.debug(error)
+            # _, target_type, _, missing_argument_name, *_ = str(error).split('"')
+            # output = f"At least one parameter for this command was entered incorrectly: '{missing_argument_name}'"
+            # if target_type:
+            #     output += f" of type '{target_type}'"
+            await ctx.reply(str(error))
             return
         elif isinstance(error, commands.CheckFailure):
             self.logger.info("Successfully deferred error af insufficient permissions")
