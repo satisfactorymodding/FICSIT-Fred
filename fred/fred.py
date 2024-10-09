@@ -67,9 +67,9 @@ class Bot(commands.Bot):
         self.isReady = True
         self.logger.info(f"We have logged in as {self.user} with prefix {self.command_prefix}")
 
-    @staticmethod
-    async def on_reaction_add(reaction: nextcord.Reaction, user: nextcord.User) -> None:
+    async def on_reaction_add(self, reaction: nextcord.Reaction, user: nextcord.User) -> None:
         if not user.bot and reaction.message.author.bot and reaction.emoji == "❌":
+            self.logger.info("Removing my own message because someone reacted with ❌.")
             await reaction.message.delete()
 
     def setup_DB(self):
