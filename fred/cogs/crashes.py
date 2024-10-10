@@ -182,7 +182,7 @@ class Crashes(FredCog):
                         if command_response.startswith(self.bot.command_prefix):  # is alias
                             command = config.Commands.fetch(command_response.strip(self.bot.command_prefix))
                         yield CrashResponse(
-                            name=command["name"],
+                            name=crash["name"],
                             value=command["content"],
                             attachment=command["attachment"],
                             inline=True,
