@@ -368,7 +368,7 @@ async def mod_embed(name: str, bot: Bot) -> tuple[nextcord.Embed | None, nextcor
     # fmt: on
     result = await bot.repository_query(query)
     mods: list[dict] = result["data"]["getMods"]["mods"]
-    logger.debug(mods)
+    # logger.debug(mods)
     if not mods:
         return None, None, None
 
