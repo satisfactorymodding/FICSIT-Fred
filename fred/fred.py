@@ -102,7 +102,6 @@ class Bot(commands.Bot):
         self.add_cog(webhooklistener.Githook(self))
         self.add_cog(mediaonly.MediaOnly(self))
         self.add_cog(crashes.Crashes(self))
-        # self.add_cog(dialogflow.DialogFlow(self))
         self.add_cog(welcome.Welcome(self))
         self.add_cog(levelling.Levelling(self))
 
@@ -115,10 +114,6 @@ class Bot(commands.Bot):
     @property
     def Crashes(self) -> crashes.Crashes:
         return self.get_cog("Crashes")  # noqa
-
-    # @property
-    # def DialogFlow(self) -> dialogflow.DialogFlow:
-    #     return self.get_cog("DialogFlow")  # noqa
 
     @property
     def Welcome(self) -> welcome.Welcome:

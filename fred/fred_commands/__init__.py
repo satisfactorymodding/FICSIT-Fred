@@ -17,14 +17,13 @@ from .bot_meta import BotCmds
 from .channels import ChannelCmds
 from .crashes import CrashCmds
 from .dbcommands import CommandCmds
-from .dialogflow import DialogflowCmds
 from .experience import EXPCmds
 from .help import HelpCmds, FredHelpEmbed
 from ..libraries import createembed
 from ..libraries.view.mod_picker import ModPicker
 
 
-class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, DialogflowCmds, EXPCmds, HelpCmds):
+class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
     @BaseCmds.listener()
     async def on_command_error(self, ctx: commands.Context, error):
         # We get an error about commands being found when using "runtime" commands, so we have to ignore that
