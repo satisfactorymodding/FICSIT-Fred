@@ -13,13 +13,12 @@ pytesseract = "^0.3.8"
 python-dotenv = "^1.0.0"
 algoliasearch = "^3.0.0"
 SQLObject = "^3.9.1"
-google-cloud-dialogflow = "^2.11.0"
 aiohttp = "^3.10.0"
 setuptools = "^72.1.0"
 psycopg2-binary = "^2.9.9"
 semver = "^3.0.2"
 pyre2-updated = "^0.3.8"
-regex = "^2024.7.24"
+regex = "^2024.9.11"
 
 [tool.poetry.group.dev.dependencies]
 black = {extras = ["d"], version = "^24.8.0"}

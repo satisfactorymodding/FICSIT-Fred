@@ -20,11 +20,6 @@ Docker is for making containers. If you're not sure what that means, look it up 
 You can get docker [here](https://docs.docker.com/engine/install/). For Linux, make sure to **not** use Docker Desktop. For Windows, it is the easiest way.
 If you don't want to install Docker (especially on Windows where Docker Desktop can take up resources and requires virtualisation to be enabled), you can also manually set up a PostgreSQL DB and configure Fred to point to it. More on that later.
 
-#### (Optional) Dialogflow auth
-
-This is optional because this feature is currently disabled in Fred.
-You'll have get authentication information for dialogflow if you want to work on that.
-
 ### Setup
 
 Two choices here: All through docker or hybrid local/docker.
