@@ -287,9 +287,7 @@ class Bot(commands.Bot):
                 self.logger.info("Processing commands")
                 await self.process_commands(message)
             else:
-                reacted = await self.Crashes.process_message(message)
-                # if not reacted:
-                #     await self.DialogFlow.process_message(message)
+                _reacted = await self.Crashes.process_message(message)
         self.logger.info("Finished processing a message", extra=common.message_info(message))
 
     async def repository_query(self, query: str):
