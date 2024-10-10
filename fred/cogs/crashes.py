@@ -523,7 +523,7 @@ class InstallInfo:
                     p1 = p1.lower()
                     p2 = p2.lower()
                 if Path(p1) != Path(p2):
-                    self.mismatches.append(f"Game Path: (`{path}`)")
+                    self.mismatches.append(f"Game Path: ({path})")
             else:
                 self.game_path = path
 
