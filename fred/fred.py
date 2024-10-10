@@ -67,9 +67,9 @@ class Bot(commands.Bot):
         self.isReady = True
         self.logger.info(f"We have logged in as {self.user} with prefix {self.command_prefix}")
 
-    @staticmethod
-    async def on_reaction_add(reaction: nextcord.Reaction, user: nextcord.User) -> None:
+    async def on_reaction_add(self, reaction: nextcord.Reaction, user: nextcord.User) -> None:
         if not user.bot and reaction.message.author.bot and reaction.emoji == "❌":
+            self.logger.info("Removing my own message because someone reacted with ❌.")
             await reaction.message.delete()
 
     def setup_DB(self):
@@ -204,14 +204,20 @@ class Bot(commands.Bot):
             return False
 
     async def reply_to_msg(
-        self, message: nextcord.Message, content: Optional[str] = None, propagate_reply=True, **kwargs
+        self,
+        message: nextcord.Message,
+        content: Optional[str] = None,
+        propagate_reply: bool = True,
+        **kwargs,
     ) -> nextcord.Message:
         self.logger.info("Replying to a message", extra=common.message_info(message))
         # use this line if you're trying to debug discord throwing code 400s
         # self.logger.debug(jsonpickle.dumps(dict(content=content, **kwargs), indent=2))
+        pingee = message.author
         if propagate_reply and message.reference is not None:
             reference = message.reference
             if (referenced_message := message.reference.cached_message) is not None:
+                pingee = referenced_message.author
                 if referenced_message.author == self.user:
                     reference = message
         else:
@@ -222,7 +228,12 @@ class Bot(commands.Bot):
         if isinstance(reference, nextcord.MessageReference):
             reference.fail_if_not_exists = False
 
-        return await message.channel.send(content, reference=reference, **kwargs)
+        try:
+            return await message.channel.send(content, reference=reference, **kwargs)
+        except (nextcord.HTTPException, nextcord.Forbidden):
+            if pingee.mention not in content:
+                content += f"\n-# {pingee.mention} ↩️"
+            return await message.channel.send(content, **kwargs)
 
     async def reply_question(
         self, message: nextcord.Message, question: Optional[str] = None, **kwargs
@@ -290,6 +301,7 @@ class Bot(commands.Bot):
         self.logger.info(f"SMR query of length {len(query)} requested")
 
         async with await self.web_session.post("https://api.ficsit.app/v2/query", json={"query": query}) as response:
+            response.raise_for_status()
             self.logger.info(f"SMR query returned with response {response.status}")
             value = await response.json()
             self.logger.info("SMR response decoded")

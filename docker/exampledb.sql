@@ -788,7 +788,7 @@ COPY public.crashes (id, name, crash, response) FROM stdin;
 54	.netmissing	Install a version of .NET Framework SDK at	Your .NET Framework install is either missing or oudated. Please download and install the latest one from https://dotnet.microsoft.com/download/visual-studio-sdks. Make sure to download the .NET **Framework**SDK
 55	noautomationtool	UATHelper: Package Mod Task (Windows): RunUAT.bat ERROR: Visual studio and/or AutomationTool.csproj was not found, nor was Engine\\Binaries\\DotNET\\AutomationTool.exe. Can't run the automation tool.	Open your .sln with Visual Studio/Rider and build the project for Shipping
 64	tolowercase	c\\.toLowerCase is not a function	>tolowercase
-68	flip	\\(╯°□°\\）╯︵ ┻━┻	┬─┬ ノ( ゜-゜ノ)
+68	flip	\\(╯°□°\\)╯︵ ┻━┻	┬─┬ ノ( ゜-゜ノ)
 69	fixit	Can we (fix\\s*it|ficsit)\\s*?	Yes we can!
 70	oldproject	ERROR: Cannot find game version file	Your project is outdated. Please update it
 71	needcompile	Module\\s+[‘‘'’`]*FactoryGame[‘‘'’`]*\\s+could\\s+not\\s+be\\s+found	Please open your .sln with Visual Studio/Rider and build the project for both Development Editor and Shipping
