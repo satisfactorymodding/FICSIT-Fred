@@ -187,7 +187,7 @@ class EXPCmds(BaseCmds):
         role: Role
         role_id = role.id
 
-        if config.DialogflowExceptionRoles.check(role_id):
+        if config.RankRoles.check(role_id):
             await self.bot.reply_to_msg(ctx.message, "This role is already a level role")
             return
 

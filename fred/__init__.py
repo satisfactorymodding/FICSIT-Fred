@@ -19,7 +19,6 @@ ENVVARS = (
     "FRED_SQL_PASSWORD",
     "FRED_SQL_HOST",
     "FRED_SQL_PORT",
-    # "DIALOGFLOW_AUTH",
 )
 
 for var in ENVVARS:

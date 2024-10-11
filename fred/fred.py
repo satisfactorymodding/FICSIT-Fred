@@ -15,7 +15,7 @@ import sqlobject as sql
 from nextcord.ext import commands
 
 from . import config
-from .cogs import crashes, dialogflow, mediaonly, webhooklistener, welcome, levelling
+from .cogs import crashes, mediaonly, webhooklistener, welcome, levelling
 from .fred_commands import Commands, FredHelpEmbed
 from .libraries import createembed, common
 
@@ -102,7 +102,6 @@ class Bot(commands.Bot):
         self.add_cog(webhooklistener.Githook(self))
         self.add_cog(mediaonly.MediaOnly(self))
         self.add_cog(crashes.Crashes(self))
-        self.add_cog(dialogflow.DialogFlow(self))
         self.add_cog(welcome.Welcome(self))
         self.add_cog(levelling.Levelling(self))
 
@@ -115,10 +114,6 @@ class Bot(commands.Bot):
     @property
     def Crashes(self) -> crashes.Crashes:
         return self.get_cog("Crashes")  # noqa
-
-    @property
-    def DialogFlow(self) -> dialogflow.DialogFlow:
-        return self.get_cog("DialogFlow")  # noqa
 
     @property
     def Welcome(self) -> welcome.Welcome:
@@ -292,9 +287,7 @@ class Bot(commands.Bot):
                 self.logger.info("Processing commands")
                 await self.process_commands(message)
             else:
-                reacted = await self.Crashes.process_message(message)
-                if not reacted:
-                    await self.DialogFlow.process_message(message)
+                _reacted = await self.Crashes.process_message(message)
         self.logger.info("Finished processing a message", extra=common.message_info(message))
 
     async def repository_query(self, query: str):
