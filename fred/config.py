@@ -8,6 +8,7 @@ from typing import Optional, Any
 
 import nextcord
 from sqlobject import SQLObject, IntCol, BoolCol, JSONCol, BigIntCol, StringCol, FloatCol, sqlhub
+from sqlobject.dberrors import DuplicateEntryError
 
 
 class PermissionRoles(SQLObject):
@@ -110,52 +111,6 @@ class MediaOnlyChannels(SQLObject):
     @staticmethod
     def check(channel_id: int) -> bool:
         return bool(MediaOnlyChannels.selectBy(channel_id=channel_id).getOne(False))
-
-
-class DialogflowChannels(SQLObject):
-    class sqlmeta:
-        table = "dialogflow_channels"
-
-    channel_id = BigIntCol()
-
-    @staticmethod
-    def check(channel_id: int) -> bool:
-        return bool(DialogflowChannels.selectBy(channel_id=channel_id).getOne(False))
-
-
-class DialogflowExceptionRoles(SQLObject):
-    class sqlmeta:
-        table = "dialogflow_exception_roles"
-
-    role_id = BigIntCol()
-
-    @staticmethod
-    def check(role_id: int) -> bool:
-        return bool(DialogflowExceptionRoles.selectBy(role_id=role_id).getOne(False))
-
-    @staticmethod
-    def fetch_all() -> list[int]:
-        query = DialogflowExceptionRoles.select()
-        return [role.role_id for role in query.lazyIter()]
-
-
-class Dialogflow(SQLObject):
-    intent_id = StringCol()
-    data = StringCol()
-    response = StringCol()
-    has_followup = BoolCol()
-
-    def as_dict(self) -> dict[str, Any]:
-        return dict(
-            intent_id=self.intent_id,
-            data=json.loads(str(self.data)) if self.data else None,
-            response=self.response,
-            has_followup=self.has_followup,
-        )
-
-    @staticmethod
-    def fetch(intent_id: str, data: dict) -> Optional[Dialogflow]:
-        return Dialogflow.selectBy(intent_id=intent_id, data=data).getOne(None)
 
 
 type CommandsOrCrashesDict = dict[str, str | StringCol]
@@ -282,7 +237,10 @@ def migrate():
     for migration in valid_migrations:
         sqlhub.processConnection.query(migration.read_text())
 
-    Misc.create_or_change("migration_rev", _migration_rev(migrations_filenames[0]))
+    try:
+        Misc.create_or_change("migration_rev", _migration_rev(migrations_filenames[0]))
+    except DuplicateEntryError as e:
+        print(f"UNABLE TO RUN MIGRATION DUE TO {e}")
 
 
 def _migration_rev(filepath: pathlib.Path) -> int:
