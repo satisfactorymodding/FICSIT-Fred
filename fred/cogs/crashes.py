@@ -182,7 +182,7 @@ class Crashes(FredCog):
                         if command_response.startswith(self.bot.command_prefix):  # is alias
                             command = config.Commands.fetch(command_response.strip(self.bot.command_prefix))
                         yield CrashResponse(
-                            name=command["name"],
+                            name=crash["name"],
                             value=command["content"],
                             attachment=command["attachment"],
                             inline=True,
@@ -523,7 +523,7 @@ class InstallInfo:
                     p1 = p1.lower()
                     p2 = p2.lower()
                 if Path(p1) != Path(p2):
-                    self.mismatches.append(f"Game Path: (`{path}`)")
+                    self.mismatches.append(f"Game Path: ({path})")
             else:
                 self.game_path = path
 

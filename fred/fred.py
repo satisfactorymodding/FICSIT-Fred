@@ -69,7 +69,7 @@ class Bot(commands.Bot):
 
     async def on_reaction_add(self, reaction: nextcord.Reaction, user: nextcord.User) -> None:
         if not user.bot and reaction.message.author.bot and reaction.emoji == "❌":
-            self.logger.info("Removing my own message because someone reacted with ❌.")
+            self.logger.info(f"Removing my own message because {user.display_name} reacted with ❌.")
             await reaction.message.delete()
 
     def setup_DB(self):
@@ -294,6 +294,7 @@ class Bot(commands.Bot):
         self.logger.info(f"SMR query of length {len(query)} requested")
 
         async with await self.web_session.post("https://api.ficsit.app/v2/query", json={"query": query}) as response:
+            response.raise_for_status()
             self.logger.info(f"SMR query returned with response {response.status}")
             value = await response.json()
             self.logger.info("SMR response decoded")
