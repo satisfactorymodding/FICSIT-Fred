@@ -108,17 +108,17 @@ class UserProfile:
         logpayload["current_level"] = self.rank
         if expected_level != self.rank:
             logger.info("Correcting a mismatched level", extra=logpayload)
-            if self.DB_user.accepts_dms:
-                if expected_level > self.rank:
-                    await Levelling.bot.send_DM(
-                        self.member,
-                        f"You went up from level {self.rank} to level {expected_level}! " f"Congratulations!",
-                    )
-                else:
-                    await Levelling.bot.send_DM(
-                        self.member,
-                        f"You went down from level {self.rank} to level {expected_level}... " f"Sorry about that",
-                    )
+            # if self.DB_user.accepts_dms:
+            #     if expected_level > self.rank:
+            #         await Levelling.bot.send_DM(
+            #             self.member,
+            #             f"You went up from level {self.rank} to level {expected_level}! " f"Congratulations!",
+            #         )
+            #     else:
+            #         await Levelling.bot.send_DM(
+            #             self.member,
+            #             f"You went down from level {self.rank} to level {expected_level}... " f"Sorry about that",
+            #         )
             self.rank = expected_level
         await self.validate_role()
 
@@ -189,7 +189,7 @@ class Levelling(common.FredCog):
             if datetime.now() >= self.xp_timers[profile.user_id]:
                 await profile.increment_xp()
             else:
-                self.logger.info(
+                self.logger.debug(
                     "Levelling: Someone sent a message too fast and will not be awarded xp",
                     extra=common.message_info(message),
                 )
