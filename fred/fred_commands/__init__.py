@@ -144,12 +144,17 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
             if view:
 
                 async def callback(interaction: nextcord.Interaction):
-                    logging.info(interaction.data.values)
-                    new_embed, new_attachment, _ = await createembed.mod_embed(interaction.data["values"][0], self.bot)
-                    # Two edits because the view doesn't go away with one... go figure why
-                    await msg.edit(view=None)
-                    await msg.edit(embed=new_embed, file=new_attachment)
-                    view.stop()
+                    if interaction.user == ctx.author:
+                        logging.info(interaction.data.values)
+                        new_embed, new_attachment, _ = await createembed.mod_embed(
+                            interaction.data["values"][0], self.bot
+                        )
+                        # Two edits because the view doesn't go away with one... go figure why
+                        await msg.edit(view=None)
+                        await msg.edit(embed=new_embed, file=new_attachment)
+                        view.stop()
+                    else:
+                        await interaction.send("Only the user who called this command can do this!", ephemeral=True)
 
                 async def timeout():
                     await msg.edit(view=None)
