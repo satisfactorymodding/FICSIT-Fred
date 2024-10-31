@@ -4,12 +4,13 @@ import asyncio
 import inspect
 import io
 import logging
+from json import dumps
 from os.path import split
 from urllib.parse import urlparse
 
 import nextcord
 import re2
-from algoliasearch.search_client import SearchClient
+from algoliasearch.search.client import SearchClient
 from nextcord.ext.commands.view import StringView
 
 from ._baseclass import BaseCmds, common, config, commands
@@ -169,16 +170,22 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         """Usage: `docsearch (search: str)`
         Response: Equivalent to using the search function on the SMR docs page; links the first search result"""
         self.logger.info(f"Searching the documentation. {search =}")
-        client: SearchClient = SearchClient.create("BH4D9OD16A", "53b3a8362ea7b391f63145996cfe8d82")
-        index = client.init_index("ficsit")
-        index.set_settings({"searchableAttributes": ["url"]})
-        query = index.search(search, {"attributesToRetrieve": "*"})
-        import json
+        client: SearchClient = SearchClient("2FDCZBLZ1A", "28531804beda52a04275ecd964db429d")
 
-        self.logger.debug(json.dumps(query, indent=2))
-        for hit in query["hits"]:
-            if hit["hierarchy"]["lvl0"].endswith("latest"):
-                await self.bot.reply_to_msg(ctx.message, f"This is the best result I got from the SMD :\n{hit['url']}")
+        query = await client.search_single_index(
+            index_name="ficsit",
+            search_params={
+                "query": search,
+                "facetFilters": [
+                    "component_name:satisfactory-modding",
+                    "component_version:latest",
+                ],
+            },
+        )
+
+        for hit in query.hits:
+            if hit.hierarchy["lvl0"].endswith("latest"):
+                await self.bot.reply_to_msg(ctx.message, f"This is the best result I got from the SMD :\n{hit.url}")
                 return
 
 
