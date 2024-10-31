@@ -17,12 +17,12 @@ FROM alpine AS build
 WORKDIR /deps
 
 #RUN pip --no-cache-dir install --progress-bar=off "poetry==1.8"
-RUN apk update
-RUN apk add --no-cache g++ git re2-dev poetry python3-dev
+RUN apk update; apk add --no-cache g++ git re2-dev poetry python3-dev
+
 COPY pyproject.toml poetry.lock poetry.toml ./
-RUN python -VV
 RUN poetry env use $(which python)
 RUN poetry install -nvvv --no-root --compile --only main
+
 COPY fred ./fred/
 RUN poetry install -nvvv --only-root --compile
 
@@ -31,5 +31,5 @@ FROM runtime
 COPY --from=build /deps/.venv ./venv
 COPY fred ./fred/
 COPY *.env .
-RUN pwd
-CMD ./venv/bin/python -m fred
+
+CMD ["./venv/bin/python", "-m", "fred"]
