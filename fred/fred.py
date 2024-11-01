@@ -143,7 +143,7 @@ class Bot(commands.Bot):
     async def githook_send(self, data: dict):
         self.logger.info("Handling GitHub payload", extra={"data": data})
 
-        embed: nextcord.Embed | None = await createembed.run(data)
+        embed: nextcord.Embed | None = await createembed.github_embed(data)
         if embed is None:
             self.logger.info("Non-supported Payload received")
         else:
