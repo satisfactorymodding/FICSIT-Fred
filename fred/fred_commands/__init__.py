@@ -4,7 +4,6 @@ import asyncio
 import inspect
 import io
 import logging
-from json import dumps
 from os.path import split
 from urllib.parse import urlparse
 
