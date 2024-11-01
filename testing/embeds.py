@@ -6,7 +6,7 @@ from os.path import abspath
 import sys
 
 sys.path.insert(0, abspath("./bot"))
-from fred.libraries.createembed import run
+from fred.libraries.createembed import github_embed
 from asyncio import run as nonawait
 from json import load
 from os import getenv
@@ -17,7 +17,7 @@ with open(abspath("./tests/push.json")) as j:
     test_data = load(j)
 
 test_data["type"] = "push"
-embed = nonawait(run(test_data))
+embed = nonawait(github_embed(test_data))
 url = getenv("TESTWEBHOOKURL")
 response = post(url, json={"embeds": [embed.to_dict()]})
 print(response)

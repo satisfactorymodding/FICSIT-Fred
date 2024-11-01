@@ -77,6 +77,22 @@ class BaseCmds(common.FredCog):
             await self.bot.reply_to_msg(ctx.message, "Invalid sub command passed...")
             return
 
+    @commands.command()
+    @commands.check(common.l4_only)
+    async def alias(self, ctx: commands.Context):
+        """Usage: don't
+        Purpose: to remind people that this isn't how you do this command
+        Notes: see issue #102"""
+        probably_command = ctx.message.content.partition("alias")[2].split()[0]
+        if probably_command in ("add", "remove"):
+            await self.bot.reply_to_msg(
+                ctx.message, f"This is not the right command! Use `{probably_command} alias` instead!"
+            )
+        else:
+            await self.bot.reply_to_msg(
+                ctx.message, f"This wouldn't even be a valid command if you did it the right way around!"
+            )
+
 
 class SearchFlags(commands.FlagConverter, delimiter="=", prefix="-"):
     column: str = "name"

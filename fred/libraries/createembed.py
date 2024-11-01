@@ -27,7 +27,7 @@ repo_name, repo_full_name = "", ""
 
 
 # GitHub Update Embed Formats
-async def run(data: dict) -> nextcord.Embed | None:
+async def github_embed(data: dict) -> nextcord.Embed | None:
     embed = None
 
     global repo_name, repo_full_name
