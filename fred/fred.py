@@ -122,16 +122,19 @@ class Bot(commands.Bot):
     async def on_error(self, event_method: str, *args, **kwargs):
         exc_type, value, tb = sys.exc_info()
         if event_method == "on_message":
-            channel: nextcord.TextChannel | nextcord.DMChannel = args[0].channel
+            channel: nextcord.abc.GuildChannel | nextcord.DMChannel = args[0].channel
             if isinstance(channel, nextcord.DMChannel):
-                channel_str = f" in {channel.recipient}'s DMs"
+                if channel.recipient is not None:
+                    channel_str = f"{channel.recipient}'s DMs"
+                else:
+                    channel_str = "a DM"
             else:
-                channel_str = f" in {channel.mention}"
+                channel_str = f"{channel.guild.name}: `#{channel.name}` ({channel.mention})"
         else:
             channel_str = ""
 
         fred_str = f"Fred v{self.version}"
-        error_meta = f"{exc_type.__name__} exception handled in `{event_method}` {channel_str}"
+        error_meta = f"{exc_type.__name__} exception handled in `{event_method}` in {channel_str}"
         full_error = f"\n{value}\n\n{''.join(traceback.format_tb(tb))}"
         self.logger.error(f"{fred_str}\n{error_meta}\n{full_error}")
 
