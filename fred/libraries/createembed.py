@@ -336,38 +336,48 @@ async def webp_icon_as_png(url: str, bot: Bot) -> tuple[nextcord.File, str]:
 
 
 # SMR Lookup Embed Formats
-async def mod_embed(name: str, bot: Bot) -> tuple[nextcord.Embed | None, nextcord.File | None, list[dict] | None]:
+async def mod_embed(name: str, bot: Bot, using_id = False) -> tuple[nextcord.Embed | None, nextcord.File | None, list[dict] | None]:
     # GraphQL Queries
     # fmt: off
-    query = '''{
-          getMods(filter: { search: "''' + name + '''", order_by: search, order:desc, limit:100}) {
+    query_values = '''
+    name
+    authors {
+        user {
+          username
+        }
+    }
+    logo
+    short_description
+    last_version_date
+    id
+    compatibility {
+        EA {
+          state
+          note
+        }
+        EXP {
+          state
+          note
+        }
+    }
+    '''
+    if using_id:
+        query = '''{
+        getModByIdOrReference(modIdOrReference: "%s") {
+            %s
+        }
+        }''' % (name, query_values)
+    else:
+        query = '''{
+        getMods(filter: { search: "%s", order_by: search, order:desc, limit:100}) {
             mods {
-              name
-              authors {
-                user {
-                  username
-                }
-              }
-              logo
-              short_description
-              last_version_date
-              id
-              compatibility {
-                EA {
-                  state
-                  note
-                }
-                EXP {
-                  state
-                  note
-                }
-              }
+                %s
             }
-          }
-        }'''
+        }
+        }''' % (name, query_values)
     # fmt: on
     result = await bot.repository_query(query)
-    mods: list[dict] = result["data"]["getMods"]["mods"]
+    mods: list[dict] = [result["data"]["getModByIdOrReference"]] if using_id else result["data"]["getMods"]["mods"]
     # logger.debug(mods)
     if not mods:
         return None, None, None
