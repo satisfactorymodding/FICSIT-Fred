@@ -226,7 +226,7 @@ class Bot(commands.Bot):
         try:
             return await message.channel.send(content, reference=reference, **kwargs)
         except (nextcord.HTTPException, nextcord.Forbidden):
-            if pingee.mention not in content:
+            if content and pingee.mention not in content:
                 content += f"\n-# {pingee.mention} ↩️"
             return await message.channel.send(content, **kwargs)
 
