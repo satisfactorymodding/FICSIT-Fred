@@ -147,7 +147,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
                     if interaction.user == ctx.author:
                         logging.info(interaction.data.values)
                         new_embed, new_attachment, _ = await createembed.mod_embed(
-                            interaction.data["values"][0], self.bot
+                            interaction.data["values"][0], self.bot, using_id=True
                         )
                         # Two edits because the view doesn't go away with one... go figure why
                         await msg.edit(view=None)
