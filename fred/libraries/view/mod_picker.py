@@ -18,4 +18,4 @@ class ModSelect(nextcord.ui.Select):
         super().__init__()
 
     def add_mod_option(self, mod: dict):
-        self.add_option(label=mod.get("name"))
+        self.add_option(label=mod.get("name"), value=mod.get("id"))
