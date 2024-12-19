@@ -336,7 +336,9 @@ async def webp_icon_as_png(url: str, bot: Bot) -> tuple[nextcord.File, str]:
 
 
 # SMR Lookup Embed Formats
-async def mod_embed(name: str, bot: Bot, using_id = False) -> tuple[nextcord.Embed | None, nextcord.File | None, list[dict] | None]:
+async def mod_embed(
+    name: str, bot: Bot, using_id=False
+) -> tuple[nextcord.Embed | None, nextcord.File | None, list[dict] | None]:
     # GraphQL Queries
     # fmt: off
     query_values = '''

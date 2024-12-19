@@ -145,6 +145,8 @@ class Crashes(FredCog):
         for mod in queried_mods:
             mod_name = mod["name"]
             mod_compat = mod["compatibility"]
+            if mod_compat is None:
+                continue  # we have no way of knowing
             compat_info = mod_compat.get("EA") or mod_compat.get("EXP")
             mod_latest_version = Version.parse(mod["versions"][0]["version"])
 
@@ -391,7 +393,8 @@ class Crashes(FredCog):
                 embed = createembed.crashes(filtered_responses)
                 embed.set_author(
                     name=f"Automated responses for {message.author.global_name or message.author.display_name} ({message.author.id})",
-                    icon_url=message.author.avatar.url,
+                    icon_url=message.author.avatar and message.author.avatar.url,
+                    # defaults to None if no avatar, like mircea
                 )
                 await self.bot.reply_to_msg(message, embed=embed, propagate_reply=False)
             return True
