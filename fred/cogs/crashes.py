@@ -393,7 +393,8 @@ class Crashes(FredCog):
                 embed = createembed.crashes(filtered_responses)
                 embed.set_author(
                     name=f"Automated responses for {message.author.global_name or message.author.display_name} ({message.author.id})",
-                    icon_url=message.author.avatar.url,
+                    icon_url=message.author.avatar and message.author.avatar.url,
+                    # defaults to None if no avatar, like mircea
                 )
                 await self.bot.reply_to_msg(message, embed=embed, propagate_reply=False)
             return True
