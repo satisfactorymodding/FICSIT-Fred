@@ -180,18 +180,20 @@ class Bot(commands.Bot):
             self.logger.info("The user refuses to have DMs sent to them")
             return False
 
-        if not user.dm_channel:
-            await user.create_dm()
-
         try:
+
+            if not user.dm_channel:
+                await user.create_dm()
+
             if not embed:
                 embed = createembed.DM(content)
                 content = None
+
             await user.dm_channel.send(content=content, embed=embed, **kwargs)
             return True
         except Exception:  # noqa
             self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
-        return False
+            return False
 
     async def checked_DM(self, user: nextcord.User, **kwargs) -> bool:
         user_meta = config.Users.create_if_missing(user)
