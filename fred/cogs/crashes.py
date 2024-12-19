@@ -145,6 +145,8 @@ class Crashes(FredCog):
         for mod in queried_mods:
             mod_name = mod["name"]
             mod_compat = mod["compatibility"]
+            if mod_compat is None:
+                continue  # we have no way of knowing
             compat_info = mod_compat.get("EA") or mod_compat.get("EXP")
             mod_latest_version = Version.parse(mod["versions"][0]["version"])
 
