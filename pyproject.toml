@@ -1,24 +1,23 @@
 [tool.poetry]
 name = "fred"
-version = "2.23.1"
+version = "2.24.0"
 description = "A Discord bot for the Satisfactory Modding Discord "
 authors = ["Feyko <feykook@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>", "Borketh <does.not.kompute@gmail.com>"]
 license = "MIT License"
 
 [tool.poetry.dependencies]
-python = "^3.12"
-nextcord = {extras = ["speed"], version = "^2.6.0"}
-Pillow = "^10.4.0"
-pytesseract = "^0.3.8"
-python-dotenv = "^1.0.0"
-algoliasearch = "^4.0.0"
-SQLObject = "^3.9.1"
-aiohttp = "^3.10.11"
-setuptools = "^72.1.0"
-psycopg2-binary = "^2.9.9"
+python = "^3.12.0"
+nextcord = { extras = ["speed"], version = "^3.0.1" }
+Pillow = "^11.0.0"
+pytesseract = "^0.3.13"
+python-dotenv = "^1.0.1"
+algoliasearch = "^4.11.2"
+SQLObject = "^3.12.0"
+aiohttp = "^3.11.11"
 semver = "^3.0.2"
 pyre2-updated = "^0.3.8"
-regex = "^2024.9.11"
+regex = "^2024.11.6"
+psycopg = { extras = ["binary"], version = "^3.2.3" }
 
 [tool.poetry.group.dev.dependencies]
 black = {extras = ["d"], version = "^24.8.0"}
