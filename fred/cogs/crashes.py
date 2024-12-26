@@ -546,7 +546,7 @@ class InstallInfo:
         # It used to matter more when we were using slower regex libraries. - Borketh
 
         lines: list[bytes] = log_file.readlines()
-        vanilla_info_search_area = filter(lambda l: re2.match("^LogInit", l), map(bytes.decode, lines))
+        vanilla_info_search_area = filter(lambda l: re2.match("^LogInit", l), map(lambda b: b.decode(), lines))
 
         info = {}
         patterns = [
@@ -571,7 +571,8 @@ class InstallInfo:
             logger.info("Didn't find all four pieces of information normally found in a log!")
             logger.debug(json.dumps(info, indent=2))
 
-        mod_loader_logs = filter(lambda l: re2.match("LogSatisfactoryModLoader", l), map(bytes.decode, lines))
+        mod_loader_logs = filter(lambda l: re2.match("LogSatisfactoryModLoader", l), map(lambda b: b.decode(), lines))
+
         for line in mod_loader_logs:
             if match := re2.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):
                 info |= match.groupdict()

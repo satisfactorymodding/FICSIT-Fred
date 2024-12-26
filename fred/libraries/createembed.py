@@ -326,7 +326,7 @@ def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.
 
 
 async def webp_icon_as_png(url: str, bot: Bot) -> tuple[nextcord.File, str]:
-    with BytesIO(await bot.async_url_get(url, get=bytes)) as virtual_webp, BytesIO() as virtual_png:
+    with BytesIO(await bot.async_url_get(url)) as virtual_webp, BytesIO() as virtual_png:
         webp_dat = Image.open(virtual_webp).convert("RGB")
         webp_dat.save(virtual_png, "png")
         virtual_png.seek(0)

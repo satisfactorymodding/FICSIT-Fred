@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import re
+import regex as re
 from functools import lru_cache, singledispatch
 from typing import TYPE_CHECKING, Optional
 
@@ -60,8 +60,7 @@ async def mod_only(ctx: Context) -> bool:
 
 
 @singledispatch
-async def permission_check(_ctx_or_member, *, level: int) -> bool:
-    pass
+async def permission_check(_ctx_or_member, *, level: int) -> bool: ...
 
 
 @permission_check.register
@@ -142,9 +141,8 @@ owo_table = {
     r"r": r"w",
     r"R": r"W",
     r"ove": r"uv",
-    r"!": r"! OwO ",
-    r"(?<![aeiou])n([aeiou])": r"ny\1",
-    r"(?<![aeiou])N([aeiou])": r"Ny\1",
+    r"!": r":3",
+    r"(?<![aeiou])([Nn])([aeiou])": r"\1y\2",
     r"you": "u",
     r"You": "U",
     r"fuzzy": r"fuzzy-wuzzy",
