@@ -218,12 +218,15 @@ class Crashes(FredCog):
                 image = image.resize(
                     (round(image.width * ratio), round(image.height * ratio)), Image.Resampling.LANCZOS
                 )
+            try:
+                enhancer_contrast = ImageEnhance.Contrast(image)
 
-            enhancer_contrast = ImageEnhance.Contrast(image)
-
-            image = enhancer_contrast.enhance(2)
-            enhancer_sharpness = ImageEnhance.Sharpness(image)
-            image = enhancer_sharpness.enhance(10)
+                image = enhancer_contrast.enhance(2)
+                enhancer_sharpness = ImageEnhance.Sharpness(image)
+                image = enhancer_sharpness.enhance(10)
+            except ValueError as e:
+                self.logger.warning("Failed to enhance contrast.")
+                self.logger.exception(e)
 
             image_text = await self.bot.loop.run_in_executor(self.bot.executor, image_to_string, image)
             self.logger.info("OCR returned the following data:\n" + image_text)
@@ -364,6 +367,7 @@ class Crashes(FredCog):
                     for j in jobs:
                         j.cancel()
                 else:
+                    await message.remove_reaction(EMOJI_CRASHES_ANALYZING, self.bot.user)
                     raise ex
 
         self.logger.info("Collecting job results")
