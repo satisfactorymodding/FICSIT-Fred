@@ -281,7 +281,9 @@ class Crashes(FredCog):
         return ext in ("png", "log", "txt", "zip", "json")
 
     async def _obtain_attachments(self, message: Message) -> AsyncGenerator[tuple[str, IO | Exception], None, None]:
-        cdn_links = re2.findall(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
+        cdn_links = re2.findall(
+            r"(https://(?:cdn.discordapp.com|media.discordapp.net)/attachments/\S+)", message.content
+        )
 
         yield bool(cdn_links or message.attachments)
 
