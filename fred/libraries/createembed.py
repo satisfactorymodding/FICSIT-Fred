@@ -271,10 +271,10 @@ def issue_comment(data: dict) -> nextcord.Embed:
 
 
 def _single_mod_embed(mod: dict) -> nextcord.Embed:
-    if zulu_time := mod.get("last_version_date"):
+    if zulu_time := mod.get("last_version_date") and len(mod.get("versions")) > 0:
         ts = timestamp(f"{zulu_time[:19]}+00:00")
     else:
-        ts = "(New)"
+        ts = ""
 
     *preceding, last = map(lambda a: a["user"]["username"], mod["authors"])
 
@@ -297,7 +297,8 @@ def _single_mod_embed(mod: dict) -> nextcord.Embed:
         if note := exp["note"]:
             desc += f"Note: {note}\n"
 
-    desc += f"\nLast Updated {ts}\nCreated by {authors}"
+    desc += f"\nLast Updated {ts}" if ts else "\n(No versions available!)"
+    desc += f"\nCreated by {authors}"
 
     return nextcord.Embed(
         title=mod["name"],
@@ -350,6 +351,9 @@ async def mod_embed(
     }
     logo
     short_description
+    versions(filter: {limit: 1, order: desc}) {
+        version
+    }
     last_version_date
     id
     compatibility {
