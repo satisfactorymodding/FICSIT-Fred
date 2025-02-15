@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import re
+import regex as re
 from functools import lru_cache, singledispatch
 from typing import TYPE_CHECKING, Optional
 
@@ -27,13 +27,11 @@ logger = new_logger(__name__)
 
 class FredCog(commands.Cog):
     bot: Bot = ...  # we can assume any cog will have a bot by the time it needs to be accessed
-    logger: logging.Logger = ...
 
     def __init__(self, bot: Bot):
         self.__class__.bot = bot
         self.bot = bot
         self.logger = new_logger(self.__class__.__name__)
-        self.__class__.logger = self.logger
         self.logger.debug("Cog loaded.")
 
 
@@ -60,8 +58,7 @@ async def mod_only(ctx: Context) -> bool:
 
 
 @singledispatch
-async def permission_check(_ctx_or_member, *, level: int) -> bool:
-    pass
+async def permission_check(_ctx_or_member, *, level: int) -> bool: ...
 
 
 @permission_check.register
@@ -142,9 +139,8 @@ owo_table = {
     r"r": r"w",
     r"R": r"W",
     r"ove": r"uv",
-    r"!": r"! OwO ",
-    r"(?<![aeiou])n([aeiou])": r"ny\1",
-    r"(?<![aeiou])N([aeiou])": r"Ny\1",
+    r"!": r":3",
+    r"(?<![aeiou])([Nn])([aeiou])": r"\1y\2",
     r"you": "u",
     r"You": "U",
     r"fuzzy": r"fuzzy-wuzzy",

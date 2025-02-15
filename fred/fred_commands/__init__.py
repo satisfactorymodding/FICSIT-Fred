@@ -128,6 +128,9 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         Response: If a near-exact match is found, gives you info about that mod.
         If close matches are found, up to 10 of those will be listed.
         If nothing even comes close, I'll let you know ;)"""
+
+        mod_name = mod_name.split("\n")[0]
+
         if len(mod_name) < 3:
             await self.bot.reply_to_msg(ctx.message, "Searching needs at least three characters!")
             return

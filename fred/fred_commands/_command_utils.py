@@ -2,8 +2,10 @@ from typing import Type
 
 from regex import ENHANCEMATCH, match, escape
 
-from ._baseclass import BaseCmds
 from ..config import Commands, Crashes, Misc
+from ..libraries.common import new_logger
+
+logger = new_logger("[Command/Crash Search]")
 
 
 def search(table: Type[Commands | Crashes], pattern: str, column: str, force_fuzzy: bool) -> (str | list[str], bool):
@@ -21,7 +23,7 @@ def search(table: Type[Commands | Crashes], pattern: str, column: str, force_fuz
         for item in table.fetch_all()
         if (item.get(column, None) is not None) and match(fuzzy_pattern, item[column], flags=ENHANCEMATCH)
     ]
-    BaseCmds.logger.info(fuzzies)
+    logger.info(fuzzies)
     return fuzzies[:5], False
 
 

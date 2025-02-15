@@ -218,12 +218,15 @@ class Crashes(FredCog):
                 image = image.resize(
                     (round(image.width * ratio), round(image.height * ratio)), Image.Resampling.LANCZOS
                 )
+            try:
+                enhancer_contrast = ImageEnhance.Contrast(image)
 
-            enhancer_contrast = ImageEnhance.Contrast(image)
-
-            image = enhancer_contrast.enhance(2)
-            enhancer_sharpness = ImageEnhance.Sharpness(image)
-            image = enhancer_sharpness.enhance(10)
+                image = enhancer_contrast.enhance(2)
+                enhancer_sharpness = ImageEnhance.Sharpness(image)
+                image = enhancer_sharpness.enhance(10)
+            except ValueError as e:
+                self.logger.warning("Failed to enhance contrast.")
+                self.logger.exception(e)
 
             image_text = await self.bot.loop.run_in_executor(self.bot.executor, image_to_string, image)
             self.logger.info("OCR returned the following data:\n" + image_text)
@@ -281,7 +284,9 @@ class Crashes(FredCog):
         return ext in ("png", "log", "txt", "zip", "json")
 
     async def _obtain_attachments(self, message: Message) -> AsyncGenerator[tuple[str, IO | Exception], None, None]:
-        cdn_links = re2.findall(r"(https://cdn.discordapp.com/attachments/\S+)", message.content)
+        cdn_links = re2.findall(
+            r"(https://(?:cdn.discordapp.com|media.discordapp.net)/attachments/\S+)", message.content
+        )
 
         yield bool(cdn_links or message.attachments)
 
@@ -362,6 +367,7 @@ class Crashes(FredCog):
                     for j in jobs:
                         j.cancel()
                 else:
+                    await message.remove_reaction(EMOJI_CRASHES_ANALYZING, self.bot.user)
                     raise ex
 
         self.logger.info("Collecting job results")
@@ -546,7 +552,7 @@ class InstallInfo:
         # It used to matter more when we were using slower regex libraries. - Borketh
 
         lines: list[bytes] = log_file.readlines()
-        vanilla_info_search_area = filter(lambda l: re2.match("^LogInit", l), map(bytes.decode, lines))
+        vanilla_info_search_area = filter(lambda l: re2.match("^LogInit", l), map(lambda b: b.decode(), lines))
 
         info = {}
         patterns = [
@@ -571,7 +577,8 @@ class InstallInfo:
             logger.info("Didn't find all four pieces of information normally found in a log!")
             logger.debug(json.dumps(info, indent=2))
 
-        mod_loader_logs = filter(lambda l: re2.match("LogSatisfactoryModLoader", l), map(bytes.decode, lines))
+        mod_loader_logs = filter(lambda l: re2.match("LogSatisfactoryModLoader", l), map(lambda b: b.decode(), lines))
+
         for line in mod_loader_logs:
             if match := re2.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):
                 info |= match.groupdict()

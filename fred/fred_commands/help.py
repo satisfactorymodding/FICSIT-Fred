@@ -189,9 +189,9 @@ class FredHelpEmbed(nextcord.Embed):
             if not cmd.subcommands:
                 solo_cmds.append(cmd)
             else:
-                embed.add_field(name=name, value="\n".join(sorted(map(lambda s: s.name, cmd.subcommands))), inline=True)
+                embed.add_field(name=name, value="\n".join(sorted(map(lambda s: s.name, cmd.subcommands))))
         if solo_cmds:
-            embed.add_field(name="other", value="\n".join(sorted(map(lambda s: s.name, solo_cmds))), inline=True)
+            embed.add_field(name="other", value="\n".join(sorted(map(lambda s: s.name, solo_cmds))))
 
         return embed
 

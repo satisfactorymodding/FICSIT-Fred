@@ -313,7 +313,7 @@ class Bot(commands.Bot):
                 rtn = await response.json()
             else:
                 content = await response.read()
-                rtn = content.decode("utf-8") if get == str else content
+                rtn = content.decode() if get == str else content
 
         self.logger.info(f"Data has length of {len(rtn)}")
         return rtn

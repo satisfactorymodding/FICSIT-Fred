@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fred"
-version = "2.24.0"
+version = "2.24.1"
 description = "A Discord bot for the Satisfactory Modding Discord "
 authors = ["Feyko <feykook@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>", "Borketh <does.not.kompute@gmail.com>"]
 license = "MIT License"
@@ -20,7 +20,7 @@ regex = "^2024.11.6"
 psycopg = { extras = ["binary"], version = "^3.2.3" }
 
 [tool.poetry.group.dev.dependencies]
-black = {extras = ["d"], version = "^24.8.0"}
+black = { extras = ["d"], version = "^24.8.0" }
 jsonpickle = "^3.0.0"
 
 [tool.poetry.scripts]

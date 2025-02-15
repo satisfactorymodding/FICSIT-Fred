@@ -76,7 +76,6 @@ class UserProfile:
                 return
             self.DB_user.rank_role_id = role_id
 
-            # if not self.guild.get_channel(config.Misc.fetch("mod_channel")).permissions_for(self.member).send_messages:
             if not await common.permission_check(self.member, level=6):
                 for member_role in self.member.roles:
                     if config.RankRoles.fetch_by_role(member_role.id) is not None:  # i.e. member_role is a rank role
