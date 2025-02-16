@@ -190,7 +190,14 @@ class Crashes(FredCog):
                             inline=True,
                         )
                 else:
-                    response = re2.sub(r"{(\d+)}", lambda m: match.group(int(m.group(1))), str(crash["response"]))
+
+                    def replace_response_value_with_captured(m: re2.Match) -> str:
+                        group = int(m.group(1))
+                        if group > len(match.groups()):
+                            return f"{{Group {group} not captured in crash regex!}}"
+                        return match.group(group)
+
+                    response = re2.sub(r"{(\d+)}", replace_response_value_with_captured, str(crash["response"]))
                     yield CrashResponse(name=crash["name"], value=response, inline=True)
 
     async def detect_and_fetch_pastebin_content(self, text: str) -> str:
