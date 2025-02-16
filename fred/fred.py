@@ -85,6 +85,8 @@ class Bot(commands.Bot):
             try:
                 connection = sql.connectionForURI(uri)
                 sql.sqlhub.processConnection = connection
+                config.migrate()
+                self.logger.debug("Applied migration.")
                 break
             except sql.dberrors.OperationalError:
                 self.logger.error(f"Could not connect to the DB on attempt {attempt}")
@@ -93,8 +95,6 @@ class Bot(commands.Bot):
         else:  # this happens if the loop is not broken by a successful connection
             raise ConnectionError("Could not connect to the DB")
         self.logger.info(f"Connected to the DB. Took {attempt} tries.")
-        config.migrate()
-        self.logger.debug("Applied migration.")
 
     def setup_cogs(self):
         self.logger.info("Setting up cogs")
