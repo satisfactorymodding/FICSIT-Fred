@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+import os
 from asyncio import Task, TaskGroup
 from os.path import split
 from pathlib import Path
@@ -17,7 +18,7 @@ re2.set_fallback_notification(re2.FALLBACK_WARNING)
 from PIL import Image, ImageEnhance
 from aiohttp import ClientResponseError
 from attr import dataclass
-from nextcord import Message, HTTPException, Forbidden, NotFound
+from nextcord import Message, HTTPException, Forbidden, NotFound, File
 from pytesseract import image_to_string, TesseractError
 from semver import Version
 
@@ -79,13 +80,10 @@ class Crashes(FredCog):
                 return None
 
     # fmt: off
-    # we don't need id but a bug with the API means it must be requested to return versions
-    # TODO remove this when the patched API is in prod
     _QUERY_TEMPLATE: Final[str] = """
     {
       getMods(filter: {references: %s, limit: 100}) {
         mods {
-          id
           name
           mod_reference
           versions(filter: {limit: 1, order: desc}) {
@@ -209,12 +207,26 @@ class Crashes(FredCog):
         else:
             return ""
 
-    async def process_text(self, text: str) -> list[CrashResponse]:
+    async def process_text(self, text: str, filename="") -> list[CrashResponse]:
         if not text:
             return []
+
         self.logger.info("Processing text.")
         responses = [msg async for msg in self.mass_regex(text)]
+
         responses.extend(await self.process_text(await self.detect_and_fetch_pastebin_content(text)))
+
+        if match := re2.search(r"([^\n]*Critical error:.*Engine exit[^\n]*\))", text, flags=re2.I | re2.M | re2.S):
+            filename = os.path.basename(filename)
+            crash = match.group(1)
+            responses.append(
+                CrashResponse(
+                    name=f"Crash found in {filename}",
+                    value="It has been attached to this message.",
+                    attachment=File(io.StringIO(crash), filename="Abridged " + filename, force_close=True),
+                )
+            )
+
         return responses
 
     async def process_image(self, file: IO) -> list[CrashResponse]:
@@ -252,7 +264,7 @@ class Crashes(FredCog):
                 info = InstallInfo.from_metadata_json(f, filename)
 
         if info is None:
-            return
+            return None
 
         if "FactoryGame.log" in files:
             with debug_zip.open("FactoryGame.log") as f:
@@ -275,7 +287,7 @@ class Crashes(FredCog):
                         yield from self._get_file_jobs(f"{filename}/{zipped_item_filename}", zip_item)
             case "log" | "txt" | "json":
                 self.logger.info(f"Adding job for log/text file {filename}")
-                yield self.process_text(str(file.read()))
+                yield self.process_text(str(file.read().decode()), filename=filename)
             case "png":
                 self.logger.info(f"Adding job for png file {filename}")
                 yield self.process_image(file)
@@ -392,12 +404,19 @@ class Crashes(FredCog):
 
         if filtered_responses := list(set(responses)):  # remove dupes
 
+            resp_files = [
+                await self.bot.obtain_attachment(att) if isinstance(att, str) else att
+                for resp in filtered_responses
+                if (att := resp.attachment) is not None
+            ]
+
             if len(filtered_responses) == 1:
                 self.logger.info("Found only one response to message, sending.")
                 await self.bot.reply_to_msg(
                     message,
                     f"{filtered_responses[0].value}\n-# Responding to `{filtered_responses[0].name}` triggered by {message.author.mention}",
                     propagate_reply=False,
+                    files=resp_files,
                 )
 
             else:
@@ -409,7 +428,7 @@ class Crashes(FredCog):
                     icon_url=message.author.avatar and message.author.avatar.url,
                     # defaults to None if no avatar, like mircea
                 )
-                await self.bot.reply_to_msg(message, embed=embed, propagate_reply=False)
+                await self.bot.reply_to_msg(message, embed=embed, propagate_reply=False, files=resp_files)
             return True
 
         else:

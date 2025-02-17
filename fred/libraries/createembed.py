@@ -416,7 +416,7 @@ class CrashResponse:
 
     name: str
     value: str
-    attachment: Optional[str] = None
+    attachment: Optional[str | nextcord.File] = None
     inline: bool = False
 
     def add_self_as_field(self, embed: nextcord.Embed):
