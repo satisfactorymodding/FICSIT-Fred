@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Optional
 from functools import lru_cache
 from typing import Coroutine, Type
 
@@ -110,7 +111,6 @@ class HelpCmds(BaseCmds):
 
 
 page_size: int = 30  # if you change this, make it a multiple of three
-field_size: int = page_size // 3  # because inlined fields stack up to three horizontally
 
 
 @attrs.define
@@ -231,25 +231,18 @@ class FredHelpEmbed(nextcord.Embed):
             "*The bot responds when a common issues are present "
             "in a message, pastebin, debug file, or screenshot.*\n"
         )
-        all_crashes = list(config.Crashes.selectBy())
+        all_crashes = list(config.Crashes.selectBy().orderBy("name"))
         logger.info(f"Fetched {len(all_crashes)} crashes from database.")
 
-        global page_size, field_size
+        global page_size
         # splits all crashes into groups of {page_size}
         pages = [all_crashes[i : i + page_size] for i in range(0, len(all_crashes), page_size)]
         try:
             page = pages[index]  # this is why try - user can provide index out of bounds
             # splits page into field groups of {field_size}
 
-            fields: list[dict] = [
-                {
-                    "name": cls.get_field_indices(index, field),
-                    "value": "\n".join(f"`{crash.as_dict()['name']}`" for crash in page[field : field + field_size]),
-                    "inline": True,
-                }
-                for field in range(0, len(page), field_size)
-            ]
-            return FredHelpEmbed(title, desc, fields=fields, usage="crashes [page]")
+            desc += "```\n" + ("\n".join(crash.name for crash in page)) + "\n```"
+            return FredHelpEmbed(title, desc, usage="crashes [page]")
 
         except IndexError:
             desc = f"There aren't that many crashes! Try a number less than {index}."
@@ -257,20 +250,18 @@ class FredHelpEmbed(nextcord.Embed):
 
     @classmethod
     def specific_crash(cls: Type[FredHelpEmbed], name: str) -> FredHelpEmbed:
-        if answer := list(config.Crashes.selectBy(name=name.lower())):
-            crash = answer[0].as_dict()
-        else:
-            crash = None
+
+        crash: Optional[config.Crashes] = config.Crashes.selectBy(name=name.lower()).getOne(None)
 
         desc = (
-            "Crash could not be found!"
-            if crash is None
-            else f"""
+            f"""
             **Regular expression:**
-            `{crash['crash']}`
+            `{crash.crash}`
             **Response:**
-            {crash['response']}
+            {crash.response}
             """
+            if crash is not None
+            else "Crash could not be found!"
         )
         return cls(f"Crash - {name}", desc, usage="crash [name]")
 
@@ -279,9 +270,9 @@ class FredHelpEmbed(nextcord.Embed):
         title = "List of Fred Commands"
         desc = "*These are normal commands that can be called by stating their name.*\n"
 
-        all_commands = list(config.Commands.selectBy())
+        all_commands = list(config.Commands.selectBy().orderBy("name"))
         logger.info(f"Fetched {len(all_commands)} commands from database.")
-        global page_size, field_size
+        global page_size
         # splits all commands into groups of {page_size}
         pages = [all_commands[page : page + page_size] for page in range(0, len(all_commands), page_size)]
         try:
@@ -289,17 +280,8 @@ class FredHelpEmbed(nextcord.Embed):
             page = pages[index]  # this is why try - user can provide index out of bounds
             # splits page into field groups of {field_size}
 
-            fields: list[dict] = [
-                {
-                    "name": cls.get_field_indices(index, field),
-                    "value": "\n".join(
-                        f"`{command.as_dict()['name']}`" for command in page[field : field + field_size]
-                    ),
-                    "inline": True,
-                }
-                for field in range(0, len(page), field_size)
-            ]
-            return cls(title, desc, fields=fields, usage="commands [page]")
+            desc += "```\n" + ("\n".join(command.name for command in page)) + "\n```"
+            return cls(title, desc, usage="commands [page]")
 
         except IndexError:
             desc = f"There aren't that many commands! Try a number less than {index}."
