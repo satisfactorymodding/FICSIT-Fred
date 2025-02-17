@@ -15,7 +15,6 @@ import re2
 
 re2.set_fallback_notification(re2.FALLBACK_WARNING)
 
-from PIL import Image, ImageEnhance
 from aiohttp import ClientResponseError
 from attr import dataclass
 from nextcord import Message, HTTPException, Forbidden, NotFound, File
@@ -23,7 +22,7 @@ from pytesseract import image_to_string, TesseractError
 from semver import Version
 
 from .. import config
-from ..libraries import createembed
+from ..libraries import createembed, ocr
 from ..libraries.common import FredCog, new_logger
 from ..libraries.createembed import CrashResponse
 
@@ -230,31 +229,7 @@ class Crashes(FredCog):
         return responses
 
     async def process_image(self, file: IO) -> list[CrashResponse]:
-        try:
-            image = Image.open(file)
-            ratio = 2160 / image.height
-            if ratio > 1:
-                image = image.resize(
-                    (round(image.width * ratio), round(image.height * ratio)), Image.Resampling.LANCZOS
-                )
-            try:
-                enhancer_contrast = ImageEnhance.Contrast(image)
-
-                image = enhancer_contrast.enhance(2)
-                enhancer_sharpness = ImageEnhance.Sharpness(image)
-                image = enhancer_sharpness.enhance(10)
-            except ValueError as e:
-                self.logger.warning("Failed to enhance contrast.")
-                self.logger.exception(e)
-
-            image_text = await self.bot.loop.run_in_executor(self.bot.executor, image_to_string, image)
-            self.logger.info("OCR returned the following data:\n" + image_text)
-            return await self.process_text(image_text)
-
-        except TesseractError as oops:
-            self.logger.error(f"OCR error!")
-            self.logger.exception(oops)
-            return []
+        return await self.process_text(await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, file))
 
     def _create_debug_messages(self, debug_zip: ZipFile, filename: str) -> Optional[CrashJob]:
         files = debug_zip.namelist()
