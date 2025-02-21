@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.2
--- Dumped by pg_dump version 13.2
+-- Dumped from database version 14.15
+-- Dumped by pg_dump version 14.15
 
--- Started on 2021-10-29 21:03:11 UTC
+-- Started on 2025-02-16 19:07:30 UTC
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -23,7 +23,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 203 (class 1259 OID 16407)
+-- TOC entry 209 (class 1259 OID 16385)
 -- Name: action_colours; Type: TABLE; Schema: public; Owner: fred
 --
 
@@ -37,7 +37,7 @@ CREATE TABLE public.action_colours (
 ALTER TABLE public.action_colours OWNER TO fred;
 
 --
--- TOC entry 202 (class 1259 OID 16405)
+-- TOC entry 210 (class 1259 OID 16390)
 -- Name: action_colours_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
 --
 
@@ -53,8 +53,8 @@ CREATE SEQUENCE public.action_colours_id_seq
 ALTER TABLE public.action_colours_id_seq OWNER TO fred;
 
 --
--- TOC entry 3074 (class 0 OID 0)
--- Dependencies: 202
+-- TOC entry 3423 (class 0 OID 0)
+-- Dependencies: 210
 -- Name: action_colours_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
 --
 
@@ -62,7 +62,7 @@ ALTER SEQUENCE public.action_colours_id_seq OWNED BY public.action_colours.id;
 
 
 --
--- TOC entry 213 (class 1259 OID 16453)
+-- TOC entry 211 (class 1259 OID 16391)
 -- Name: commands; Type: TABLE; Schema: public; Owner: fred
 --
 
@@ -77,7 +77,7 @@ CREATE TABLE public.commands (
 ALTER TABLE public.commands OWNER TO fred;
 
 --
--- TOC entry 212 (class 1259 OID 16451)
+-- TOC entry 212 (class 1259 OID 16396)
 -- Name: commands_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
 --
 
@@ -93,7 +93,7 @@ CREATE SEQUENCE public.commands_id_seq
 ALTER TABLE public.commands_id_seq OWNER TO fred;
 
 --
--- TOC entry 3075 (class 0 OID 0)
+-- TOC entry 3424 (class 0 OID 0)
 -- Dependencies: 212
 -- Name: commands_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
 --
@@ -102,7 +102,7 @@ ALTER SEQUENCE public.commands_id_seq OWNED BY public.commands.id;
 
 
 --
--- TOC entry 215 (class 1259 OID 16464)
+-- TOC entry 213 (class 1259 OID 16397)
 -- Name: crashes; Type: TABLE; Schema: public; Owner: fred
 --
 
@@ -117,7 +117,7 @@ CREATE TABLE public.crashes (
 ALTER TABLE public.crashes OWNER TO fred;
 
 --
--- TOC entry 214 (class 1259 OID 16462)
+-- TOC entry 214 (class 1259 OID 16402)
 -- Name: crashes_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
 --
 
@@ -133,15 +133,133 @@ CREATE SEQUENCE public.crashes_id_seq
 ALTER TABLE public.crashes_id_seq OWNER TO fred;
 
 --
--- TOC entry 3076 (class 0 OID 0)
+-- TOC entry 3425 (class 0 OID 0)
 -- Dependencies: 214
 -- Name: crashes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
 --
 
 ALTER SEQUENCE public.crashes_id_seq OWNED BY public.crashes.id;
 
+
 --
--- TOC entry 205 (class 1259 OID 16418)
+-- TOC entry 215 (class 1259 OID 16403)
+-- Name: dialogflow; Type: TABLE; Schema: public; Owner: fred
+--
+
+CREATE TABLE public.dialogflow (
+    id integer NOT NULL,
+    intent_id text,
+    data text,
+    response text,
+    has_followup boolean
+);
+
+
+ALTER TABLE public.dialogflow OWNER TO fred;
+
+--
+-- TOC entry 216 (class 1259 OID 16408)
+-- Name: dialogflow_channels; Type: TABLE; Schema: public; Owner: fred
+--
+
+CREATE TABLE public.dialogflow_channels (
+    id integer NOT NULL,
+    channel_id bigint
+);
+
+
+ALTER TABLE public.dialogflow_channels OWNER TO fred;
+
+--
+-- TOC entry 217 (class 1259 OID 16411)
+-- Name: dialogflow_channels_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
+--
+
+CREATE SEQUENCE public.dialogflow_channels_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.dialogflow_channels_id_seq OWNER TO fred;
+
+--
+-- TOC entry 3426 (class 0 OID 0)
+-- Dependencies: 217
+-- Name: dialogflow_channels_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
+--
+
+ALTER SEQUENCE public.dialogflow_channels_id_seq OWNED BY public.dialogflow_channels.id;
+
+
+--
+-- TOC entry 218 (class 1259 OID 16412)
+-- Name: dialogflow_exception_roles; Type: TABLE; Schema: public; Owner: fred
+--
+
+CREATE TABLE public.dialogflow_exception_roles (
+    id integer NOT NULL,
+    role_id bigint
+);
+
+
+ALTER TABLE public.dialogflow_exception_roles OWNER TO fred;
+
+--
+-- TOC entry 219 (class 1259 OID 16415)
+-- Name: dialogflow_exception_roles_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
+--
+
+CREATE SEQUENCE public.dialogflow_exception_roles_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.dialogflow_exception_roles_id_seq OWNER TO fred;
+
+--
+-- TOC entry 3427 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: dialogflow_exception_roles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
+--
+
+ALTER SEQUENCE public.dialogflow_exception_roles_id_seq OWNED BY public.dialogflow_exception_roles.id;
+
+
+--
+-- TOC entry 220 (class 1259 OID 16416)
+-- Name: dialogflow_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
+--
+
+CREATE SEQUENCE public.dialogflow_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.dialogflow_id_seq OWNER TO fred;
+
+--
+-- TOC entry 3428 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: dialogflow_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
+--
+
+ALTER SEQUENCE public.dialogflow_id_seq OWNED BY public.dialogflow.id;
+
+
+--
+-- TOC entry 221 (class 1259 OID 16417)
 -- Name: media_only_channels; Type: TABLE; Schema: public; Owner: fred
 --
 
@@ -154,7 +272,7 @@ CREATE TABLE public.media_only_channels (
 ALTER TABLE public.media_only_channels OWNER TO fred;
 
 --
--- TOC entry 204 (class 1259 OID 16416)
+-- TOC entry 222 (class 1259 OID 16420)
 -- Name: media_only_channels_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
 --
 
@@ -170,8 +288,8 @@ CREATE SEQUENCE public.media_only_channels_id_seq
 ALTER TABLE public.media_only_channels_id_seq OWNER TO fred;
 
 --
--- TOC entry 3080 (class 0 OID 0)
--- Dependencies: 204
+-- TOC entry 3429 (class 0 OID 0)
+-- Dependencies: 222
 -- Name: media_only_channels_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
 --
 
@@ -179,7 +297,7 @@ ALTER SEQUENCE public.media_only_channels_id_seq OWNED BY public.media_only_chan
 
 
 --
--- TOC entry 219 (class 1259 OID 16486)
+-- TOC entry 223 (class 1259 OID 16421)
 -- Name: miscellaneous; Type: TABLE; Schema: public; Owner: fred
 --
 
@@ -193,7 +311,7 @@ CREATE TABLE public.miscellaneous (
 ALTER TABLE public.miscellaneous OWNER TO fred;
 
 --
--- TOC entry 218 (class 1259 OID 16484)
+-- TOC entry 224 (class 1259 OID 16426)
 -- Name: miscellaneous_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
 --
 
@@ -209,8 +327,8 @@ CREATE SEQUENCE public.miscellaneous_id_seq
 ALTER TABLE public.miscellaneous_id_seq OWNER TO fred;
 
 --
--- TOC entry 3081 (class 0 OID 0)
--- Dependencies: 218
+-- TOC entry 3430 (class 0 OID 0)
+-- Dependencies: 224
 -- Name: miscellaneous_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
 --
 
@@ -218,7 +336,7 @@ ALTER SEQUENCE public.miscellaneous_id_seq OWNED BY public.miscellaneous.id;
 
 
 --
--- TOC entry 201 (class 1259 OID 16399)
+-- TOC entry 225 (class 1259 OID 16427)
 -- Name: rank_roles; Type: TABLE; Schema: public; Owner: fred
 --
 
@@ -232,7 +350,7 @@ CREATE TABLE public.rank_roles (
 ALTER TABLE public.rank_roles OWNER TO fred;
 
 --
--- TOC entry 200 (class 1259 OID 16397)
+-- TOC entry 226 (class 1259 OID 16430)
 -- Name: rank_roles_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
 --
 
@@ -248,8 +366,8 @@ CREATE SEQUENCE public.rank_roles_id_seq
 ALTER TABLE public.rank_roles_id_seq OWNER TO fred;
 
 --
--- TOC entry 3082 (class 0 OID 0)
--- Dependencies: 200
+-- TOC entry 3431 (class 0 OID 0)
+-- Dependencies: 226
 -- Name: rank_roles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
 --
 
@@ -257,7 +375,7 @@ ALTER SEQUENCE public.rank_roles_id_seq OWNED BY public.rank_roles.id;
 
 
 --
--- TOC entry 217 (class 1259 OID 16475)
+-- TOC entry 227 (class 1259 OID 16431)
 -- Name: reserved_commands; Type: TABLE; Schema: public; Owner: fred
 --
 
@@ -270,7 +388,7 @@ CREATE TABLE public.reserved_commands (
 ALTER TABLE public.reserved_commands OWNER TO fred;
 
 --
--- TOC entry 216 (class 1259 OID 16473)
+-- TOC entry 228 (class 1259 OID 16436)
 -- Name: reserved_commands_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
 --
 
@@ -286,8 +404,8 @@ CREATE SEQUENCE public.reserved_commands_id_seq
 ALTER TABLE public.reserved_commands_id_seq OWNER TO fred;
 
 --
--- TOC entry 3083 (class 0 OID 0)
--- Dependencies: 216
+-- TOC entry 3432 (class 0 OID 0)
+-- Dependencies: 228
 -- Name: reserved_commands_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
 --
 
@@ -295,7 +413,7 @@ ALTER SEQUENCE public.reserved_commands_id_seq OWNED BY public.reserved_commands
 
 
 --
--- TOC entry 223 (class 1259 OID 41679)
+-- TOC entry 229 (class 1259 OID 16437)
 -- Name: role_perms; Type: TABLE; Schema: public; Owner: fred
 --
 
@@ -310,7 +428,7 @@ CREATE TABLE public.role_perms (
 ALTER TABLE public.role_perms OWNER TO fred;
 
 --
--- TOC entry 222 (class 1259 OID 41677)
+-- TOC entry 230 (class 1259 OID 16442)
 -- Name: role_perms_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
 --
 
@@ -326,8 +444,8 @@ CREATE SEQUENCE public.role_perms_id_seq
 ALTER TABLE public.role_perms_id_seq OWNER TO fred;
 
 --
--- TOC entry 3084 (class 0 OID 0)
--- Dependencies: 222
+-- TOC entry 3433 (class 0 OID 0)
+-- Dependencies: 230
 -- Name: role_perms_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: fred
 --
 
@@ -335,7 +453,7 @@ ALTER SEQUENCE public.role_perms_id_seq OWNED BY public.role_perms.id;
 
 
 --
--- TOC entry 221 (class 1259 OID 33342)
+-- TOC entry 231 (class 1259 OID 16443)
 -- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: fred
 --
 
@@ -350,7 +468,7 @@ CREATE SEQUENCE public.users_id_seq
 ALTER TABLE public.users_id_seq OWNER TO fred;
 
 --
--- TOC entry 220 (class 1259 OID 16898)
+-- TOC entry 232 (class 1259 OID 16444)
 -- Name: users; Type: TABLE; Schema: public; Owner: fred
 --
 
@@ -371,7 +489,7 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO fred;
 
 --
--- TOC entry 2880 (class 2604 OID 16410)
+-- TOC entry 3219 (class 2604 OID 16450)
 -- Name: action_colours id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -379,7 +497,7 @@ ALTER TABLE ONLY public.action_colours ALTER COLUMN id SET DEFAULT nextval('publ
 
 
 --
--- TOC entry 2885 (class 2604 OID 16456)
+-- TOC entry 3220 (class 2604 OID 16451)
 -- Name: commands id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -387,7 +505,7 @@ ALTER TABLE ONLY public.commands ALTER COLUMN id SET DEFAULT nextval('public.com
 
 
 --
--- TOC entry 2886 (class 2604 OID 16467)
+-- TOC entry 3221 (class 2604 OID 16452)
 -- Name: crashes id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -395,7 +513,7 @@ ALTER TABLE ONLY public.crashes ALTER COLUMN id SET DEFAULT nextval('public.cras
 
 
 --
--- TOC entry 2884 (class 2604 OID 16445)
+-- TOC entry 3222 (class 2604 OID 16453)
 -- Name: dialogflow id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -403,7 +521,7 @@ ALTER TABLE ONLY public.dialogflow ALTER COLUMN id SET DEFAULT nextval('public.d
 
 
 --
--- TOC entry 2882 (class 2604 OID 16429)
+-- TOC entry 3223 (class 2604 OID 16454)
 -- Name: dialogflow_channels id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -411,7 +529,7 @@ ALTER TABLE ONLY public.dialogflow_channels ALTER COLUMN id SET DEFAULT nextval(
 
 
 --
--- TOC entry 2883 (class 2604 OID 16437)
+-- TOC entry 3224 (class 2604 OID 16455)
 -- Name: dialogflow_exception_roles id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -419,7 +537,7 @@ ALTER TABLE ONLY public.dialogflow_exception_roles ALTER COLUMN id SET DEFAULT n
 
 
 --
--- TOC entry 2881 (class 2604 OID 16421)
+-- TOC entry 3225 (class 2604 OID 16456)
 -- Name: media_only_channels id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -427,7 +545,7 @@ ALTER TABLE ONLY public.media_only_channels ALTER COLUMN id SET DEFAULT nextval(
 
 
 --
--- TOC entry 2888 (class 2604 OID 16489)
+-- TOC entry 3226 (class 2604 OID 16457)
 -- Name: miscellaneous id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -435,7 +553,7 @@ ALTER TABLE ONLY public.miscellaneous ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
--- TOC entry 2879 (class 2604 OID 16402)
+-- TOC entry 3227 (class 2604 OID 16458)
 -- Name: rank_roles id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -443,7 +561,7 @@ ALTER TABLE ONLY public.rank_roles ALTER COLUMN id SET DEFAULT nextval('public.r
 
 
 --
--- TOC entry 2887 (class 2604 OID 16478)
+-- TOC entry 3228 (class 2604 OID 16459)
 -- Name: reserved_commands id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -451,7 +569,7 @@ ALTER TABLE ONLY public.reserved_commands ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
--- TOC entry 2890 (class 2604 OID 41682)
+-- TOC entry 3229 (class 2604 OID 16460)
 -- Name: role_perms id; Type: DEFAULT; Schema: public; Owner: fred
 --
 
@@ -459,8 +577,8 @@ ALTER TABLE ONLY public.role_perms ALTER COLUMN id SET DEFAULT nextval('public.r
 
 
 --
--- TOC entry 3048 (class 0 OID 16407)
--- Dependencies: 203
+-- TOC entry 3394 (class 0 OID 16385)
+-- Dependencies: 209
 -- Data for Name: action_colours; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
@@ -478,8 +596,8 @@ COPY public.action_colours (id, name, colour) FROM stdin;
 
 
 --
--- TOC entry 3058 (class 0 OID 16453)
--- Dependencies: 213
+-- TOC entry 3396 (class 0 OID 16391)
+-- Dependencies: 211
 -- Data for Name: commands; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
@@ -555,7 +673,6 @@ COPY public.commands (id, name, content, attachment) FROM stdin;
 39	malware	The reason is that the mod manager does not have a certificate / detects as malware: \nThe certificate costs hundreds per year, those involved refuse to pay it. But rest assured; This community created it from scratch. We all use it. Provided you only get it via https://smm.ficsit.app we can assure you it is safe.\nSMM is open-source and can be found here: <https://github.com/satisfactorymodding/SatisfactoryModManager>	\N
 46	creative	Want to play creative mode?\nHere would be a list of mods that should provide a creative mode like experience:\nhttps://ficsit.app/guide/8B8zfGtQXEF5i9	\N
 52	qol	Want Quality of Life mods?\nHere would be a list of qol mods:\nhttps://ficsit.app/guide/4kk48ivCPtoL3K	\N
-157	test	\N	https://cdn.discordapp.com/attachments/320955199999180802/892075422433570836/honk.jpeg
 168	d3d	Please force the use of DirectX11 with your game by adding the -d3d11 argument to your game	\N
 169	scim-support	https://discord.com/invite/0sFOD6GxFZRc1ad0	\N
 161	debuginfo	In order to help you we need more information\nwe can get that additional Information when you go to the following setting, save the file and send the whole zip archive in this channel.	https://cdn.discordapp.com/attachments/834348739539238922/892086547820728381/debuginfo.png
@@ -571,6 +688,8 @@ COPY public.commands (id, name, content, attachment) FROM stdin;
 88	doesxwork	You can see what mods are currently update at <https://ficsit.app/> Mods that aren't marked as outdated are updated for the Update 4	\N
 69	ui-time	**I SUMMON THEE, <@!293484684787056640> **	https://cdn.discordapp.com/attachments/834348739539238922/843883283598409769/summondeantendo2.gif
 90	config	Make sure you have the right config file. The new config folder is at `<GameInstall>\\FactoryGame\\Configs`, ***not*** at `<GameInstall>\\Configs`. If the file is not there, make sure you've ran the game with **at least one mod installed** at least once	\N
+141	nog	Nog has a Discord server! If you have any question about the mods he's working on, join here -> https://discord.gg/JjngemP9A4	\N
+142	emoteanim	<a:{0}:{1}>	\N
 94	smmreset	You're about to delete all your SMM profiles, so make sure you either make a backup of these files, or know the mods you had installed!\nFirst, use `Alt + F4` to close SMM. Then press `Windows Key + R`, and paste this, `%appdata%\\SatisfactoryModManager\\profiles`. Press enter, and delete all the folders in there. Now, open SMM and it should work	\N
 160	fred	\N	https://cdn.discordapp.com/attachments/320955199999180802/892086083620323408/ficsitfred.png
 89	consolecheats	Open `<Satisfactory Install Location>/FactoryGame/Configs/SML.cfg` with a text editor (right click -> Open with...), find enableCheatConsoleCommands and set it to true\nit should look like this: `"enableCheatConsoleCommands": true`	\N
@@ -614,8 +733,6 @@ COPY public.commands (id, name, content, attachment) FROM stdin;
 139	red	Red means you shouldn't be using that mod. Either the mod is incompatible, or the author has hidden it (probably for a good reason, like having bugs) and you still have it installed	\N
 150	ihaveanidea	So you've had an idea for a mod? Great! We all love new ideas, or even a new take on an existing idea.\nHere would be a list of some very common suggestions:\nhttps://ficsit.app/guide/FK8DcC44gDrFfY	\N
 108	mp	First of all, all players involved need the exact same mods to play together\nAnd to know if a mod is multiplayer compatible : If the mod only adds recipes, items, or buildings that have no custom logic (behave just like original ones with a new model or for recipes that the mod adds) then it should work. Also, it works if the mod description says it specifically. You can also test the mod yourself, as a mod might not crash multiplayer, but it only works for the host, which you might be ok with depending on the mod	\N
-141	nog	Nog has a Discord server! If you have any question about the mods he's working on, join here -> https://discord.gg/JjngemP9A4	\N
-142	emoteanim	<a:{0}:{1}>	\N
 162	verifyepic	To verify the integrity of the gamefiles please press the following buttons shown below one after the other.	https://cdn.discordapp.com/attachments/834348739539238922/892142274555813909/unknown.png
 151	nokeybinds	When you think some of your modded keybinds are gone try to delete `input.ini` in `%localappdata%\\FactoryGame\\Saved\\Config\\WindowsNoEditor`	\N
 145	verifysteam	To verify the integrity of the gamefiles press the button shown below	https://cdn.discordapp.com/attachments/555507339969560586/878725468071817246/unknown.png
@@ -634,12 +751,13 @@ COPY public.commands (id, name, content, attachment) FROM stdin;
 210	docs	>modding	\N
 143	modding	You seem to have questions about modding.\nYou should grab the Aspiring Modder role available in <#555442202780762143> by reacting with ⚙️, read the docs carefully(<https://docs.ficsit.app/>) and if questions exist ask them in the correct channel you got through the role.	\N
 199	exp	**TLDR: Mods don't work on the Experimental branch currently. Either use Early Access (if you want to play with mods), or disable the mods**\n\nThe Experimental branch now has Update 5 which breaks SML and mods. If you want to play with Update 5 you can disable mods from SMM (be warned that saving a save without the mods installed will result in all modded buildings and items disappearing). If you want to keep playing with mods, use the Early Access branch.\n\n**If you have been playing on Experimental without mods already, then changing to Early Access is not recommended since it will not be able to load or even detect your save files. If this is the case, just don't use mods\\* for the time being.**\n\n\\*See `>vanilla` for details on turning mods off.	\N
+218	argtest	this {0} that {1} the other {2} this again {0} and everything {...}	\N
 \.
 
 
 --
--- TOC entry 3060 (class 0 OID 16464)
--- Dependencies: 215
+-- TOC entry 3398 (class 0 OID 16397)
+-- Dependencies: 213
 -- Data for Name: crashes; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
@@ -670,7 +788,6 @@ COPY public.crashes (id, name, crash, response) FROM stdin;
 54	.netmissing	Install a version of .NET Framework SDK at	Your .NET Framework install is either missing or oudated. Please download and install the latest one from https://dotnet.microsoft.com/download/visual-studio-sdks. Make sure to download the .NET **Framework**SDK
 55	noautomationtool	UATHelper: Package Mod Task (Windows): RunUAT.bat ERROR: Visual studio and/or AutomationTool.csproj was not found, nor was Engine\\Binaries\\DotNET\\AutomationTool.exe. Can't run the automation tool.	Open your .sln with Visual Studio/Rider and build the project for Shipping
 64	tolowercase	c\\.toLowerCase is not a function	>tolowercase
-68	flip	\\(╯°□°\\)╯︵ ┻━┻	┬─┬ ノ( ゜-゜ノ)
 69	fixit	Can we (fix\\s*it|ficsit)\\s*?	Yes we can!
 70	oldproject	ERROR: Cannot find game version file	Your project is outdated. Please update it
 71	needcompile	Module\\s+[‘‘'’`]*FactoryGame[‘‘'’`]*\\s+could\\s+not\\s+be\\s+found	Please open your .sln with Visual Studio/Rider and build the project for both Development Editor and Shipping
@@ -678,12 +795,13 @@ COPY public.crashes (id, name, crash, response) FROM stdin;
 74	modupdates	Mod updates are available	You have mod updates available. If you are having issues with outdated mods, make sure to click Update All rather than updating each mod individually.
 53	dataja	(can I ask( you)*|I have) a question (about (?:\\w+\\s?){0,2})?.{0,5}$	https://dontasktoask.com/
 94	author	who (created|made|wrote) (fred|the bot)	I was created by 3 amazing people\n<https://github.com/Feyko/FICSIT-Fred/graphs/contributors>
+68	flip	\\(╯°□°\\)╯︵ ┻━┻	┬─┬ ノ( ゜-゜ノ)
 \.
 
 
 --
--- TOC entry 3056 (class 0 OID 16442)
--- Dependencies: 211
+-- TOC entry 3400 (class 0 OID 16403)
+-- Dependencies: 215
 -- Data for Name: dialogflow; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
@@ -709,8 +827,8 @@ COPY public.dialogflow (id, intent_id, data, response, has_followup) FROM stdin;
 
 
 --
--- TOC entry 3052 (class 0 OID 16426)
--- Dependencies: 207
+-- TOC entry 3401 (class 0 OID 16408)
+-- Dependencies: 216
 -- Data for Name: dialogflow_channels; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
@@ -722,8 +840,8 @@ COPY public.dialogflow_channels (id, channel_id) FROM stdin;
 
 
 --
--- TOC entry 3054 (class 0 OID 16434)
--- Dependencies: 209
+-- TOC entry 3403 (class 0 OID 16412)
+-- Dependencies: 218
 -- Data for Name: dialogflow_exception_roles; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
@@ -736,20 +854,23 @@ COPY public.dialogflow_exception_roles (id, role_id) FROM stdin;
 
 
 --
--- TOC entry 3050 (class 0 OID 16418)
--- Dependencies: 205
+-- TOC entry 3406 (class 0 OID 16417)
+-- Dependencies: 221
 -- Data for Name: media_only_channels; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
 COPY public.media_only_channels (id, channel_id) FROM stdin;
 1	696718959193489438
 2	562121682538594314
+7	1283104993875857511
+8	854810398858412044
+9	1293357175644880926
 \.
 
 
 --
--- TOC entry 3064 (class 0 OID 16486)
--- Dependencies: 219
+-- TOC entry 3408 (class 0 OID 16421)
+-- Dependencies: 223
 -- Data for Name: miscellaneous; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
@@ -760,24 +881,23 @@ COPY public.miscellaneous (id, key, value) FROM stdin;
 14	prefix	"?"
 8	levelling_state	true
 4	rank_value_multiplier	1.3
-7	main_guild_id	555424930502541343
 5	xp_gain_value	10
 3	base_rank_value	300
 6	xp_gain_delay	20
-9	dialogflow_state	true
 1	welcome_message	"Welcome, new person ! I am sorry to DM you as soon you join, but please read on, it is important :\\nYou (just like anyone else who joins this server) have been muted for 10 minutes to give you the time to read this message, the rules, the faq and potentially the channels if you have a question that wasn't answered in the faq\\n\\nPlease, do make use of those 5 minutes and read everything that I just mentioned\\nIf you ever have a question unanswered by the faq, please first scroll through appropriate channels a bit and/or use the Discord search function (top right on Desktop) to search for questions close to yours\\n\\nBelow this message will be any important info that we really really want you to know (If there is no message then there is nothing major happening currently)"
-10	dialogflow_debug_state	false
 16	is_running	true
-15	dialogflow_steam_scam_intent_id	"DEACTIVATE-25ae1306-f2aa-4d79-96f8-5abe38a43ed9"
 17	base_level_value	300
 18	level_value_multiplier	1.3
 2	latest_info	""
+7	main_guild_id	854423652262215710
+20	error_channel	1269746804501647412
+19	migration_rev	2
 \.
 
 
 --
--- TOC entry 3046 (class 0 OID 16399)
--- Dependencies: 201
+-- TOC entry 3410 (class 0 OID 16427)
+-- Dependencies: 225
 -- Data for Name: rank_roles; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
@@ -786,8 +906,8 @@ COPY public.rank_roles (id, rank, role_id) FROM stdin;
 
 
 --
--- TOC entry 3062 (class 0 OID 16475)
--- Dependencies: 217
+-- TOC entry 3412 (class 0 OID 16431)
+-- Dependencies: 227
 -- Data for Name: reserved_commands; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
@@ -813,8 +933,8 @@ COPY public.reserved_commands (id, name) FROM stdin;
 
 
 --
--- TOC entry 3068 (class 0 OID 41679)
--- Dependencies: 223
+-- TOC entry 3414 (class 0 OID 16437)
+-- Dependencies: 229
 -- Data for Name: role_perms; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
@@ -832,23 +952,26 @@ COPY public.role_perms (id, role_id, perm_lvl, role_name) FROM stdin;
 11	555431049300017162	6	Moderator
 12	555426814177181701	7	Server Admin
 13	590597379569352714	7	Admin
+14	854455256569479220	6	the powers that be
 \.
 
 
 --
--- TOC entry 3065 (class 0 OID 16898)
--- Dependencies: 220
+-- TOC entry 3417 (class 0 OID 16444)
+-- Dependencies: 232
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: fred
 --
 
 COPY public.users (id, user_id, full_name, message_count, xp_count, xp_multiplier, role_xp_multiplier, rank, rank_role_id, accepts_dms) FROM stdin;
 1	227473074616795137	Feyko#7953	57156	138424	1	1	24	\N	t
+22693	147821698379546625	\N	7	50	1	1	0	\N	t
+22692	506192269557366805	\N	244	450	1	1	2	\N	t
 \.
 
 
 --
--- TOC entry 3085 (class 0 OID 0)
--- Dependencies: 202
+-- TOC entry 3434 (class 0 OID 0)
+-- Dependencies: 210
 -- Name: action_colours_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
@@ -856,16 +979,16 @@ SELECT pg_catalog.setval('public.action_colours_id_seq', 9, true);
 
 
 --
--- TOC entry 3086 (class 0 OID 0)
+-- TOC entry 3435 (class 0 OID 0)
 -- Dependencies: 212
 -- Name: commands_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
-SELECT pg_catalog.setval('public.commands_id_seq', 217, true);
+SELECT pg_catalog.setval('public.commands_id_seq', 219, true);
 
 
 --
--- TOC entry 3087 (class 0 OID 0)
+-- TOC entry 3436 (class 0 OID 0)
 -- Dependencies: 214
 -- Name: crashes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
@@ -874,8 +997,8 @@ SELECT pg_catalog.setval('public.crashes_id_seq', 98, true);
 
 
 --
--- TOC entry 3088 (class 0 OID 0)
--- Dependencies: 206
+-- TOC entry 3437 (class 0 OID 0)
+-- Dependencies: 217
 -- Name: dialogflow_channels_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
@@ -883,8 +1006,8 @@ SELECT pg_catalog.setval('public.dialogflow_channels_id_seq', 3, true);
 
 
 --
--- TOC entry 3089 (class 0 OID 0)
--- Dependencies: 208
+-- TOC entry 3438 (class 0 OID 0)
+-- Dependencies: 219
 -- Name: dialogflow_exception_roles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
@@ -892,8 +1015,8 @@ SELECT pg_catalog.setval('public.dialogflow_exception_roles_id_seq', 1, true);
 
 
 --
--- TOC entry 3090 (class 0 OID 0)
--- Dependencies: 210
+-- TOC entry 3439 (class 0 OID 0)
+-- Dependencies: 220
 -- Name: dialogflow_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
@@ -901,26 +1024,26 @@ SELECT pg_catalog.setval('public.dialogflow_id_seq', 18, true);
 
 
 --
--- TOC entry 3091 (class 0 OID 0)
--- Dependencies: 204
+-- TOC entry 3440 (class 0 OID 0)
+-- Dependencies: 222
 -- Name: media_only_channels_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
-SELECT pg_catalog.setval('public.media_only_channels_id_seq', 4, true);
+SELECT pg_catalog.setval('public.media_only_channels_id_seq', 9, true);
 
 
 --
--- TOC entry 3092 (class 0 OID 0)
--- Dependencies: 218
+-- TOC entry 3441 (class 0 OID 0)
+-- Dependencies: 224
 -- Name: miscellaneous_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
-SELECT pg_catalog.setval('public.miscellaneous_id_seq', 16, true);
+SELECT pg_catalog.setval('public.miscellaneous_id_seq', 20, true);
 
 
 --
--- TOC entry 3093 (class 0 OID 0)
--- Dependencies: 200
+-- TOC entry 3442 (class 0 OID 0)
+-- Dependencies: 226
 -- Name: rank_roles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
@@ -928,8 +1051,8 @@ SELECT pg_catalog.setval('public.rank_roles_id_seq', 1, false);
 
 
 --
--- TOC entry 3094 (class 0 OID 0)
--- Dependencies: 216
+-- TOC entry 3443 (class 0 OID 0)
+-- Dependencies: 228
 -- Name: reserved_commands_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
@@ -937,8 +1060,8 @@ SELECT pg_catalog.setval('public.reserved_commands_id_seq', 17, true);
 
 
 --
--- TOC entry 3095 (class 0 OID 0)
--- Dependencies: 222
+-- TOC entry 3444 (class 0 OID 0)
+-- Dependencies: 230
 -- Name: role_perms_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
@@ -946,16 +1069,16 @@ SELECT pg_catalog.setval('public.role_perms_id_seq', 13, true);
 
 
 --
--- TOC entry 3096 (class 0 OID 0)
--- Dependencies: 221
+-- TOC entry 3445 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fred
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 22691, true);
+SELECT pg_catalog.setval('public.users_id_seq', 22693, true);
 
 
 --
--- TOC entry 2894 (class 2606 OID 16415)
+-- TOC entry 3232 (class 2606 OID 16462)
 -- Name: action_colours action_colours_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -964,7 +1087,7 @@ ALTER TABLE ONLY public.action_colours
 
 
 --
--- TOC entry 2904 (class 2606 OID 16461)
+-- TOC entry 3234 (class 2606 OID 16464)
 -- Name: commands commands_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -973,7 +1096,7 @@ ALTER TABLE ONLY public.commands
 
 
 --
--- TOC entry 2906 (class 2606 OID 16472)
+-- TOC entry 3236 (class 2606 OID 16466)
 -- Name: crashes crashes_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -982,7 +1105,7 @@ ALTER TABLE ONLY public.crashes
 
 
 --
--- TOC entry 2898 (class 2606 OID 16431)
+-- TOC entry 3240 (class 2606 OID 16468)
 -- Name: dialogflow_channels dialogflow_channels_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -991,7 +1114,7 @@ ALTER TABLE ONLY public.dialogflow_channels
 
 
 --
--- TOC entry 2900 (class 2606 OID 16439)
+-- TOC entry 3242 (class 2606 OID 16470)
 -- Name: dialogflow_exception_roles dialogflow_exception_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -1000,7 +1123,7 @@ ALTER TABLE ONLY public.dialogflow_exception_roles
 
 
 --
--- TOC entry 2902 (class 2606 OID 16450)
+-- TOC entry 3238 (class 2606 OID 16472)
 -- Name: dialogflow dialogflow_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -1009,7 +1132,7 @@ ALTER TABLE ONLY public.dialogflow
 
 
 --
--- TOC entry 2896 (class 2606 OID 16423)
+-- TOC entry 3244 (class 2606 OID 16474)
 -- Name: media_only_channels media_only_channels_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -1018,7 +1141,7 @@ ALTER TABLE ONLY public.media_only_channels
 
 
 --
--- TOC entry 2910 (class 2606 OID 16494)
+-- TOC entry 3246 (class 2606 OID 16476)
 -- Name: miscellaneous miscellaneous_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -1027,7 +1150,7 @@ ALTER TABLE ONLY public.miscellaneous
 
 
 --
--- TOC entry 2892 (class 2606 OID 16404)
+-- TOC entry 3248 (class 2606 OID 16478)
 -- Name: rank_roles rank_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -1036,7 +1159,7 @@ ALTER TABLE ONLY public.rank_roles
 
 
 --
--- TOC entry 2908 (class 2606 OID 16483)
+-- TOC entry 3250 (class 2606 OID 16480)
 -- Name: reserved_commands reserved_commands_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -1045,7 +1168,7 @@ ALTER TABLE ONLY public.reserved_commands
 
 
 --
--- TOC entry 2914 (class 2606 OID 41687)
+-- TOC entry 3252 (class 2606 OID 16482)
 -- Name: role_perms role_perms_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -1054,7 +1177,7 @@ ALTER TABLE ONLY public.role_perms
 
 
 --
--- TOC entry 2912 (class 2606 OID 16913)
+-- TOC entry 3254 (class 2606 OID 16484)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: fred
 --
 
@@ -1062,7 +1185,7 @@ ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 
--- Completed on 2021-10-29 21:03:12 UTC
+-- Completed on 2025-02-16 19:07:30 UTC
 
 --
 -- PostgreSQL database dump complete

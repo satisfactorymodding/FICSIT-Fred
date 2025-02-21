@@ -19,7 +19,7 @@ from .crashes import CrashCmds
 from .dbcommands import CommandCmds
 from .experience import EXPCmds
 from .help import HelpCmds, FredHelpEmbed
-from ..libraries import createembed
+from ..libraries import createembed, ocr
 from ..libraries.view.mod_picker import ModPicker
 
 
@@ -189,6 +189,18 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
             if hit.hierarchy["lvl0"].endswith("latest"):
                 await self.bot.reply_to_msg(ctx.message, f"This is the best result I got from the SMD :\n{hit.url}")
                 return
+
+    @commands.command()
+    async def ocr_test(self, ctx: commands.Context) -> None:
+        """Usage: `ocr_test` {attach an image!}"""
+        text = "OCR Debugging:\n\n"
+        for n, att in enumerate(ctx.message.attachments):
+            with io.BytesIO() as img:
+                await att.save(img)
+                read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, img)
+            text += f"**Image {n}:**\n ```\n{read_text}\n```\n"
+
+        await self.bot.reply_to_msg(ctx.message, text)
 
 
 def extract_target_type_from_converter_param(missing_argument: inspect.Parameter):

@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import sys
 import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from importlib.metadata import version
 from os import getenv
+from os.path import split
 from typing import Optional
+from urllib.parse import urlparse
 
 import aiohttp
 import nextcord
@@ -85,6 +88,8 @@ class Bot(commands.Bot):
             try:
                 connection = sql.connectionForURI(uri)
                 sql.sqlhub.processConnection = connection
+                config.migrate()
+                self.logger.debug("Applied migration.")
                 break
             except sql.dberrors.OperationalError:
                 self.logger.error(f"Could not connect to the DB on attempt {attempt}")
@@ -93,8 +98,6 @@ class Bot(commands.Bot):
         else:  # this happens if the loop is not broken by a successful connection
             raise ConnectionError("Could not connect to the DB")
         self.logger.info(f"Connected to the DB. Took {attempt} tries.")
-        config.migrate()
-        self.logger.debug("Applied migration.")
 
     def setup_cogs(self):
         self.logger.info("Setting up cogs")
@@ -317,3 +320,9 @@ class Bot(commands.Bot):
 
         self.logger.info(f"Data has length of {len(rtn)}")
         return rtn
+
+    async def obtain_attachment(self, url: str) -> nextcord.File:
+        async with self.web_session.get(url) as resp:
+            buff = io.BytesIO(await resp.read())
+            _, filename = split(urlparse(url).path)
+            return nextcord.File(filename=filename, fp=buff, force_close=True)

@@ -271,7 +271,7 @@ def issue_comment(data: dict) -> nextcord.Embed:
 
 
 def _single_mod_embed(mod: dict) -> nextcord.Embed:
-    if zulu_time := mod.get("last_version_date") and len(mod.get("versions")) > 0:
+    if (zulu_time := mod.get("last_version_date")) and len(mod.get("versions")) > 0:
         ts = timestamp(f"{zulu_time[:19]}+00:00")
     else:
         ts = ""
@@ -416,7 +416,7 @@ class CrashResponse:
 
     name: str
     value: str
-    attachment: Optional[str] = None
+    attachment: Optional[str | nextcord.File] = None
     inline: bool = False
 
     def add_self_as_field(self, embed: nextcord.Embed):

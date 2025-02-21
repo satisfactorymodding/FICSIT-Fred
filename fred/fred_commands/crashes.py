@@ -1,4 +1,5 @@
-from re2 import search, RegexError
+import re2
+from re2 import RegexError
 
 from ._baseclass import BaseCmds, commands, config, SearchFlags
 from ._command_utils import get_search
@@ -22,18 +23,14 @@ class CrashCmds(BaseCmds):
 
         if not match:
             match, _ = await self.bot.reply_question(ctx.message, "What should the logs match (regex)?")
-        try:
-            search(match, "test")
-        except RegexError:
-            await self.bot.reply_to_msg(
-                ctx.message,
-                "The regex isn't valid. Please refer to "
-                "https://docs.python.org/3/library/re.html for docs on Python's regex library",
-            )
-            return
 
         if not response:
             response, _ = await self.bot.reply_question(ctx.message, "What should the response be?")
+
+        issue = validate_crash(match, response)
+        if issue:
+            await self.bot.reply_to_msg(ctx.message, issue)
+            return
 
         config.Crashes(name=crash_name, crash=match, response=response)
         await self.bot.reply_to_msg(ctx.message, "Known crash '" + crash_name + "' added!")
@@ -52,7 +49,9 @@ class CrashCmds(BaseCmds):
         await self.bot.reply_to_msg(ctx.message, "Crash removed!")
 
     @BaseCmds.modify.command(name="crash")
-    async def modify_crash(self, ctx: commands.Context, name: str.lower, match: str = None, *, response: str = None):
+    async def modify_crash(
+        self, ctx: commands.Context, name: str.lower, new_crash: str = None, *, new_response: str = None
+    ):
         """Usage: `modify crash (name) ["regex"] [response]`
         Purpose: Adds a crash to the list of known crashes.
         Notes:
@@ -61,24 +60,20 @@ class CrashCmds(BaseCmds):
             - Ensure the regex is surrounded by quotes BUT ONLY if you are doing it in one command.
             - `response` can be my command prefix and the name of a command, which will result in
             the response mirroring that of the command indicated."""
-        query = config.Crashes.selectBy(name=name)
-        results = list(query)
+        crash = config.Crashes.selectBy(name=name).getOne(None)
 
-        if not results:
+        if crash is None:
             await ctx.send(f"Could not find a crash with name '{name}'. Aborting")
             return
 
         try:
             if change_crash := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the crash to match?"):
-                match, _ = await self.bot.reply_question(
+                new_crash, _ = await self.bot.reply_question(
                     ctx.message, "What is the regular expression to match in the logs?"
                 )
-        except ValueError:
-            return
 
-        try:
             if change_response := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the response?"):
-                response, _ = await self.bot.reply_question(
+                new_response, _ = await self.bot.reply_question(
                     ctx.message,
                     f"What response do you want it to provide? Responding with `{self.bot.command_prefix}command_name`"
                     "will use the response of that command.",
@@ -86,10 +81,17 @@ class CrashCmds(BaseCmds):
         except ValueError:
             return
 
-        if change_crash:
-            results[0].crash = match
-        if change_response:
-            results[0].response = response
+        checked_crash = new_crash if change_crash else crash.crash
+        checked_response = new_response if change_response else crash.response
+
+        issue = validate_crash(checked_crash, checked_response)
+        if issue:
+            await self.bot.reply_to_msg(ctx.message, issue)
+            return
+
+        crash.crash = checked_crash
+        crash.response = checked_response
+
         await self.bot.reply_to_msg(ctx.message, f"Crash '{name}' modified!")
 
     @BaseCmds.search.command(name="crashes")
@@ -103,3 +105,20 @@ class CrashCmds(BaseCmds):
 
         response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
+
+
+def validate_crash(expression: str, response: str) -> str:
+    """Returns a string describing an issue with the crash or empty string if it's fine."""
+    try:
+        compiled = re2.compile(expression)
+        re2.search(compiled, "test")
+        replace_groups = re2.findall(r"{(\d+)}", response)
+        replace_groups_count = max(map(int, replace_groups), default=0)
+
+        if replace_groups_count > compiled.groups:
+            return f"There are replacement groups the regex does not capture!"
+
+    except (re2.error, re2.RegexError) as e:
+        return f"The expression isn't valid: {e}"
+
+    return ""  # all good
