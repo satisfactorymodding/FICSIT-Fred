@@ -4,11 +4,13 @@ import asyncio
 import inspect
 import io
 import logging
+from contextlib import suppress
 from os.path import split
 from urllib.parse import urlparse
 
 import nextcord
 import re2
+from PIL import UnidentifiedImageError
 from algoliasearch.search.client import SearchClient
 from nextcord.ext.commands.view import StringView
 
@@ -20,6 +22,7 @@ from .dbcommands import CommandCmds
 from .experience import EXPCmds
 from .help import HelpCmds, FredHelpEmbed
 from ..libraries import createembed, ocr
+from ..libraries.content_manager import ContentManager
 from ..libraries.view.mod_picker import ModPicker
 
 
@@ -194,11 +197,12 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
     async def ocr_test(self, ctx: commands.Context) -> None:
         """Usage: `ocr_test` {attach an image!}"""
         text = "OCR Debugging:\n\n"
-        for n, att in enumerate(ctx.message.attachments):
-            with io.BytesIO() as img:
-                await att.save(img)
-                read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, img)
-            text += f"**Image {n}:**\n ```\n{read_text}\n```\n"
+
+        async with await ContentManager.from_message(ctx.message, self.bot.web_session) as cm:
+            for n, file in enumerate(cm.get_files()):
+                with file.sync.lock, suppress(UnidentifiedImageError):
+                    read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, file)
+                    text += f"**Image {n}:**\n ```\n{read_text}\n```\n"
 
         await self.bot.reply_to_msg(ctx.message, text)
 
