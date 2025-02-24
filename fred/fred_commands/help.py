@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Optional
-from functools import lru_cache
 from typing import Coroutine, Type
+from typing import Optional
 
 import attrs
 import nextcord
@@ -145,18 +144,6 @@ class FredHelpEmbed(nextcord.Embed):
 
     def __str__(self: FredHelpEmbed) -> str:
         return str(self.to_dict())
-
-    @staticmethod
-    @lru_cache
-    def get_shift(index: int, field_number: int) -> int:
-        return field_number + (index * page_size)
-
-    @staticmethod
-    @lru_cache
-    def get_field_indices(index: int, field_number: int) -> str:
-        start = 1 + FredHelpEmbed.get_shift(index, field_number)
-        end = field_size + FredHelpEmbed.get_shift(index, field_number)
-        return f"{start}-{end}"
 
     @classmethod
     def git_webhooks(cls: Type[FredHelpEmbed]) -> FredHelpEmbed:

@@ -1,5 +1,4 @@
 import re2
-from re2 import RegexError
 
 from ._baseclass import BaseCmds, commands, config, SearchFlags
 from ._command_utils import get_search
