@@ -39,7 +39,7 @@ async def github_embed(data: dict) -> nextcord.Embed | None:
 
     if (data_type := data.get("type")) is None:
         logger.error("data didn't have a type field")
-        return
+        return None
 
     match data_type:
         case "push":
@@ -315,6 +315,8 @@ def compatibility_to_emoji(compatibility_state: str) -> str:
             return ":warning:"
         case "Broken":
             return ":no_entry_sign:"
+        case _:
+            return ":question:"
 
 
 def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.Embed:

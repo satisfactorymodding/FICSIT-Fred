@@ -213,9 +213,9 @@ def extract_target_type_from_converter_param(missing_argument: inspect.Parameter
     if ":" not in s:
         return s, None
 
-    split = s.split(": ")
-    converter_type = split[1]
-    missing_argument_name = split[0]
+    split_type = s.split(": ")
+    converter_type = split_type[1]
+    missing_argument_name = split_type[0]
 
     target_type = converter_type.split(".")[-1].strip("Converter")
     return missing_argument_name, target_type
