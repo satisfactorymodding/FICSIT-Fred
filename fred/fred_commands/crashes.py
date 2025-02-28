@@ -1,5 +1,4 @@
 import re2
-from re2 import RegexError
 
 from ._baseclass import BaseCmds, commands, config, SearchFlags
 from ._command_utils import get_search
@@ -103,7 +102,7 @@ class CrashCmds(BaseCmds):
             -column=(name/crash/response) The column of the database to search along. Defaults to name
         Notes: Uses fuzzy matching!"""
 
-        response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
+        response = get_search(config.Crashes, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
 
 
@@ -111,7 +110,7 @@ def validate_crash(expression: str, response: str) -> str:
     """Returns a string describing an issue with the crash or empty string if it's fine."""
     try:
         compiled = re2.compile(expression)
-        re2.search(compiled, "test")
+        re2.search(expression, "test")
         replace_groups = re2.findall(r"{(\d+)}", response)
         replace_groups_count = max(map(int, replace_groups), default=0)
 

@@ -1,7 +1,7 @@
 from nextcord import Member
 
-from .. import config
-from ..libraries import common
+from fred import config
+from fred.libraries import common
 
 
 class Welcome(common.FredCog):

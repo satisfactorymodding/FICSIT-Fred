@@ -1,7 +1,9 @@
 import asyncio
 from os import getenv
 
-from .fred import Bot, nextcord
+import nextcord
+
+from fred.bot import Bot
 
 
 async def a_main():

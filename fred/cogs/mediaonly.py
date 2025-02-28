@@ -1,11 +1,10 @@
 from nextcord import Message, Thread, ForumChannel
 
-from .. import config
-from ..libraries import common
-from ..libraries.common import FredCog
+from fred import config
+from fred.libraries import common
 
 
-class MediaOnly(FredCog):
+class MediaOnly(common.FredCog):
 
     async def process_message(self, message: Message) -> bool:
         """Returns whether the message was removed."""

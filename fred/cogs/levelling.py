@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import math
-from datetime import *
+from datetime import datetime, timedelta
 
 from nextcord import DMChannel, Message, Guild
 
-from .. import config
-from ..libraries import common
+from fred import config
+from fred.libraries import common
 
 logger = common.new_logger(__name__)
 

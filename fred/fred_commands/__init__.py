@@ -4,14 +4,19 @@ import asyncio
 import inspect
 import io
 import logging
+from contextlib import suppress
 from os.path import split
 from urllib.parse import urlparse
 
 import nextcord
 import re2
+from PIL import UnidentifiedImageError
 from algoliasearch.search.client import SearchClient
 from nextcord.ext.commands.view import StringView
 
+from fred.libraries import createembed, ocr
+from fred.libraries.content_manager import ContentManager
+from fred.libraries.view.mod_picker import ModPicker
 from ._baseclass import BaseCmds, common, config, commands
 from .bot_meta import BotCmds
 from .channels import ChannelCmds
@@ -19,8 +24,8 @@ from .crashes import CrashCmds
 from .dbcommands import CommandCmds
 from .experience import EXPCmds
 from .help import HelpCmds, FredHelpEmbed
-from ..libraries import createembed, ocr
-from ..libraries.view.mod_picker import ModPicker
+
+logging.info("Init fred_commands")
 
 
 class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
@@ -148,7 +153,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
 
                 async def callback(interaction: nextcord.Interaction):
                     if interaction.user == ctx.author:
-                        logging.info(interaction.data.values)
+                        self.logger.info(interaction.data.values)
                         new_embed, new_attachment, _ = await createembed.mod_embed(
                             interaction.data["values"][0], self.bot, using_id=True
                         )
@@ -194,11 +199,12 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
     async def ocr_test(self, ctx: commands.Context) -> None:
         """Usage: `ocr_test` {attach an image!}"""
         text = "OCR Debugging:\n\n"
-        for n, att in enumerate(ctx.message.attachments):
-            with io.BytesIO() as img:
-                await att.save(img)
-                read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, img)
-            text += f"**Image {n}:**\n ```\n{read_text}\n```\n"
+
+        async with await ContentManager.from_message(ctx.message, self.bot.web_session) as cm:
+            for n, file in enumerate(cm.get_files()):
+                with file.sync.lock, suppress(UnidentifiedImageError):
+                    read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, file)
+                    text += f"**Image {n}:**\n ```\n{read_text}\n```\n"
 
         await self.bot.reply_to_msg(ctx.message, text)
 
@@ -209,9 +215,9 @@ def extract_target_type_from_converter_param(missing_argument: inspect.Parameter
     if ":" not in s:
         return s, None
 
-    split = s.split(": ")
-    converter_type = split[1]
-    missing_argument_name = split[0]
+    split_type = s.split(": ")
+    converter_type = split_type[1]
+    missing_argument_name = split_type[0]
 
     target_type = converter_type.split(".")[-1].strip("Converter")
     return missing_argument_name, target_type
