@@ -2,8 +2,8 @@ from typing import Type
 
 from regex import ENHANCEMATCH, match, escape
 
-from ..config import Commands, Crashes, Misc
-from ..libraries.common import new_logger
+from fred.config import Commands, Crashes, Misc
+from fred.libraries.common import new_logger
 
 logger = new_logger("[Command/Crash Search]")
 

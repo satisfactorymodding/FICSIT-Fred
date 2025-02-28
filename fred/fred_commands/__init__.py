@@ -14,6 +14,9 @@ from PIL import UnidentifiedImageError
 from algoliasearch.search.client import SearchClient
 from nextcord.ext.commands.view import StringView
 
+from fred.libraries import createembed, ocr
+from fred.libraries.content_manager import ContentManager
+from fred.libraries.view.mod_picker import ModPicker
 from ._baseclass import BaseCmds, common, config, commands
 from .bot_meta import BotCmds
 from .channels import ChannelCmds
@@ -21,9 +24,8 @@ from .crashes import CrashCmds
 from .dbcommands import CommandCmds
 from .experience import EXPCmds
 from .help import HelpCmds, FredHelpEmbed
-from ..libraries import createembed, ocr
-from ..libraries.content_manager import ContentManager
-from ..libraries.view.mod_picker import ModPicker
+
+logging.info("Init fred_commands")
 
 
 class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
@@ -151,7 +153,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
 
                 async def callback(interaction: nextcord.Interaction):
                     if interaction.user == ctx.author:
-                        logging.info(interaction.data.values)
+                        self.logger.info(interaction.data.values)
                         new_embed, new_attachment, _ = await createembed.mod_embed(
                             interaction.data["values"][0], self.bot, using_id=True
                         )

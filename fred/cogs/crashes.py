@@ -1,31 +1,28 @@
 from __future__ import annotations
 
-from io import StringIO
 import json
-from os import path
 from asyncio import Task, TaskGroup
 from asyncio import wait_for, to_thread, TimeoutError
 from contextlib import suppress
+from io import StringIO
 from itertools import batched
+from os import path
 from os.path import split, splitext
 from pathlib import Path
 from typing import AsyncIterator, IO, Type, Coroutine, Generator, Optional, Any, Final, TypedDict
 from zipfile import ZipFile
 
 import re2
-
-from ..libraries.content_manager import ContentManager
-
-re2.set_fallback_notification(re2.FALLBACK_WARNING)
-
 from attr import dataclass
 from nextcord import Message, File
 from semver import Version
 
-from .. import config
-from ..libraries import createembed, ocr
-from ..libraries.common import FredCog, new_logger
-from ..libraries.createembed import CrashResponse
+from fred import config
+from fred.libraries import createembed, ocr
+from fred.libraries.common import FredCog, new_logger
+from fred.libraries.content_manager import ContentManager
+
+re2.set_fallback_notification(re2.FALLBACK_WARNING)
 
 REGEX_LIMIT: float = 6.9
 DOWNLOAD_SIZE_LIMIT = 104857600  # 100 MiB
@@ -51,10 +48,12 @@ async def regex_with_timeout(*args, **kwargs):
 
 class Crashes(FredCog):
 
-    type CrashJob = Coroutine[Any, Any, list[CrashResponse]]
+    type CrashJob = Coroutine[Any, Any, list[createembed.CrashResponse]]
     type CrashJobGenerator = Generator[Crashes.CrashJob, None, None]
 
-    async def make_sml_version_message(self, game_version: int = 0, sml: str = "", **_) -> Optional[CrashResponse]:
+    async def make_sml_version_message(
+        self, game_version: int = 0, sml: str = "", **_
+    ) -> Optional[createembed.CrashResponse]:
         if game_version and sml:
             # Check the right SML for that CL
             query = """{
@@ -75,7 +74,7 @@ class Crashes(FredCog):
                 )
                 if latest_compatible_sml != sml_versions[0]:
                     msg += "\nAlso, your game itself may need an update!"
-                return CrashResponse("Outdated SML!", msg, inline=True)
+                return createembed.CrashResponse("Outdated SML!", msg, inline=True)
             else:
                 return None
 
@@ -110,8 +109,8 @@ class Crashes(FredCog):
 
     async def check_mods(
         self, input_mods: InstallInfo.InstalledMods, experimental: bool = False
-    ) -> list[CrashResponse]:
-        responses: list[CrashResponse] = []
+    ) -> list[createembed.CrashResponse]:
+        responses: list[createembed.CrashResponse] = []
         if not input_mods:
             return responses
 
@@ -156,25 +155,28 @@ class Crashes(FredCog):
                 "(this is why your mods don't load)."
             )
 
-            responses.append(CrashResponse("Incompatible mods found!", string))
+            responses.append(createembed.CrashResponse("Incompatible mods found!", string))
 
         if outdated_mods:
             string = "\n".join(f"{mod[0]} can be updated to `{mod[1]}`" for mod in outdated_mods)
             if len(string) > 900:  # fields have a 1024 char value length limit
                 string = "TOO MANY OUTDATED MODS TO LIST!!"
             string += "\nUpdate these mods, there may be fixes for your issue in doing so."
-            responses.append(CrashResponse("Outdated mods found!", string))
+            responses.append(createembed.CrashResponse("Outdated mods found!", string))
         return responses
 
-    async def mass_regex(self, text: str) -> AsyncIterator[CrashResponse]:
-        for crash in config.Crashes.fetch_all():
+    async def mass_regex(self, text: str) -> AsyncIterator[createembed.CrashResponse]:
+
+        all_crashes = config.Crashes.fetch_all()
+
+        for crash in all_crashes:
             if match := await regex_with_timeout(crash["crash"], text, flags=re2.IGNORECASE | re2.S):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
                         command_response = command["content"]
                         if command_response.startswith(self.bot.command_prefix):  # is alias
                             command = config.Commands.fetch(command_response.strip(self.bot.command_prefix))
-                        yield CrashResponse(
+                        yield createembed.CrashResponse(
                             name=crash["name"],
                             value=command["content"],
                             attachment=command["attachment"],
@@ -189,7 +191,7 @@ class Crashes(FredCog):
                         return match.group(group)
 
                     response = re2.sub(r"{(\d+)}", replace_response_value_with_captured, str(crash["response"]))
-                    yield CrashResponse(name=crash["name"], value=response, inline=True)
+                    yield createembed.CrashResponse(name=crash["name"], value=response, inline=True)
 
     async def detect_and_fetch_pastebin_content(self, text: str) -> str:
         if match := re2.search(r"(https://pastebin.com/\S+)", text):
@@ -200,12 +202,17 @@ class Crashes(FredCog):
         else:
             return ""
 
-    async def process_text(self, text: str, filename="") -> list[CrashResponse]:
+    async def process_text(self, text: str, filename="") -> list[createembed.CrashResponse]:
         if not text:
             return []
 
         self.logger.info("Processing text.")
+        import time
+
+        start = time.time()
         responses = [msg async for msg in self.mass_regex(text)]
+        done = time.time()
+        self.logger.info(f"Fetch took {done - start} seconds")
 
         responses.extend(await self.process_text(await self.detect_and_fetch_pastebin_content(text)))
 
@@ -213,7 +220,7 @@ class Crashes(FredCog):
             filename = path.basename(filename)
             crash = match.group(1)
             responses.append(
-                CrashResponse(
+                createembed.CrashResponse(
                     name=f"Crash found in {filename}",
                     value="It has been attached to this message.",
                     attachment=File(StringIO(crash), filename="Abridged " + filename, force_close=True),
@@ -222,21 +229,21 @@ class Crashes(FredCog):
 
         return responses
 
-    async def process_text_file(self, file: ContentManager.ManagedFile) -> list[CrashResponse]:
+    async def process_text_file(self, file: ContentManager.ManagedFile) -> list[createembed.CrashResponse]:
         self.logger.info("Processing text file.")
         with file.sync.lock:
             res = await self.process_text(file.read().decode(), file.filename)
         file.sync.mark_done()
         return res
 
-    async def process_image(self, file: ContentManager.ManagedFile) -> list[CrashResponse]:
+    async def process_image(self, file: ContentManager.ManagedFile) -> list[createembed.CrashResponse]:
         self.logger.info("Processing image.")
         with file.sync.lock:
             res = await self.process_text(await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, file))
         file.sync.mark_done()
         return res
 
-    async def process_zip(self, managed_zip_content: ContentManager, filename: str) -> list[CrashResponse]:
+    async def process_zip(self, managed_zip_content: ContentManager, filename: str) -> list[createembed.CrashResponse]:
         self.logger.info(f"Processing zip {filename}")
 
         res = []
@@ -336,7 +343,7 @@ class Crashes(FredCog):
                 self.logger.info("Indicating interest in message")
                 await message.add_reaction(EMOJI_CRASHES_ANALYZING)
 
-            responses: list[CrashResponse] = []
+            responses: list[createembed.CrashResponse] = []
             jobs: list[Task] = []
             try:
                 self.logger.info("Creating message processing tasks")
@@ -611,8 +618,8 @@ class InstallInfo:
 
         return version_info + "\n```"
 
-    def format(self) -> CrashResponse:
-        return CrashResponse(
+    def format(self) -> createembed.CrashResponse:
+        return createembed.CrashResponse(
             name=f"Key Details for {self.filename}",
             value=self._version_info(),
         )

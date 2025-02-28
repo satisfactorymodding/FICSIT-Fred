@@ -8,10 +8,10 @@ from nextcord import User, Message, Member, Guild, NotFound
 from nextcord.ext import commands
 from nextcord.ext.commands import Context
 
-from .. import config
+from fred import config
 
 if TYPE_CHECKING:
-    from ..fred import Bot
+    from fred.bot import Bot
 
 
 def new_logger(name: str) -> logging.Logger:

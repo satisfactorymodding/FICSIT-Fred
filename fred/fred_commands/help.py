@@ -7,8 +7,8 @@ import attrs
 import nextcord
 import regex
 
+from fred.libraries import common
 from ._baseclass import BaseCmds, commands, config
-from ..libraries import common
 
 logger = common.new_logger(__name__)
 

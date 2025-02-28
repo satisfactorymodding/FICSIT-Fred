@@ -1,8 +1,8 @@
 from nextcord import Role, User
 
+from fred.cogs import levelling
+from fred.libraries import createembed
 from ._baseclass import BaseCmds, commands, common, config
-from ..cogs import levelling
-from ..libraries import createembed
 
 
 class EXPCmds(BaseCmds):
