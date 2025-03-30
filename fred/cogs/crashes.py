@@ -146,11 +146,12 @@ class Crashes(FredCog):
                 continue  # we have no way of knowing
             compat_info = mod_compat.get("EA") or mod_compat.get("EXP")
             mod_latest_version = Version.parse(mod["versions"][0]["version"])
+            using_mod_version = Version.parse(input_mods[mod["mod_reference"]])
 
             if compat_info["state"] == "Broken":
                 broken_mods.append((mod_name, compat_info["note"]))
 
-            if mod_latest_version > input_mods[mod["mod_reference"]]:
+            if mod_latest_version > using_mod_version and not mod_latest_version.prerelease:
                 outdated_mods.append((mod_name, str(mod_latest_version)))
 
         if broken_mods:
