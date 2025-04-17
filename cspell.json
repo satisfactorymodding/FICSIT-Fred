@@ -6,9 +6,11 @@
   "language": "en",
   // words - list of words to be always considered correct
   "words": [
+    "dberrors",
     "FICSIT",
     "libpq",
     "Mircea",
+    "owoize",
     "pgadmin",
     "virtualenv"
   ],
