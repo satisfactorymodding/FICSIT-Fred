@@ -248,9 +248,9 @@ class Bot(commands.Bot):
             return message2.author == message.author
 
         try:
-            response: nextcord.Message = await self.wait_for("message", timeout=60.0, check=check)
+            response: nextcord.Message = await self.wait_for("message", timeout=120.0, check=check)
         except asyncio.TimeoutError:
-            await self.reply_to_msg(message, "Timed out and aborted after 60 seconds.")
+            await self.reply_to_msg(message, "Timed out and aborted after 120 seconds.")
             raise asyncio.TimeoutError
 
         return response.content, response.attachments[0] if response.attachments else None
