@@ -7,8 +7,7 @@ load_dotenv()
 
 logging.root = logging.getLogger("FRED")
 logging.basicConfig(level=getenv("FRED_LOG_LEVEL", logging.DEBUG))
-
-from .fred import __version__  # noqa
+logging.info("Init fred")
 
 ENVVARS = (
     "FRED_IP",

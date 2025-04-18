@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from ._baseclass import BaseCmds, commands, config, common
 
 if TYPE_CHECKING:
-    from ..fred import Bot
+    from fred.bot import Bot
 
 
 class BotCmds(BaseCmds):

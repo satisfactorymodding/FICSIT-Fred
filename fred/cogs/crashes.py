@@ -1,30 +1,28 @@
 from __future__ import annotations
 
-import asyncio
-import io
 import json
-import os
 from asyncio import Task, TaskGroup
-from os.path import split
+from asyncio import wait_for, to_thread, TimeoutError
+from contextlib import suppress
+from io import StringIO
+from itertools import batched
+from os import path
+from os.path import split, splitext
 from pathlib import Path
-from typing import AsyncIterator, IO, Type, Coroutine, Generator, Optional, Any, Final, TypedDict, AsyncGenerator
-from urllib.parse import urlparse
+from typing import AsyncIterator, IO, Type, Coroutine, Generator, Optional, Any, Final, TypedDict
 from zipfile import ZipFile
 
 import re2
-
-re2.set_fallback_notification(re2.FALLBACK_WARNING)
-
-from aiohttp import ClientResponseError
 from attr import dataclass
-from nextcord import Message, HTTPException, Forbidden, NotFound, File
-from pytesseract import image_to_string, TesseractError
+from nextcord import Message, File
 from semver import Version
 
-from .. import config
-from ..libraries import createembed, ocr
-from ..libraries.common import FredCog, new_logger
-from ..libraries.createembed import CrashResponse
+from fred import config
+from fred.libraries import createembed, ocr
+from fred.libraries.common import FredCog, new_logger
+from fred.libraries.content_manager import ContentManager
+
+re2.set_fallback_notification(re2.FALLBACK_WARNING)
 
 REGEX_LIMIT: float = 6.9
 DOWNLOAD_SIZE_LIMIT = 104857600  # 100 MiB
@@ -36,8 +34,8 @@ logger = new_logger(__name__)
 
 async def regex_with_timeout(*args, **kwargs):
     try:
-        return await asyncio.wait_for(asyncio.to_thread(re2.search, *args, **kwargs), REGEX_LIMIT)
-    except asyncio.TimeoutError:
+        return await wait_for(to_thread(re2.search, *args, **kwargs), REGEX_LIMIT)
+    except TimeoutError:
         raise TimeoutError(
             f"A regex timed out after {REGEX_LIMIT} seconds! \n"
             f"pattern: ({args[0]}) \n"
@@ -50,10 +48,12 @@ async def regex_with_timeout(*args, **kwargs):
 
 class Crashes(FredCog):
 
-    type CrashJob = Coroutine[Any, Any, list[CrashResponse]]
+    type CrashJob = Coroutine[Any, Any, list[createembed.CrashResponse]]
     type CrashJobGenerator = Generator[Crashes.CrashJob, None, None]
 
-    async def make_sml_version_message(self, game_version: int = 0, sml: str = "", **_) -> Optional[CrashResponse]:
+    async def make_sml_version_message(
+        self, game_version: int = 0, sml: str = "", **_
+    ) -> Optional[createembed.CrashResponse]:
         if game_version and sml:
             # Check the right SML for that CL
             query = """{
@@ -74,7 +74,7 @@ class Crashes(FredCog):
                 )
                 if latest_compatible_sml != sml_versions[0]:
                     msg += "\nAlso, your game itself may need an update!"
-                return CrashResponse("Outdated SML!", msg, inline=True)
+                return createembed.CrashResponse("Outdated SML!", msg, inline=True)
             else:
                 return None
 
@@ -109,25 +109,18 @@ class Crashes(FredCog):
 
     async def check_mods(
         self, input_mods: InstallInfo.InstalledMods, experimental: bool = False
-    ) -> list[CrashResponse]:
-        responses: list[CrashResponse] = []
+    ) -> list[createembed.CrashResponse]:
+        responses: list[createembed.CrashResponse] = []
         if not input_mods:
             return responses
 
-        # This separates the mods into blocks of 100 because of API restrictions
-        def formatted_chunks_of_100_mod_references() -> Generator[str, None, None]:
-            mods = input_mods.copy()
-            while mods:
-                new_chunk = []
-                while mods and len(new_chunk) < 100:
-                    new_chunk.append(mods.popitem()[0])
-                yield json.dumps(new_chunk)
-
         queried_mods: list[Crashes._ModLookupGQLResponse] = []
-        for chunk in formatted_chunks_of_100_mod_references():
+
+        # This separates the mods into blocks of 100 because of API restrictions
+        for chunk in batched(input_mods, 100):
             # formats the list appropriately for GQL
             game_branch = "EXP" if experimental else "EA"
-            query = self._QUERY_TEMPLATE % (chunk, game_branch)
+            query = self._QUERY_TEMPLATE % (json.dumps(chunk), game_branch)
 
             queried_mods.extend(
                 # this guarantees this won't annoyingly KeyError and will only add nothing
@@ -163,25 +156,28 @@ class Crashes(FredCog):
                 "(this is why your mods don't load)."
             )
 
-            responses.append(CrashResponse("Incompatible mods found!", string))
+            responses.append(createembed.CrashResponse("Incompatible mods found!", string))
 
         if outdated_mods:
             string = "\n".join(f"{mod[0]} can be updated to `{mod[1]}`" for mod in outdated_mods)
             if len(string) > 900:  # fields have a 1024 char value length limit
                 string = "TOO MANY OUTDATED MODS TO LIST!!"
             string += "\nUpdate these mods, there may be fixes for your issue in doing so."
-            responses.append(CrashResponse("Outdated mods found!", string))
+            responses.append(createembed.CrashResponse("Outdated mods found!", string))
         return responses
 
-    async def mass_regex(self, text: str) -> AsyncIterator[CrashResponse]:
-        for crash in config.Crashes.fetch_all():
+    async def mass_regex(self, text: str) -> AsyncIterator[createembed.CrashResponse]:
+
+        all_crashes = config.Crashes.fetch_all()
+
+        for crash in all_crashes:
             if match := await regex_with_timeout(crash["crash"], text, flags=re2.IGNORECASE | re2.S):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
                         command_response = command["content"]
                         if command_response.startswith(self.bot.command_prefix):  # is alias
                             command = config.Commands.fetch(command_response.strip(self.bot.command_prefix))
-                        yield CrashResponse(
+                        yield createembed.CrashResponse(
                             name=crash["name"],
                             value=command["content"],
                             attachment=command["attachment"],
@@ -196,7 +192,7 @@ class Crashes(FredCog):
                         return match.group(group)
 
                     response = re2.sub(r"{(\d+)}", replace_response_value_with_captured, str(crash["response"]))
-                    yield CrashResponse(name=crash["name"], value=response, inline=True)
+                    yield createembed.CrashResponse(name=crash["name"], value=response, inline=True)
 
     async def detect_and_fetch_pastebin_content(self, text: str) -> str:
         if match := re2.search(r"(https://pastebin.com/\S+)", text):
@@ -207,113 +203,129 @@ class Crashes(FredCog):
         else:
             return ""
 
-    async def process_text(self, text: str, filename="") -> list[CrashResponse]:
+    async def process_text(self, text: str, filename="") -> list[createembed.CrashResponse]:
         if not text:
             return []
 
         self.logger.info("Processing text.")
+        import time
+
+        start = time.time()
         responses = [msg async for msg in self.mass_regex(text)]
+        done = time.time()
+        self.logger.info(f"Fetch took {done - start} seconds")
 
         responses.extend(await self.process_text(await self.detect_and_fetch_pastebin_content(text)))
 
         if match := re2.search(r"([^\n]*Critical error:.*Engine exit[^\n]*\))", text, flags=re2.I | re2.M | re2.S):
-            filename = os.path.basename(filename)
+            filename = path.basename(filename)
             crash = match.group(1)
             responses.append(
-                CrashResponse(
+                createembed.CrashResponse(
                     name=f"Crash found in {filename}",
                     value="It has been attached to this message.",
-                    attachment=File(io.StringIO(crash), filename="Abridged " + filename, force_close=True),
+                    attachment=File(StringIO(crash), filename="Abridged " + filename, force_close=True),
                 )
             )
 
         return responses
 
-    async def process_image(self, file: IO) -> list[CrashResponse]:
-        return await self.process_text(await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, file))
+    async def process_text_file(self, file: ContentManager.ManagedFile) -> list[createembed.CrashResponse]:
+        self.logger.info("Processing text file.")
+        with file.sync.lock:
+            res = await self.process_text(file.read().decode(), file.filename)
+        file.sync.mark_done()
+        return res
 
-    def _create_debug_messages(self, debug_zip: ZipFile, filename: str) -> Optional[CrashJob]:
-        files = debug_zip.namelist()
-        info: Optional[InstallInfo] = None
-        if "metadata.json" in files:
-            with debug_zip.open("metadata.json") as f:
-                info = InstallInfo.from_metadata_json(f, filename)
+    async def process_image(self, file: ContentManager.ManagedFile) -> list[createembed.CrashResponse]:
+        self.logger.info("Processing image.")
+        with file.sync.lock:
+            res = await self.process_text(await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, file))
+        file.sync.mark_done()
+        return res
 
-        if info is None:
-            return None
+    async def process_zip(self, managed_zip_content: ContentManager, filename: str) -> list[createembed.CrashResponse]:
+        self.logger.info(f"Processing zip {filename}")
 
-        if "FactoryGame.log" in files:
-            with debug_zip.open("FactoryGame.log") as f:
-                info.update_from_fg_log(f)
+        res = []
 
-        async def coro_rtn():
-            return [info.format(), *await self.check_mods(info.installed_mods)]
+        with managed_zip_content.sync.lock, suppress(IndexError):
+            info: Optional[InstallInfo] = None
 
-        return coro_rtn()
+            searchable_files = managed_zip_content.searchable()
 
-    def _get_file_jobs(self, filename: str, file: IO) -> CrashJobGenerator:
-        match self._file_extension(filename):
-            case "zip":
-                self.logger.info(f"Adding jobs from zip file {filename}")
-                zip_file = ZipFile(file)
-                if res := self._create_debug_messages(zip_file, filename):
-                    yield res
-                for zipped_item_filename in zip_file.namelist():
-                    with zip_file.open(zipped_item_filename) as zip_item:
-                        yield from self._get_file_jobs(f"{filename}/{zipped_item_filename}", zip_item)
-            case "log" | "txt" | "json":
-                self.logger.info(f"Adding job for log/text file {filename}")
-                yield self.process_text(str(file.read().decode()), filename=filename)
-            case "png":
-                self.logger.info(f"Adding job for png file {filename}")
-                yield self.process_image(file)
-            case _:
-                self.logger.info(f"Not adding any job for {filename}")
+            files = searchable_files.get(f"{filename}/metadata.json", [])
+            metadata = files.pop(0)  # shortcuts to return [] if there is no metadata file
+            if files:
+                self.logger.warn("Multiple metadata.json found! Using 1st.")
+
+            with metadata.sync.lock:
+                metadata.seek(0)
+                info = InstallInfo.from_metadata_json(metadata, filename)
+
+            with suppress(IndexError):
+                files = searchable_files.get(f"{filename}/FactoryGame.log", [])
+                fg_log = files.pop(0)  # shortcuts to return without using fg.log if there isn't one
+                if files:
+                    self.logger.warn("Multiple FactoryGame.log found! Using 1st.")
+
+                with fg_log.sync.lock:
+                    fg_log.seek(0)
+                    info.update_from_fg_log(fg_log)
+
+            if info is not None:
+                res.append(info.format())
+                res.extend(await self.check_mods(info.installed_mods))
+
+        managed_zip_content.sync.mark_done()
+        return res
+
+    def _get_file_jobs(self, cm: ContentManager) -> CrashJobGenerator:
+        cm.sync.mark_using()
+
+        for file in cm.get_files():
+            self.logger.debug(f"Getting jobs for file {file.filename}")
+            match self._file_extension(file.filename):
+                case "zip":
+                    self.logger.info(f"Adding jobs from zip file {file.filename}")
+                    file.sync.mark_using()
+                    with file.sync.lock:
+                        zip_file = ZipFile(file)
+                        zcm = ContentManager.from_zipfile(zip_file, file.filename)
+                    file.sync.mark_done()
+                    cm.add_child(zcm)
+                    zcm.sync.mark_using()
+                    self.logger.info(f"Adding job from zip file {file.filename}")
+                    yield self.process_zip(zcm, file.filename)
+                    self.logger.info(f"Recursing job creation over zip file {file.filename}")
+                    yield from self._get_file_jobs(zcm)
+
+                case "log" | "txt" | "json":
+                    self.logger.info(f"Adding job for log/text file {file.filename}")
+                    yield self.process_text_file(file)
+                    file.sync.mark_using()
+                case "png":
+                    self.logger.info(f"Adding job for png file {file.filename}")
+                    file.sync.mark_using()
+                    yield self.process_image(file)
+                case _:
+                    self.logger.info(f"Not adding any job for {file.filename}")
+
+        # this guarantees the mark done runs
+        cm.sync.mark_done()
+
+        async def nothing():
+            return []
+
+        yield nothing()
 
     @staticmethod
     def _file_extension(filename: str) -> str:
-        return filename.rpartition(".")[-1].lower()
+        return splitext(split(filename)[1])[1][1:].lower()
 
     @staticmethod
     def _ext_filter(ext: str) -> bool:
         return ext in ("png", "log", "txt", "zip", "json")
-
-    async def _obtain_attachments(self, message: Message) -> AsyncGenerator[tuple[str, IO | Exception], None, None]:
-        cdn_links = re2.findall(
-            r"(https://(?:cdn.discordapp.com|media.discordapp.net)/attachments/\S+)", message.content
-        )
-
-        yield bool(cdn_links or message.attachments)
-
-        for att_url in cdn_links:
-            self.logger.info("Attempting to acquire linked file manually")
-            url_path = urlparse(att_url).path
-            _, name = split(url_path)
-
-            if self._ext_filter(self._file_extension(name)):
-                try:
-
-                    async with self.bot.web_session.head(att_url) as response:
-                        response.raise_for_status()
-                        if int(response.headers.get("Content-Length", 0)) > DOWNLOAD_SIZE_LIMIT:
-                            yield name, ResourceWarning(f"File unreasonably large!")
-
-                    async with self.bot.web_session.get(att_url) as response:
-                        response.raise_for_status()
-                        yield name, io.BytesIO(await response.read())
-
-                except ClientResponseError as e:
-                    yield name, e
-
-        for att in message.attachments:
-            self.logger.info("Attempting to acquire file via Discord")
-            name = att.filename
-            if self._ext_filter(self._file_extension(name)):
-                try:
-                    file = await att.to_file()
-                    yield name, file.fp
-                except HTTPException | Forbidden | NotFound as e:
-                    yield name, e
 
     async def process_message(self, message: Message) -> bool:
         """
@@ -326,53 +338,39 @@ class Crashes(FredCog):
         - Return whether there were any messages
         """
         self.logger.info("Processing message")
-        file_getter = self._obtain_attachments(message)
-        # get the first yield, which is just whether there's anything to do
-        if there_were_files := await file_getter.asend(None):
-            self.logger.info("Indicating interest in message")
-            await message.add_reaction(EMOJI_CRASHES_ANALYZING)
+        async with await ContentManager.from_message(message, self.bot.web_session) as content_manager:
 
-        responses: list[CrashResponse] = []
-        files: list[IO] = []
-        try:
-            self.logger.info("Creating message processing tasks")
-            async with TaskGroup() as task_group:
-                jobs: list[Task] = [task_group.create_task(self.process_text(message.content))]
+            if there_were_files := content_manager.has_files():
+                self.logger.info("Indicating interest in message")
+                await message.add_reaction(EMOJI_CRASHES_ANALYZING)
 
-                async for name, file_or_exc in file_getter:
-                    if isinstance(file_or_exc, Exception):
-                        self.logger.error(f"Unable to obtain file '{name}'")
-                        self.logger.exception(file_or_exc)
-                        responses.append(
-                            CrashResponse(
-                                name="Download failed", value=f"Could not obtain file '{name}' due to `{file_or_exc}`"
-                            )
-                        )
-                        continue
+            responses: list[createembed.CrashResponse] = []
+            jobs: list[Task] = []
+            try:
+                self.logger.info("Creating message processing tasks")
+                async with TaskGroup() as task_group:
+                    jobs.append(task_group.create_task(self.process_text(message.content)))
+                    jobs.extend((task_group.create_task(job) for job in self._get_file_jobs(content_manager)))
 
-                    file: IO = file_or_exc
-                    files.append(file)
-                    jobs.extend((task_group.create_task(job) for job in self._get_file_jobs(name, file)))
-        except ExceptionGroup as eg:
-            for ex in eg.exceptions:
-                if isinstance(ex, TimeoutError):
-                    self.logger.exception(ex)
-                    await message.remove_reaction(EMOJI_CRASHES_ANALYZING, self.bot.user)
-                    await message.add_reaction(EMOJI_CRASHES_TIMEOUT)
-                    for j in jobs:
-                        j.cancel()
-                else:
-                    await message.remove_reaction(EMOJI_CRASHES_ANALYZING, self.bot.user)
-                    raise ex
+            except ExceptionGroup as eg:
+                self.logger.error(f"Exceptions raised in jobs: {eg.exceptions}")
+                for ex in eg.exceptions:
+                    if isinstance(ex, TimeoutError):
+                        self.logger.exception(ex)
+                        await message.remove_reaction(EMOJI_CRASHES_ANALYZING, self.bot.user)
+                        await message.add_reaction(EMOJI_CRASHES_TIMEOUT)
+                        for j in jobs:
+                            j.cancel()
+                    else:
+                        await message.remove_reaction(EMOJI_CRASHES_ANALYZING, self.bot.user)
+                        raise ex
 
-        self.logger.info("Collecting job results")
-        for job in jobs:
-            responses.extend(job.result())
+            self.logger.info("Collecting job results")
+            for job in jobs:
+                responses.extend(job.result())
 
-        if files:
-            self.logger.info("Closing files")
-            for file in files:
-                file.close()
+        # all files should be closed at this point
+        self.logger.debug("Do we get past the context manager?")
 
         if there_were_files:
             self.logger.info("Removing reaction")
@@ -526,17 +524,17 @@ class InstallInfo:
             else:
                 self.game_version = game_version
 
-        if path := info.get("path"):
+        if game_path := info.get("path"):
             if self.game_path:
-                p1 = path.replace("\\", "/")
+                p1 = game_path.replace("\\", "/")
                 p2 = self.game_path.replace("\\", "/")
                 if "Windows" in self.game_type:  # windows is case-insensitive
                     p1 = p1.lower()
                     p2 = p2.lower()
                 if Path(p1) != Path(p2):
-                    self.mismatches.append(f"Game Path: ({path})")
+                    self.mismatches.append(f"Game Path: ({game_path})")
             else:
-                self.game_path = path
+                self.game_path = game_path
 
         if launcher := info.get("launcher"):
             if self.game_launcher_id and self.game_launcher_id.lower() != launcher.lower():
@@ -621,8 +619,8 @@ class InstallInfo:
 
         return version_info + "\n```"
 
-    def format(self) -> CrashResponse:
-        return CrashResponse(
+    def format(self) -> createembed.CrashResponse:
+        return createembed.CrashResponse(
             name=f"Key Details for {self.filename}",
             value=self._version_info(),
         )

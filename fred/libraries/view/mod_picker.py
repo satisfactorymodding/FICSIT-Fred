@@ -1,7 +1,7 @@
-import nextcord.ui
+from nextcord.ui import Select, View
 
 
-class ModPicker(nextcord.ui.View):
+class ModPicker(View):
     def __init__(self, mods: list[dict]):
         super().__init__()
         self.select = ModSelect()
@@ -13,7 +13,7 @@ class ModPicker(nextcord.ui.View):
         self.select.callback = callback
 
 
-class ModSelect(nextcord.ui.Select):
+class ModSelect(Select):
     def __init__(self):
         super().__init__()
 

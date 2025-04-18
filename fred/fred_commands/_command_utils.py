@@ -2,8 +2,8 @@ from typing import Type
 
 from regex import ENHANCEMATCH, match, escape
 
-from ..config import Commands, Crashes, Misc
-from ..libraries.common import new_logger
+from fred.config import Commands, Crashes, Misc
+from fred.libraries.common import new_logger
 
 logger = new_logger("[Command/Crash Search]")
 
@@ -45,7 +45,7 @@ def get_search(table: Type[Commands | Crashes], pattern: str, column: str, force
                 response += (
                     f"\n`{prefix}"
                     + (f"`\n`{prefix}".join(searched))
-                    + "\n` These were found by fuzzy matching. If it's not fuzzy enough, complain to Borketh#3347."
+                    + "\n` These were found by fuzzy matching. If it's not fuzzy enough, complain to @borketh."
                 )
         else:
             response = "Nothing could be found!"

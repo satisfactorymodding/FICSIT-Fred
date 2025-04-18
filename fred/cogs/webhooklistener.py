@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from fred.libraries import common
 
 if TYPE_CHECKING:
-    from fred.fred import Bot
+    from fred.bot import Bot
 
 logger = common.new_logger(__name__)
 
