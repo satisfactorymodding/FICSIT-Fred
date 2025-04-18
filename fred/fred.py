@@ -248,9 +248,9 @@ class Bot(commands.Bot):
             return message2.author == message.author
 
         try:
-            response: nextcord.Message = await self.wait_for("message", timeout=60.0, check=check)
+            response: nextcord.Message = await self.wait_for("message", timeout=120.0, check=check)
         except asyncio.TimeoutError:
-            await self.reply_to_msg(message, "Timed out and aborted after 60 seconds.")
+            await self.reply_to_msg(message, "Timed out and aborted after 120 seconds.")
             raise asyncio.TimeoutError
 
         return response.content, response.attachments[0] if response.attachments else None
@@ -279,12 +279,12 @@ class Bot(commands.Bot):
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
                 self.logger.info("A user now accepts to receive DMs", extra=common.message_info(message))
-                await self.reply_to_msg(message, "You will now receive level changes notifications !")
+                await self.reply_to_msg(message, "You will now receive direct messages from me again! If you change your mind, send a message that says `stop`.")
                 return
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
                 self.logger.info("A user now refuses to receive DMs", extra=common.message_info(message))
-                await self.reply_to_msg(message, "You will no longer receive level changes notifications !")
+                await self.reply_to_msg(message, "You will no longer receive direct messages from me! To resume, send a message that says `start`.")
                 return
 
         removed = await self.MediaOnly.process_message(message)
