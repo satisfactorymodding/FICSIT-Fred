@@ -388,9 +388,11 @@ async def mod_embed(
     if not mods:
         return None, None, None
 
-    single_mod = common.mod_name_eq((mod := mods[0])["name"], name) or len(mods) == 1
+    single_mod = len(mods) == 1 
+        or (common.mod_name_eq((mods[0])["name"], name) and not common.mod_name_eq((mods[1])["name"], name))
     if single_mod:
-        # we have a near-exact match
+        # we have only one result, or only one near-exact match
+        mod = mods[0]
         embed = _single_mod_embed(mod)
         logo = l if (l := mod["logo"]) else "https://ficsit.app/images/no_image.webp"
         file, filename = await webp_icon_as_png(logo, bot)
