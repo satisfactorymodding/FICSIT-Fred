@@ -28,7 +28,9 @@ class HelpCmds(BaseCmds):
     async def _send_help(self, ctx: commands.Context, **kwargs):
         if not ctx.author.dm_channel:
             await ctx.author.create_dm()
-        if not await self.bot.send_safe_direct_message(ctx.author, in_dm=ctx.channel == ctx.author.dm_channel, **kwargs):
+        if not await self.bot.send_safe_direct_message(
+            ctx.author, in_dm=ctx.channel == ctx.author.dm_channel, **kwargs
+        ):
             await ctx.reply(
                 "Help commands only work in DMs to avoid clutter. "
                 "You have either disabled server DMs or indicated that you do not wish for Fred to DM you. "

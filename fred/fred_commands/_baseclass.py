@@ -44,7 +44,11 @@ class BaseCmds(common.FredCog):
         Purpose: Searches things like crashes and commands for the stuff requested.
         Notes: Uses fuzzy matching!"""
         if ctx.invoked_subcommand is None:
-            await self.bot.reply_to_msg(ctx.message, "Cannot search this category! Are you sure it exists?")
+            await self.bot.reply_to_msg(
+                ctx.message,
+                "Cannot search this category! Valid categories are: "
+                f"{', '.join(c.name for c in BaseCmds.search.commands)}",
+            )
             return
 
     @commands.group()
