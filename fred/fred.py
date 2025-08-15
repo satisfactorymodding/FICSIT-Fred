@@ -279,12 +279,18 @@ class Bot(commands.Bot):
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
                 self.logger.info("A user now accepts to receive DMs", extra=common.message_info(message))
-                await self.reply_to_msg(message, "You will now receive direct messages from me again! If you change your mind, send a message that says `stop`.")
+                await self.reply_to_msg(
+                    message,
+                    "You will now receive direct messages from me again! If you change your mind, send a message that says `stop`.",
+                )
                 return
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
                 self.logger.info("A user now refuses to receive DMs", extra=common.message_info(message))
-                await self.reply_to_msg(message, "You will no longer receive direct messages from me! To resume, send a message that says `start`.")
+                await self.reply_to_msg(
+                    message,
+                    "You will no longer receive direct messages from me! To resume, send a message that says `start`.",
+                )
                 return
 
         removed = await self.MediaOnly.process_message(message)

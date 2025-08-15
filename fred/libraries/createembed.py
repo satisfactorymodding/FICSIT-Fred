@@ -388,8 +388,9 @@ async def mod_embed(
     if not mods:
         return None, None, None
 
-    single_mod = len(mods) == 1 
-        or (common.mod_name_eq((mods[0])["name"], name) and not common.mod_name_eq((mods[1])["name"], name))
+    single_mod = len(mods) == 1 or (
+        common.mod_name_eq(mods[0]["name"], name) and not common.mod_name_eq(mods[1]["name"], name)
+    )
     if single_mod:
         # we have only one result, or only one near-exact match
         mod = mods[0]
