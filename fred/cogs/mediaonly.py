@@ -39,7 +39,7 @@ class MediaOnly(FredCog):
         if thread:
             self.logger.info("Removing a thread", extra=common.message_info(message))
             await message.channel.delete()
-            await self.bot.send_DM(
+            await self.bot.send_safe_direct_message(
                 message.author,
                 f"Hi {message.author.mention}, "
                 f"{message.channel.parent.mention} is a 'media-only' forum. "
@@ -51,7 +51,7 @@ class MediaOnly(FredCog):
         else:
             self.logger.info("Removing a message", extra=common.message_info(message))
             await message.delete()
-            await self.bot.send_DM(
+            await self.bot.send_safe_direct_message(
                 message.author,
                 f"Hi {message.author.mention}, "
                 f"{message.channel.mention} is a 'media-only' channel. "

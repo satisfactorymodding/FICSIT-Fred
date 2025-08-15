@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import logging
-import regex as re
 from functools import lru_cache, singledispatch
+from io import BytesIO
 from typing import TYPE_CHECKING, Optional
 
-from nextcord import User, Message, Member, Guild, NotFound
+import regex as re
+from nextcord import User, Message, Member, Guild, NotFound, File
 from nextcord.ext import commands
 from nextcord.ext.commands import Context
 
@@ -159,3 +160,7 @@ def owoize(string: str) -> str:
         new_string.append(" ".join(new_line))
 
     return "\n".join(new_string)
+
+
+def text2file(content: str, filename="file") -> File:
+    return File(BytesIO(content.encode()), filename=filename)

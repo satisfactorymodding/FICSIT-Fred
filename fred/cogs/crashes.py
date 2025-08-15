@@ -18,7 +18,6 @@ re2.set_fallback_notification(re2.FALLBACK_WARNING)
 from aiohttp import ClientResponseError
 from attr import dataclass
 from nextcord import Message, HTTPException, Forbidden, NotFound, File
-from pytesseract import image_to_string, TesseractError
 from semver import Version
 
 from .. import config

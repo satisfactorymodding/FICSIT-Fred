@@ -24,6 +24,8 @@ from .libraries import createembed, common
 
 __version__ = version("fred")
 
+from .libraries.common import text2file
+
 
 class Bot(commands.Bot):
 
@@ -157,7 +159,7 @@ class Bot(commands.Bot):
             channel = self.get_channel(config.Misc.fetch("githook_channel"))
             await channel.send(content=None, embed=embed)
 
-    async def send_DM(
+    async def _send_safe_direct_message_internal(
         self,
         user: nextcord.User | nextcord.Member,
         content: str = None,
@@ -192,19 +194,34 @@ class Bot(commands.Bot):
                 embed = createembed.DM(content)
                 content = None
 
-            await user.dm_channel.send(content=content, embed=embed, **kwargs)
+            await self.safe_send(user.dm_channel, content=content, embed=embed, **kwargs)
             return True
         except Exception:  # noqa
             self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
             return False
 
-    async def checked_DM(self, user: nextcord.User, **kwargs) -> bool:
+    async def send_safe_direct_message(self, user: nextcord.User, **kwargs) -> bool:
         user_meta = config.Users.create_if_missing(user)
         try:
-            return await self.send_DM(user, user_meta=user_meta, **kwargs)
+            return await self._send_safe_direct_message_internal(user, user_meta=user_meta, **kwargs)
         except (nextcord.HTTPException, nextcord.Forbidden):
             # user has blocked bot or does not take mutual-server DMs
             return False
+
+    @staticmethod
+    async def safe_send(
+        chan: nextcord.TextChannel | nextcord.DMChannel,
+        content: Optional[str],
+        /,
+        files: Optional[list[nextcord.File]] = None,
+        **kwargs,
+    ) -> nextcord.Message:
+        if content is not None and len(content) > 2000:
+            files = files or []
+            files.append(text2file(content, filename="long-message.txt"))
+            content = "Message too long, converted to text file!"
+
+        return await chan.send(content, files=files, **kwargs)
 
     async def reply_to_msg(
         self,
@@ -232,11 +249,11 @@ class Bot(commands.Bot):
             reference.fail_if_not_exists = False
 
         try:
-            return await message.channel.send(content, reference=reference, **kwargs)
+            return await self.safe_send(message.channel, content, reference=reference, **kwargs)
         except (nextcord.HTTPException, nextcord.Forbidden):
             if content and pingee.mention not in content:
                 content += f"\n-# {pingee.mention} ↩️"
-            return await message.channel.send(content, **kwargs)
+            return await self.safe_send(message.channel, content, **kwargs)
 
     async def reply_question(
         self, message: nextcord.Message, question: Optional[str] = None, **kwargs
