@@ -200,10 +200,10 @@ class Bot(commands.Bot):
             self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
             return False
 
-    async def send_safe_direct_message(self, user: nextcord.User, **kwargs) -> bool:
+    async def send_safe_direct_message(self, user: nextcord.User, content=None, **kwargs) -> bool:
         user_meta = config.Users.create_if_missing(user)
         try:
-            return await self._send_safe_direct_message_internal(user, user_meta=user_meta, **kwargs)
+            return await self._send_safe_direct_message_internal(user, content, user_meta=user_meta, **kwargs)
         except (nextcord.HTTPException, nextcord.Forbidden):
             # user has blocked bot or does not take mutual-server DMs
             return False
