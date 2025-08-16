@@ -194,7 +194,7 @@ class Bot(commands.Bot):
                 embed = createembed.DM(content)
                 content = None
 
-            await self.safe_send(user.dm_channel, content=content, embed=embed, **kwargs)
+            await self.safe_send(user.dm_channel, content, embed=embed, **kwargs)
             return True
         except Exception:  # noqa
             self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
@@ -212,7 +212,7 @@ class Bot(commands.Bot):
     async def safe_send(
         chan: nextcord.TextChannel | nextcord.DMChannel,
         content: Optional[str],
-        /,
+        *,
         files: Optional[list[nextcord.File]] = None,
         **kwargs,
     ) -> nextcord.Message:
