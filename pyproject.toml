@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "fred"
-version = "2.25.6"
+version = "2.25.7"
 description = "A Discord bot for the Satisfactory Modding Discord "
-authors = ["Feyko <feykook@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>", "Borketh <does.not.kompute@gmail.com>"]
+authors = ["Feyko <feykook@gmail.com>", "Borketh <does.not.kompute@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>"]
 license = "MIT License"
 
 [tool.poetry.dependencies]
