@@ -9,13 +9,6 @@ logger = new_logger("[Command/Crash Search]")
 
 
 def search(table: Type[Commands | Crashes], pattern: str, column: str, force_fuzzy: bool) -> tuple[str | list[str], bool]:
-    """Returns the top results based on the result.
-
-    This function performs an exact lookup unless `force_fuzzy` is True or no
-    exact match is found. Fuzzy results are returned as a list of names (best
-    matches first). The score is computed from the regex Match.fuzzy_counts()
-    (inserts + deletes + substitutions) and used only for sorting/filtering.
-    """
 
     if column not in dir(table):
         raise KeyError(f"`{column}` is not a column in the {table.__name__} table!")
@@ -23,6 +16,9 @@ def search(table: Type[Commands | Crashes], pattern: str, column: str, force_fuz
     if not force_fuzzy and (exact_match := table.fetch_by(column, pattern)):
         return exact_match[column], True
 
+    if len(pattern) < 2:
+        raise KeyError("Search pattern must be at least 2 characters long for fuzzy searching!")
+    
     # Set fuzzy range - (1/3 pattern length, max 6)
     max_edits = min(len(pattern) // 3, 6)
     substring_pattern = rf".*(?:{escape(pattern)}){{e<={max_edits}}}.*"
