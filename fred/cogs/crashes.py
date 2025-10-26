@@ -103,7 +103,6 @@ def safe_findall(pattern: str, string: str, flags=0):
         return regex_fallback.findall(pattern, string, flags=flags)
 
 
-
 class Crashes(FredCog):
 
     type CrashJob = Coroutine[Any, Any, list[CrashResponse]]
@@ -273,7 +272,9 @@ class Crashes(FredCog):
 
         responses.extend(await self.process_text(await self.detect_and_fetch_pastebin_content(text)))
 
-        if match := await safe_search(r"([^\n]*Critical error:.*Engine exit[^\n]*\))", text, flags=re2.I | re2.M | re2.S):
+        if match := await safe_search(
+            r"([^\n]*Critical error:.*Engine exit[^\n]*\))", text, flags=re2.I | re2.M | re2.S
+        ):
             filename = os.path.basename(filename)
             crash = match.group(1)
             responses.append(
@@ -336,7 +337,9 @@ class Crashes(FredCog):
         return ext in ("png", "log", "txt", "zip", "json")
 
     async def _obtain_attachments(self, message: Message) -> AsyncGenerator[tuple[str, IO | Exception], None, None]:
-        cdn_links = safe_findall(r"(https://(?:cdn.discordapp.com|media.discordapp.net)/attachments/\S+)", message.content)
+        cdn_links = safe_findall(
+            r"(https://(?:cdn.discordapp.com|media.discordapp.net)/attachments/\S+)", message.content
+        )
 
         yield bool(cdn_links or message.attachments)
 
@@ -634,7 +637,9 @@ class InstallInfo:
             logger.info("Didn't find all four pieces of information normally found in a log!")
             logger.debug(json.dumps(info, indent=2))
 
-        mod_loader_logs = filter(lambda l: safe_search_sync("LogSatisfactoryModLoader", l), map(lambda b: b.decode(), lines))
+        mod_loader_logs = filter(
+            lambda l: safe_search_sync("LogSatisfactoryModLoader", l), map(lambda b: b.decode(), lines)
+        )
 
         for line in mod_loader_logs:
             if match := safe_search_sync(r"(?<=v\.)(?P<sml>[\d.]+)", line):

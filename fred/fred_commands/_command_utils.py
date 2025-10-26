@@ -8,7 +8,9 @@ from ..libraries.common import new_logger
 logger = new_logger("[Command/Crash Search]")
 
 
-def search(table: Type[Commands | Crashes], pattern: str, column: str, force_fuzzy: bool) -> tuple[str | list[str], bool]:
+def search(
+    table: Type[Commands | Crashes], pattern: str, column: str, force_fuzzy: bool
+) -> tuple[str | list[str], bool]:
     """Returns the top three results based on the result"""
 
     if column not in dir(table):
