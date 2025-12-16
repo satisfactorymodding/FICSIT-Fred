@@ -11,6 +11,9 @@ import nextcord
 import re2
 from algoliasearch.search.client import SearchClient
 from nextcord.ext.commands.view import StringView
+from nextcord import Interaction, SlashOption
+from nextcord.ext import application_checks
+from nextcord.ext.commands import Cog
 
 from ._baseclass import BaseCmds, common, config, commands
 from .bot_meta import BotCmds
@@ -23,7 +26,7 @@ from ..libraries import createembed, ocr
 from ..libraries.view.mod_picker import ModPicker
 
 
-class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
+class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, Cog):
     @BaseCmds.listener()
     async def on_command_error(self, ctx: commands.Context, error):
         # We get an error about commands being found when using "runtime" commands, so we have to ignore that
@@ -201,6 +204,76 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
             text += f"**Image {n}:**\n ```\n{read_text}\n```\n"
 
         await self.bot.reply_to_msg(ctx.message, text)
+
+    @nextcord.slash_command(
+        name="mod",
+        description="Searches for a mod and returns info about it."
+    )
+    async def mod_slash(
+        self,
+        interaction: Interaction,
+        mod_name: str = SlashOption(description="Name of the mod to search for")
+    ):
+        mod_name = mod_name.split("\n")[0]
+
+        if len(mod_name) < 3:
+            await interaction.response.send_message(
+                "Searching needs at least three characters!",
+                ephemeral=True
+            )
+            return
+
+        embed, attachment, multiple_mods = await createembed.mod_embed(mod_name, self.bot)
+
+        if embed is None:
+            await interaction.response.send_message("No mods found!")
+        else:
+            view = ModPicker(multiple_mods) if multiple_mods else None
+            await interaction.response.send_message(embed=embed, view=view, file=attachment)
+
+    @nextcord.slash_command(name="docsearch", description="Search SMR documentation")
+    async def docsearch_slash(
+        self,
+        interaction: Interaction,
+        search: str = SlashOption(description="Search terms")
+    ):
+        self.logger.info(f"Searching docs: {search}")
+        client = SearchClient("2FDCZBLZ1A", "28531804beda52a04275ecd964db429d")
+
+        query = await client.search_single_index(
+            index_name="ficsit",
+            search_params={
+                "query": search,
+                "facetFilters": [
+                    "component_name:satisfactory-modding",
+                    "component_version:latest",
+                ],
+            }
+        )
+
+        for hit in query.hits:
+            if hit.hierarchy["lvl0"].endswith("latest"):
+                await interaction.response.send_message(
+                    f"Best match:\n{hit.url}"
+                )
+                return
+
+    @nextcord.slash_command(name="ocr_test", description="Run OCR on uploaded images")
+    async def ocr_test_slash(self, interaction: Interaction):
+        attachments = interaction.data.get("resolved", {}).get("attachments", {})
+        text = "OCR Debugging:\n\n"
+
+        if not attachments:
+            await interaction.response.send_message("Attach at least one image!", ephemeral=True)
+            return
+
+        for n, att in attachments.items():
+            buffer = io.BytesIO()
+            await interaction.client.http.get_from_cdn(att["url"], buffer)
+            read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, buffer)
+            text += f"**Image {n}:**\n```\n{read_text}\n```\n"
+
+        await interaction.response.send_message(text)
 
 
 def extract_target_type_from_converter_param(missing_argument: inspect.Parameter):

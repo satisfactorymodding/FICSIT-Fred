@@ -1,11 +1,13 @@
-from nextcord import Role, User
+import nextcord
+from nextcord import Interaction, SlashOption, Role, User
+from nextcord.ext.commands import Cog
 
 from ._baseclass import BaseCmds, commands, common, config
 from ..cogs import levelling
 from ..libraries import createembed
 
 
-class EXPCmds(BaseCmds):
+class EXPCmds(BaseCmds, Cog):
 
     @commands.group()
     @commands.check(common.mod_only)
@@ -207,3 +209,27 @@ class EXPCmds(BaseCmds):
             await self.bot.reply_to_msg(ctx.message, "level role removed!")
         else:
             await self.bot.reply_to_msg(ctx.message, "level role could not be found!")
+
+    @nextcord.slash_command(
+        name="xp_give",
+        description="Gives the indicated user the specified XP."
+    )
+    async def xp_give_slash(
+        self,
+        interaction: Interaction,
+        target: User = SlashOption(description="The user to give XP to"),
+        amount: float = SlashOption(description="The amount of XP to give")
+    ):
+        profile = levelling.UserProfile(target.id, interaction.guild)
+        if amount < 0:
+            await interaction.response.send_message(
+                f"<:thonk:836648850377801769> attempt to give a negative\n"
+                f"Did you mean `{self.bot.command_prefix}xp take`?",
+                ephemeral=True
+            )
+        else:
+            await profile.give_xp(amount)
+            await interaction.response.send_message(
+                f"Gave {amount} XP to {target.name}. "
+                f"They are now rank {profile.rank} ({profile.xp_count} XP)",
+            )

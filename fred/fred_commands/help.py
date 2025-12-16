@@ -7,6 +7,8 @@ from typing import Optional
 import attrs
 import nextcord
 import regex
+from nextcord import Interaction, SlashOption
+from nextcord.ext.commands import Cog
 
 from ._baseclass import BaseCmds, commands, config
 from ..libraries import common
@@ -14,7 +16,7 @@ from ..libraries import common
 logger = common.new_logger(__name__)
 
 
-class HelpCmds(BaseCmds):
+class HelpCmds(BaseCmds, Cog):
 
     @commands.group()
     async def help(self, ctx: commands.Context) -> None:
@@ -25,22 +27,41 @@ class HelpCmds(BaseCmds):
             await self.help_special(ctx, name="help")
             return
 
-    async def _send_help(self, ctx: commands.Context, **kwargs):
-        if not ctx.author.dm_channel:
-            await ctx.author.create_dm()
-        if not await self.bot.send_safe_direct_message(
-            ctx.author, in_dm=ctx.channel == ctx.author.dm_channel, **kwargs
-        ):
-            await ctx.reply(
-                "Help commands only work in DMs to avoid clutter. "
-                "You have either disabled server DMs or indicated that you do not wish for Fred to DM you. "
-                "Please enable both of these if you want to receive messages."
-            )
+    async def _send_help(self, ctx_or_interaction, **kwargs):
+
+        if isinstance(ctx_or_interaction, Interaction):
+            if not ctx_or_interaction.user.dm_channel:
+                await ctx_or_interaction.user.create_dm()
+            if not await self.bot.send_safe_direct_message(
+                ctx_or_interaction.user, in_dm=ctx_or_interaction.channel == ctx_or_interaction.user.dm_channel, **kwargs
+            ):
+                await ctx_or_interaction.response.send_message(
+                    "Help commands only work in DMs to avoid clutter. "
+                    "You have either disabled server DMs or indicated that you do not wish for Fred to DM you. "
+                    "Please enable both of these if you want to receive messages.",
+                    ephemeral=True
+                )
+            else:
+                try:
+                    await ctx_or_interaction.message.delete()
+                except nextcord.Forbidden:
+                    pass
         else:
-            try:
-                await ctx.message.delete()
-            except nextcord.Forbidden:
-                pass  # doesn't have delete perms, f.e. in a DM channel
+            if not ctx_or_interaction.author.dm_channel:
+                await ctx_or_interaction.author.create_dm()
+            if not await self.bot.send_safe_direct_message(
+                ctx_or_interaction.author, in_dm=ctx_or_interaction.channel == ctx_or_interaction.author.dm_channel, **kwargs
+            ):
+                await ctx_or_interaction.reply(
+                    "Help commands only work in DMs to avoid clutter. "
+                    "You have either disabled server DMs or indicated that you do not wish for Fred to DM you. "
+                    "Please enable both of these if you want to receive messages."
+                )
+            else:
+                try:
+                    await ctx_or_interaction.message.delete()
+                except nextcord.Forbidden:
+                    pass
 
     @help.command(name="commands")
     async def help_commands(self, ctx: commands.Context, page: int = None) -> None:
@@ -111,8 +132,25 @@ class HelpCmds(BaseCmds):
         response = FredHelpEmbed.media_only()
         await self._send_help(ctx, embed=response)
 
+    @nextcord.slash_command(
+        name="help",
+        description="Provides help information about commands."
+    )
+    async def help_slash(
+        self,
+        interaction: Interaction,
+        command: str = SlashOption(description="The command to get help for", required=False)
+    ):
+        if not command:
+            await self.help_special(interaction, name="help")
+            return
+
+        # Assuming _send_help is adapted for slash commands
+        await self._send_help(interaction, command=command)
+
 
 page_size: int = 30  # if you change this, make it a multiple of three
+field_size: int = 10  # Define 'field_size' if it is missing
 
 
 @attrs.define

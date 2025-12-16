@@ -1,6 +1,9 @@
+import nextcord
 from ._baseclass import BaseCmds, commands, SearchFlags
 from ._command_utils import get_search
 from .. import config
+from nextcord import Interaction, SlashOption
+from nextcord.ext.commands import Cog
 
 
 def _extract_prefix(string: str, prefix: str):
@@ -13,7 +16,7 @@ def _extract_prefix(string: str, prefix: str):
         return False, string
 
 
-class CommandCmds(BaseCmds):
+class CommandCmds(BaseCmds, Cog):
 
     @BaseCmds.add.command(name="command")
     async def add_command(self, ctx: commands.Context, command_name: str.lower, *, response: str = None):
@@ -249,3 +252,28 @@ class CommandCmds(BaseCmds):
 
         response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
+
+    @nextcord.slash_command(
+        name="add_command",
+        description="Adds a simple command to the list of commands."
+    )
+    async def add_command_slash(
+        self,
+        interaction: Interaction,
+        command_name: str = SlashOption(description="The name of the command to add"),
+        response: str = SlashOption(description="The response for the command", required=False)
+    ):
+        if config.Commands.fetch(command_name) is not None:
+            await interaction.response.send_message("This command already exists!")
+            return
+
+        if config.ReservedCommands.check(command_name):
+            await interaction.response.send_message("This command name is reserved")
+            return
+
+        if not response:
+            await interaction.response.send_message("Please provide a response for the command.", ephemeral=True)
+            return
+
+        config.Commands(name=command_name, response=response)
+        await interaction.response.send_message(f"Command '{command_name}' added!")

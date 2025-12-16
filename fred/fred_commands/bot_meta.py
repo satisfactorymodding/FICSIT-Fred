@@ -3,12 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ._baseclass import BaseCmds, commands, config, common
+from nextcord import Interaction, SlashOption
+from nextcord.ext.commands import Cog
+import nextcord
 
 if TYPE_CHECKING:
     from ..fred import Bot
 
 
-class BotCmds(BaseCmds):
+class BotCmds(BaseCmds, Cog):
 
     @commands.command()
     async def version(self, ctx: commands.Context):
@@ -75,3 +78,42 @@ class BotCmds(BaseCmds):
         Notes: owo what's this? you need to be a mod to use this :3"""
         self.bot.owo = not self.bot.owo
         await ctx.reply("OwO" if self.bot.owo else "no owo :(")
+
+    @nextcord.slash_command(
+        name="version",
+        description="Displays Fred's current version."
+    )
+    async def version_slash(self, interaction: Interaction):
+        await interaction.response.send_message(self.bot.version)
+
+    @nextcord.slash_command(
+        name="set_welcome_message",
+        description="Sets the welcome message for new members."
+    )
+    async def set_welcome_message_slash(
+        self,
+        interaction: Interaction,
+        welcome_message: str = SlashOption(description="The welcome message to set")
+    ):
+        if len(welcome_message) < 10:
+            config.Misc.change("welcome_message", "")
+            await interaction.response.send_message("The welcome message is now disabled")
+        else:
+            config.Misc.change("welcome_message", welcome_message)
+            await interaction.response.send_message("The welcome message has been changed")
+
+    @nextcord.slash_command(
+        name="set_latest_info",
+        description="Sets the latest info message for new members."
+    )
+    async def set_latest_info_slash(
+        self,
+        interaction: Interaction,
+        latest_info: str = SlashOption(description="The latest info message to set")
+    ):
+        if len(latest_info) < 10:
+            config.Misc.change("latest_info", "")
+            await interaction.response.send_message("The latest info message is now disabled")
+        else:
+            config.Misc.change("latest_info", latest_info)
+            await interaction.response.send_message("The latest info message has been changed")

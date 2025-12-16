@@ -1,10 +1,12 @@
-from nextcord import TextChannel, ForumChannel
+import nextcord
 from nextcord.abc import GuildChannel
+from nextcord import Interaction, SlashOption, TextChannel, ForumChannel
+from nextcord.ext.commands import Cog
 
 from ._baseclass import BaseCmds, commands, config, common
 
 
-class ChannelCmds(BaseCmds):
+class ChannelCmds(BaseCmds, Cog):
 
     @BaseCmds.add.command(name="mediaonly")
     async def add_mediaonly(self, ctx: commands.Context, channel: commands.GuildChannelConverter):
@@ -63,6 +65,42 @@ class ChannelCmds(BaseCmds):
             self.bot.error_channel = error_channel_id
             config.Misc.create_or_change("error_channel", error_channel_id)
             await self.bot.reply_to_msg(ctx.message, f"The error channel has been changed to {chan.mention}.")
+
+    @nextcord.slash_command(
+        name="add_mediaonly",
+        description="Adds a channel to the media-only list."
+    )
+    async def add_mediaonly_slash(
+        self,
+        interaction: Interaction,
+        channel: TextChannel = SlashOption(description="The channel to add to media-only")
+    ):
+        if not can_enforce_mediaonly(channel):
+            await interaction.response.send_message(f"I don't know how to enforce mediaonly in {channel.mention}.")
+            return
+
+        if config.MediaOnlyChannels.check(channel.id):
+            await interaction.response.send_message(f"{channel.mention} is already a media-only channel")
+            return
+
+        config.MediaOnlyChannels(channel_id=channel.id)
+        await interaction.response.send_message(f"Media-only channel {channel.mention} added!")
+
+    @nextcord.slash_command(
+        name="remove_mediaonly",
+        description="Removes a channel from the media-only list."
+    )
+    async def remove_mediaonly_slash(
+        self,
+        interaction: Interaction,
+        channel: TextChannel = SlashOption(description="The channel to remove from media-only")
+    ):
+        if not config.MediaOnlyChannels.check(channel.id):
+            await interaction.response.send_message(f"{channel.mention} is not marked as a media-only channel!")
+            return
+
+        config.MediaOnlyChannels.deleteBy(channel_id=channel.id)
+        await interaction.response.send_message(f"{channel.mention} is no longer a media-only channel.")
 
 
 def can_enforce_mediaonly(channel: GuildChannel) -> bool:
