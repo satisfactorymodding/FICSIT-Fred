@@ -102,7 +102,7 @@ class CrashCmds(BaseCmds):
             -column=(name/crash/response) The column of the database to search along. Defaults to name
         Notes: Uses fuzzy matching!"""
 
-        response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
+        response = get_search(config.Crashes, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
 
 
