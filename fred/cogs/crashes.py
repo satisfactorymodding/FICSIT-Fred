@@ -49,6 +49,7 @@ async def regex_with_timeout(*args, **kwargs):
     except re2.RegexError as e:
         raise ValueError(args[0]) from e
 
+
 class Crashes(FredCog):
 
     type CrashJob = Coroutine[Any, Any, list[CrashResponse]]
