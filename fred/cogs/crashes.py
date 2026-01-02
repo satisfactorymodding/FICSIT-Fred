@@ -12,8 +12,6 @@ from urllib.parse import urlparse
 from zipfile import ZipFile
 
 import re2
-import regex as regex_fallback
-import re as std_re
 
 re2.set_fallback_notification(re2.FALLBACK_WARNING)
 

@@ -6,20 +6,6 @@ import re as std_re
 REGEX_LIMIT: float = 6.9
 
 
-async def regex_with_timeout(*args, **kwargs):
-    try:
-        return await asyncio.wait_for(asyncio.to_thread(re2.search, *args, **kwargs), REGEX_LIMIT)
-    except asyncio.TimeoutError:
-        raise TimeoutError(
-            f"A regex timed out after {REGEX_LIMIT} seconds! \n"
-            f"pattern: ({args[0]}) \n"
-            f"flags: {kwargs['flags']} \n"
-            f"on text of length {len(args[1])}"
-        )
-    except re2.RegexError as e:
-        raise ValueError(args[0]) from e
-
-
 def pattern_uses_lookaround(pattern: str) -> bool:
     return bool(std_re.search(r"\(\?=|\(\?!|\(\?<=|\(\?<!", pattern))
 
