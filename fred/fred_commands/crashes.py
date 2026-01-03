@@ -110,7 +110,8 @@ def validate_crash(expression: str, response: str) -> str:
     """Returns a string describing an issue with the crash or empty string if it's fine."""
     try:
         compiled = re2.compile(expression)
-        re2.search(compiled, "test")
+        re2.search(expression, "test")
+
         replace_groups = re2.findall(r"{(\d+)}", response)
         replace_groups_count = max(map(int, replace_groups), default=0)
 
