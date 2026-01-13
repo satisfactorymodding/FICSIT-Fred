@@ -109,7 +109,9 @@ class CrashCmds(BaseCmds):
 def validate_crash(expression: str, response: str) -> str:
     """Returns a string describing an issue with the crash or empty string if it's fine."""
     try:
+        print(f"Debug: Compiling expression: {expression}")
         compiled = re2.compile(expression)
+        print("Debug: Performing test search with re2")
         re2.search(expression, "test")
 
         replace_groups = re2.findall(r"{(\d+)}", response)
@@ -119,6 +121,11 @@ def validate_crash(expression: str, response: str) -> str:
             return f"There are replacement groups the regex does not capture!"
 
     except (re2.error, re2.RegexError) as e:
+        print(f"Debug: re2 error encountered: {e}")
         return f"The expression isn't valid: {e}"
+
+    except Exception as fallback_error:
+        print(f"Debug: Fallback module error: {fallback_error}")
+        return f"An error occurred in the fallback module: {fallback_error}"
 
     return ""  # all good

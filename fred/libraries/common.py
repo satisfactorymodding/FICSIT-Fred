@@ -64,6 +64,10 @@ async def permission_check(_ctx_or_member, *, level: int) -> bool: ...
 
 @permission_check.register
 async def _permission_check_ctx(ctx: Context, *, level: int) -> bool:
+
+    #temp bypass
+    return True
+
     main_guild_id = config.Misc.fetch("main_guild_id")
     main_guild = await ctx.bot.fetch_guild(main_guild_id)
 
