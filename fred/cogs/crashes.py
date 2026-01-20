@@ -12,8 +12,10 @@ from urllib.parse import urlparse
 from zipfile import ZipFile
 
 import re2
+import re as regex_fallback
 
 re2.set_fallback_notification(re2.FALLBACK_WARNING)
+re2.set_fallback_module(regex_fallback)
 
 from aiohttp import ClientResponseError
 from attr import dataclass
@@ -25,7 +27,7 @@ from ..libraries import createembed, ocr
 from ..libraries.common import FredCog, new_logger
 from ..libraries.createembed import CrashResponse
 
-from ..libraries.regex_util import safe_findall, safe_search, safe_search_sync, safe_sub
+from ..libraries.regex_util import safe_search
 
 
 REGEX_LIMIT: float = 6.9
@@ -177,7 +179,6 @@ class Crashes(FredCog):
 
     async def mass_regex(self, text: str) -> AsyncIterator[CrashResponse]:
         for crash in config.Crashes.fetch_all():
-            # Use safe_search so patterns with lookaround fall back to the full `regex` package
             if match := await safe_search(crash["crash"], text, flags=re2.IGNORECASE | re2.S):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
@@ -198,13 +199,13 @@ class Crashes(FredCog):
                             return f"{{Group {group} not captured in crash regex!}}"
                         return match.group(group)
 
-                    response = safe_sub(r"{(\d+)}", replace_response_value_with_captured, str(crash["response"]))
+                    response = re2.sub(r"{(\d+)}", replace_response_value_with_captured, str(crash["response"]))
                     yield CrashResponse(name=crash["name"], value=response, inline=True)
 
     async def detect_and_fetch_pastebin_content(self, text: str) -> str:
         if match := await safe_search(r"(https://pastebin.com/\S+)", text):
             self.logger.info("Found a pastebin link! Fetching text.")
-            url = safe_sub(r"(?<=bin.com)/", "/raw/", match.group(1))
+            url = re2.sub(r"(?<=bin.com)/", "/raw/", match.group(1))
             async with self.bot.web_session.get(url) as response:
                 return await response.text()
         else:
@@ -284,7 +285,7 @@ class Crashes(FredCog):
         return ext in ("png", "log", "txt", "zip", "json")
 
     async def _obtain_attachments(self, message: Message) -> AsyncGenerator[tuple[str, IO | Exception], None, None]:
-        cdn_links = safe_findall(
+        cdn_links = re2.findall(
             r"(https://(?:cdn.discordapp.com|media.discordapp.net)/attachments/\S+)", message.content
         )
 
@@ -559,14 +560,14 @@ class InstallInfo:
         # It used to matter more when we were using slower regex libraries. - Borketh
 
         lines: list[bytes] = log_file.readlines()
-        vanilla_info_search_area = filter(lambda l: safe_search_sync("^LogInit", l), map(lambda b: b.decode(), lines))
+        vanilla_info_search_area = filter(lambda l: re2.search("^LogInit", l), map(lambda b: b.decode(), lines))
 
         info = {}
         patterns = [
-            r"Net CL: (?P<game_version>\d+)",
-            r"Command Line:(?P<cli>.*)",
-            r"Base Directory:(?P<path>.+)",
-            r"Launcher ID: (?P<launcher>\w+)",
+            re2.compile(r"Net CL: (?P<game_version>\d+)"),
+            re2.compile(r"Command Line:(?P<cli>.*)"),
+            re2.compile(r"Base Directory:(?P<path>.+)"),
+            re2.compile(r"Launcher ID: (?P<launcher>\w+)"),
         ]
 
         # This loop sequentially finds information,
@@ -577,19 +578,17 @@ class InstallInfo:
         for line in vanilla_info_search_area:
             if not patterns:
                 break
-            elif match := safe_search_sync(patterns[0], line):
+            elif match := re2.search(patterns[0], line):
                 info |= match.groupdict()
                 patterns.pop(0)
         else:
             logger.info("Didn't find all four pieces of information normally found in a log!")
             logger.debug(json.dumps(info, indent=2))
 
-        mod_loader_logs = filter(
-            lambda l: safe_search_sync("LogSatisfactoryModLoader", l), map(lambda b: b.decode(), lines)
-        )
+        mod_loader_logs = filter(lambda l: re2.search("LogSatisfactoryModLoader", l), map(lambda b: b.decode(), lines))
 
         for line in mod_loader_logs:
-            if match := safe_search_sync(r"(?<=v\.)(?P<sml>[\d.]+)", line):
+            if match := re2.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):
                 info |= match.groupdict()
                 break
 

@@ -11,7 +11,7 @@ def pattern_uses_lookaround(pattern: str) -> bool:
     return bool(regex_fallback.search(r"\(\?=|\(\?!|\(\?<=|\(\?<!", pattern))
 
 
-async def re2_search_with_timeout(pattern: str, text: str, flags=0):
+async def safe_search(pattern: str, text: str, flags=0):
     try:
         return await asyncio.wait_for(asyncio.to_thread(re2.search, pattern, text, flags=flags), REGEX_LIMIT)
     except asyncio.TimeoutError:
@@ -21,19 +21,3 @@ async def re2_search_with_timeout(pattern: str, text: str, flags=0):
             f"flags: {flags} \n"
             f"on text of length {len(text)}"
         )
-
-
-async def safe_search(pattern: str, text: str, flags=0):
-    return await re2_search_with_timeout(pattern, text, flags=flags)
-
-
-def safe_search_sync(pattern: str, text: str, flags=0):
-    return re2.search(pattern, text, flags=flags)
-
-
-def safe_sub(pattern: str, repl, string: str, flags=0):
-    return re2.sub(pattern, repl, string, flags=flags)
-
-
-def safe_findall(pattern: str, string: str, flags=0):
-    return re2.findall(pattern, string, flags=flags)
