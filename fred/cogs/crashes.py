@@ -12,8 +12,10 @@ from urllib.parse import urlparse
 from zipfile import ZipFile
 
 import re2
+import re as regex_fallback
 
 re2.set_fallback_notification(re2.FALLBACK_WARNING)
+re2.set_fallback_module(regex_fallback)
 
 from aiohttp import ClientResponseError
 from attr import dataclass
@@ -24,6 +26,9 @@ from .. import config
 from ..libraries import createembed, ocr
 from ..libraries.common import FredCog, new_logger
 from ..libraries.createembed import CrashResponse
+
+from ..libraries.regex_util import safe_search
+
 
 REGEX_LIMIT: float = 6.9
 DOWNLOAD_SIZE_LIMIT = 104857600  # 100 MiB
@@ -174,7 +179,7 @@ class Crashes(FredCog):
 
     async def mass_regex(self, text: str) -> AsyncIterator[CrashResponse]:
         for crash in config.Crashes.fetch_all():
-            if match := await regex_with_timeout(crash["crash"], text, flags=re2.IGNORECASE | re2.S):
+            if match := await safe_search(crash["crash"], text, flags=re2.IGNORECASE | re2.S):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
                     if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
                         command_response = command["content"]
@@ -188,7 +193,7 @@ class Crashes(FredCog):
                         )
                 else:
 
-                    def replace_response_value_with_captured(m: re2.Match) -> str:
+                    def replace_response_value_with_captured(m) -> str:
                         group = int(m.group(1))
                         if group > len(match.groups()):
                             return f"{{Group {group} not captured in crash regex!}}"
@@ -198,7 +203,7 @@ class Crashes(FredCog):
                     yield CrashResponse(name=crash["name"], value=response, inline=True)
 
     async def detect_and_fetch_pastebin_content(self, text: str) -> str:
-        if match := re2.search(r"(https://pastebin.com/\S+)", text):
+        if match := await safe_search(r"(https://pastebin.com/\S+)", text):
             self.logger.info("Found a pastebin link! Fetching text.")
             url = re2.sub(r"(?<=bin.com)/", "/raw/", match.group(1))
             async with self.bot.web_session.get(url) as response:
@@ -215,7 +220,9 @@ class Crashes(FredCog):
 
         responses.extend(await self.process_text(await self.detect_and_fetch_pastebin_content(text)))
 
-        if match := re2.search(r"([^\n]*Critical error:.*Engine exit[^\n]*\))", text, flags=re2.I | re2.M | re2.S):
+        if match := await safe_search(
+            r"([^\n]*Critical error:.*Engine exit[^\n]*\))", text, flags=re2.I | re2.M | re2.S
+        ):
             filename = os.path.basename(filename)
             crash = match.group(1)
             responses.append(
@@ -553,7 +560,7 @@ class InstallInfo:
         # It used to matter more when we were using slower regex libraries. - Borketh
 
         lines: list[bytes] = log_file.readlines()
-        vanilla_info_search_area = filter(lambda l: re2.match("^LogInit", l), map(lambda b: b.decode(), lines))
+        vanilla_info_search_area = filter(lambda l: re2.search("^LogInit", l), map(lambda b: b.decode(), lines))
 
         info = {}
         patterns = [
@@ -578,7 +585,7 @@ class InstallInfo:
             logger.info("Didn't find all four pieces of information normally found in a log!")
             logger.debug(json.dumps(info, indent=2))
 
-        mod_loader_logs = filter(lambda l: re2.match("LogSatisfactoryModLoader", l), map(lambda b: b.decode(), lines))
+        mod_loader_logs = filter(lambda l: re2.search("LogSatisfactoryModLoader", l), map(lambda b: b.decode(), lines))
 
         for line in mod_loader_logs:
             if match := re2.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):
