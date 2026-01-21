@@ -13,7 +13,7 @@ pytesseract = "^0.3.13"
 python-dotenv = "^1.0.1"
 algoliasearch = "^4.11.2"
 SQLObject = "^3.12.0"
-aiohttp = "^3.12.14"
+aiohttp = "^3.13.3"
 semver = "^3.0.2"
 regex = "^2025"
 psycopg = { extras = ["binary"], version = "^3.2.3" }
