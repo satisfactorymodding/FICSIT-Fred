@@ -262,7 +262,7 @@ class Bot(commands.Bot):
 
         def check(message2: nextcord.Message):
             nonlocal message
-            return message2.author == message.author
+            return (message2.author == message.author) and (message2.channel == message.channel)
 
         try:
             response: nextcord.Message = await self.wait_for("message", timeout=120.0, check=check)
