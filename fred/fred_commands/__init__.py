@@ -190,6 +190,9 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
                 await self.bot.reply_to_msg(ctx.message, f"This is the best result I got from the SMD :\n{hit.url}")
                 return
 
+        # grumbus.
+        await self.bot.reply_to_msg(ctx.message, "No results found for `{search}`.")
+
     @commands.command()
     async def ocr_test(self, ctx: commands.Context) -> None:
         """Usage: `ocr_test` {attach an image!}"""
