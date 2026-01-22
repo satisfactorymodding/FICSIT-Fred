@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import math
 from datetime import *
 
+import math
 from nextcord import DMChannel, Message, Guild
 
 from .. import config

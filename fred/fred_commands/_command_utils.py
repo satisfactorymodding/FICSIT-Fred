@@ -1,6 +1,6 @@
 from typing import Type
 
-from regex import ENHANCEMATCH, match, escape, search as re_search
+from regex import ENHANCEMATCH, escape, search as re_search
 
 from ..config import Commands, Crashes, Misc
 from ..libraries.common import new_logger

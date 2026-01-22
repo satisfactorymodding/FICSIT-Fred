@@ -4,6 +4,7 @@ import asyncio
 import io
 import json
 import os
+import re as regex_fallback
 from asyncio import Task, TaskGroup
 from os.path import split
 from pathlib import Path
@@ -12,7 +13,6 @@ from urllib.parse import urlparse
 from zipfile import ZipFile
 
 import re2
-import re as regex_fallback
 
 re2.set_fallback_notification(re2.FALLBACK_WARNING)
 re2.set_fallback_module(regex_fallback)
@@ -28,7 +28,6 @@ from ..libraries.common import FredCog, new_logger
 from ..libraries.createembed import CrashResponse
 
 from ..libraries.regex_util import safe_search
-
 
 REGEX_LIMIT: float = 6.9
 DOWNLOAD_SIZE_LIMIT = 104857600  # 100 MiB
