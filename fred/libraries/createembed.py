@@ -33,7 +33,7 @@ async def github_embed(data: dict) -> nextcord.Embed | None:
     global repo_name, repo_full_name
     try:
         repo_name = data["repository"]["full_name"]
-        repo_full_name = f'{data["repository"]["name"]}/{data["ref"].split("/")[2]}'
+        repo_full_name = f'{data["repository"]["name"]}/{'/'.join(data["ref"].split("/")[2:])}'
     except (KeyError, IndexError):
         repo_name, repo_full_name = "", ""
 

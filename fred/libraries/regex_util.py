@@ -1,6 +1,7 @@
 import asyncio
-import re2
 import re as regex_fallback
+
+import re2
 
 REGEX_LIMIT: float = 6.9
 

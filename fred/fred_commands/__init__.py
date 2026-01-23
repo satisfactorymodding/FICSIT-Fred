@@ -80,7 +80,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         if (match := re2.match(command_pattern, message.content)) is None:
             return
 
-        (name, arguments) = match.groups()
+        name, arguments = match.groups()
 
         self.logger.info(f"Processing the command {name}", extra=common.message_info(message))
 
@@ -189,6 +189,9 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
             if hit.hierarchy["lvl0"].endswith("latest"):
                 await self.bot.reply_to_msg(ctx.message, f"This is the best result I got from the SMD :\n{hit.url}")
                 return
+
+        # grumbus.
+        await self.bot.reply_to_msg(ctx.message, "No results found for `{search}`.")
 
     @commands.command()
     async def ocr_test(self, ctx: commands.Context) -> None:
