@@ -125,32 +125,47 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
 
         await self.bot.reply_to_msg(message, text, file=attachment)
 
-    @commands.command()
-    async def mod(self, ctx: commands.Context, *, mod_name: str) -> None:
-        """Usage: `mod (name: str)`
-        Response: If a near-exact match is found, gives you info about that mod.
-        If close matches are found, up to 10 of those will be listed.
-        If nothing even comes close, I'll let you know ;)"""
 
+
+# Mod Combined Implementation
+    async def handle_mod(self, ctx_or_interaction, mod_name: str):
+        
         mod_name = mod_name.split("\n")[0]
 
         if len(mod_name) < 3:
-            await self.bot.reply_to_msg(ctx.message, "Searching needs at least three characters!")
+            if isinstance(ctx_or_interaction, commands.Context):
+                await self.bot.reply_to_msg(ctx_or_interaction.message, "Searching needs at least three characters!")
+            elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                await ctx_or_interaction.response.send_message("Searching needs at least three characters!", ephemeral=True)
             return
 
         embed, attachment, multiple_mods = await createembed.mod_embed(mod_name, self.bot)
         if embed is None:
-            await self.bot.reply_to_msg(ctx.message, "No mods found!")
+            if isinstance(ctx_or_interaction, commands.Context):
+                await self.bot.reply_to_msg(ctx_or_interaction.message, "No mods found!")
+            elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                await ctx_or_interaction.response.send_message("No mods found!", ephemeral=True)
         else:
             if multiple_mods:
                 view = ModPicker(multiple_mods)
             else:
                 view = None
-            msg = await self.bot.reply_to_msg(ctx.message, embed=embed, view=view, file=attachment)
-            if view:
 
+            if isinstance(ctx_or_interaction, commands.Context):
+                msg = await self.bot.reply_to_msg(ctx_or_interaction.message, embed=embed, view=view, file=attachment)
+            elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                await ctx_or_interaction.response.send_message(embed=embed, view=view, files=[attachment] if attachment else None, ephemeral=True)
+                msg = await ctx_or_interaction.original_message()
+
+            if view:
                 async def callback(interaction: nextcord.Interaction):
-                    if interaction.user == ctx.author:
+
+                    if isinstance(ctx_or_interaction, commands.Context):
+                        author = ctx_or_interaction.author
+                    elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                        author = ctx_or_interaction.user
+
+                    if interaction.user == author:
                         logging.info(interaction.data.values)
                         new_embed, new_attachment, _ = await createembed.mod_embed(
                             interaction.data["values"][0], self.bot, using_id=True
@@ -169,6 +184,29 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
                 view.on_timeout = timeout
 
                 await view.wait()
+
+    @commands.command()
+    async def mod(self, ctx: commands.Context, *, mod_name: str) -> None:
+        """Usage: `mod (name: str)`
+        Response: If a near-exact match is found, gives you info about that mod.
+        If close matches are found, up to 10 of those will be listed.
+        If nothing even comes close, I'll let you know ;)"""
+
+        await self.handle_mod(ctx, mod_name)
+
+    @nextcord.slash_command(
+        name="mod",
+        description="Searches for a mod and returns info about it."
+    )
+    async def mod_slash(
+        self,
+        interaction: Interaction,
+        mod_name: str = SlashOption(description="Name of the mod to search for")
+    ):
+        await self.handle_mod(interaction, mod_name)
+
+
+                
 
     @commands.command(aliases=["docssearch"])
     async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
@@ -205,31 +243,6 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
 
         await self.bot.reply_to_msg(ctx.message, text)
 
-    @nextcord.slash_command(
-        name="mod",
-        description="Searches for a mod and returns info about it."
-    )
-    async def mod_slash(
-        self,
-        interaction: Interaction,
-        mod_name: str = SlashOption(description="Name of the mod to search for")
-    ):
-        mod_name = mod_name.split("\n")[0]
-
-        if len(mod_name) < 3:
-            await interaction.response.send_message(
-                "Searching needs at least three characters!",
-                ephemeral=True
-            )
-            return
-
-        embed, attachment, multiple_mods = await createembed.mod_embed(mod_name, self.bot)
-
-        if embed is None:
-            await interaction.response.send_message("No mods found!")
-        else:
-            view = ModPicker(multiple_mods) if multiple_mods else None
-            await interaction.response.send_message(embed=embed, view=view, file=attachment)
 
     @nextcord.slash_command(name="docsearch", description="Search SMR documentation")
     async def docsearch_slash(
