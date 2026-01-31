@@ -96,6 +96,8 @@ class CrashCmds(BaseCmds, Cog):
 
         await self.bot.reply_to_msg(ctx.message, f"Crash '{name}' modified!")
 
+
+    #       Search Crashes Command
     @BaseCmds.search.command(name="crashes")
     async def search_crashes(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
         """Usage: `search crashes (name) [options]`
@@ -109,51 +111,75 @@ class CrashCmds(BaseCmds, Cog):
         await self.bot.reply_to_msg(ctx.message, response)
 
     @nextcord.slash_command(
-        name="add_crash",
-        description="Adds a crash to the list of known crashes."
+        name="search_crashes",
+        description="Searches crashes for the stuff requested."
     )
-    async def add_crash_slash(
+    async def search_crashes_slash(
         self,
         interaction: Interaction,
-        crash_name: str = SlashOption(description="The name of the crash to add"),
-        match: str = SlashOption(description="The regex to match logs", required=False),
-        response: str = SlashOption(description="The response for the crash", required=False)
+        pattern: str = SlashOption(description="The pattern to search for"),
+        fuzzy: bool = SlashOption(description="Whether to use fuzzy matching", default=False),
+        column: str = SlashOption(
+            description="The column of the database to search along",
+            choices={"name": "name", "crash": "crash", "response": "response"},
+            default="name"
+        ),
+        private_command: bool = SlashOption(description="Only you can see the response", default=True)
     ):
-        if config.Crashes.fetch(crash_name) is not None:
-            await interaction.response.send_message("A crash with this name already exists")
-            return
+        flags = SearchFlags()
+        flags.fuzzy = fuzzy
+        flags.column = column
 
-        if not match:
-            await interaction.response.send_message("Please provide a regex to match logs.", ephemeral=True)
-            return
+        response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
+        await interaction.response.send_message(response, ephemeral=private_command)
 
-        if not response:
-            await interaction.response.send_message("Please provide a response for the crash.", ephemeral=True)
-            return
 
-        issue = validate_crash(match, response)
-        if issue:
-            await interaction.response.send_message(issue)
-            return
+    # @nextcord.slash_command(
+    #     name="add_crash",
+    #     description="Adds a crash to the list of known crashes."
+    # )
+    # async def add_crash_slash(
+    #     self,
+    #     interaction: Interaction,
+    #     crash_name: str = SlashOption(description="The name of the crash to add"),
+    #     match: str = SlashOption(description="The regex to match logs", required=False),
+    #     response: str = SlashOption(description="The response for the crash", required=False)
+    # ):
+    #     if config.Crashes.fetch(crash_name) is not None:
+    #         await interaction.response.send_message("A crash with this name already exists")
+    #         return
 
-        config.Crashes(name=crash_name, crash=match, response=response)
-        await interaction.response.send_message(f"Known crash '{crash_name}' added!")
+    #     if not match:
+    #         await interaction.response.send_message("Please provide a regex to match logs.", ephemeral=True)
+    #         return
 
-    @nextcord.slash_command(
-        name="remove_crash",
-        description="Removes a crash from the list of known crashes."
-    )
-    async def remove_crash_slash(
-        self,
-        interaction: Interaction,
-        crash_name: str = SlashOption(description="The name of the crash to remove")
-    ):
-        if config.Crashes.fetch(crash_name) is None:
-            await interaction.response.send_message("No crash with this name exists")
-            return
+    #     if not response:
+    #         await interaction.response.send_message("Please provide a response for the crash.", ephemeral=True)
+    #         return
 
-        config.Crashes.deleteBy(name=crash_name)
-        await interaction.response.send_message(f"Known crash '{crash_name}' removed!")
+    #     issue = validate_crash(match, response)
+    #     if issue:
+    #         await interaction.response.send_message(issue)
+    #         return
+
+    #     config.Crashes(name=crash_name, crash=match, response=response)
+    #     await interaction.response.send_message(f"Known crash '{crash_name}' added!")
+
+    # @nextcord.slash_command(
+    #     name="remove_crash",
+    #     description="Removes a crash from the list of known crashes."
+    # )
+    # async def remove_crash_slash(
+    #     self,
+    #     interaction: Interaction,
+    #     crash_name: str = SlashOption(description="The name of the crash to remove")
+    # ):
+    #     if config.Crashes.fetch(crash_name) is None:
+    #         await interaction.response.send_message("No crash with this name exists")
+    #         return
+
+    #     config.Crashes.deleteBy(name=crash_name)
+    #     await interaction.response.send_message(f"Known crash '{crash_name}' removed!")
 
 
 def validate_crash(expression: str, response: str) -> str:

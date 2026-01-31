@@ -241,6 +241,8 @@ class CommandCmds(BaseCmds, Cog):
         Notes: If response is not supplied you will be prompted for one with a timeout"""
         await self.rename_command(ctx, name, new_name)
 
+
+    #       Search Commands Command
     @BaseCmds.search.command(name="commands")
     async def search_commands(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
         """Usage: `search commands (pattern) [options]`
@@ -254,26 +256,46 @@ class CommandCmds(BaseCmds, Cog):
         await self.bot.reply_to_msg(ctx.message, response)
 
     @nextcord.slash_command(
-        name="add_command",
-        description="Adds a simple command to the list of commands."
+        name="search_commands",
+        description="Searches commands for the stuff requested."
     )
-    async def add_command_slash(
+    async def search_commands_slash(
         self,
         interaction: Interaction,
-        command_name: str = SlashOption(description="The name of the command to add"),
-        response: str = SlashOption(description="The response for the command", required=False)
+        pattern: str = SlashOption(description="The pattern to search for"),
+        fuzzy: bool = SlashOption(description="Whether to use fuzzy matching", default=False),
+        column: str = SlashOption(
+            description="The column of the database to search along",
+            choices={"name": "name", "content": "content", "attachment": "attachment"},
+            default="name"
+        ),
+        private_command: bool = SlashOption(description="Only you can see the response", default=True)
     ):
-        if config.Commands.fetch(command_name) is not None:
-            await interaction.response.send_message("This command already exists!")
-            return
+        response = get_search(config.Commands, pattern, column, fuzzy)
+        await interaction.response.send_message(response, ephemeral=private_command)
 
-        if config.ReservedCommands.check(command_name):
-            await interaction.response.send_message("This command name is reserved")
-            return
 
-        if not response:
-            await interaction.response.send_message("Please provide a response for the command.", ephemeral=True)
-            return
+    # @nextcord.slash_command(
+    #     name="add_command",
+    #     description="Adds a simple command to the list of commands."
+    # )
+    # async def add_command_slash(
+    #     self,
+    #     interaction: Interaction,
+    #     command_name: str = SlashOption(description="The name of the command to add"),
+    #     response: str = SlashOption(description="The response for the command", required=False)
+    # ):
+    #     if config.Commands.fetch(command_name) is not None:
+    #         await interaction.response.send_message("This command already exists!")
+    #         return
 
-        config.Commands(name=command_name, response=response)
-        await interaction.response.send_message(f"Command '{command_name}' added!")
+    #     if config.ReservedCommands.check(command_name):
+    #         await interaction.response.send_message("This command name is reserved")
+    #         return
+
+    #     if not response:
+    #         await interaction.response.send_message("Please provide a response for the command.", ephemeral=True)
+    #         return
+
+    #     config.Commands(name=command_name, response=response)
+    #     await interaction.response.send_message(f"Command '{command_name}' added!")

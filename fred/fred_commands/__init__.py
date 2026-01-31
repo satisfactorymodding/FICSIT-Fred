@@ -126,9 +126,8 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
         await self.bot.reply_to_msg(message, text, file=attachment)
 
 
-
-# Mod Combined Implementation
-    async def handle_mod(self, ctx_or_interaction, mod_name: str):
+    #       Mod search command
+    async def handle_mod(self, ctx_or_interaction, mod_name: str, ephemeral: bool) -> None:
         
         mod_name = mod_name.split("\n")[0]
 
@@ -136,7 +135,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
             if isinstance(ctx_or_interaction, commands.Context):
                 await self.bot.reply_to_msg(ctx_or_interaction.message, "Searching needs at least three characters!")
             elif isinstance(ctx_or_interaction, nextcord.Interaction):
-                await ctx_or_interaction.response.send_message("Searching needs at least three characters!", ephemeral=True)
+                await ctx_or_interaction.response.send_message("Searching needs at least three characters!", ephemeral=ephemeral)
             return
 
         embed, attachment, multiple_mods = await createembed.mod_embed(mod_name, self.bot)
@@ -144,7 +143,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
             if isinstance(ctx_or_interaction, commands.Context):
                 await self.bot.reply_to_msg(ctx_or_interaction.message, "No mods found!")
             elif isinstance(ctx_or_interaction, nextcord.Interaction):
-                await ctx_or_interaction.response.send_message("No mods found!", ephemeral=True)
+                await ctx_or_interaction.response.send_message("No mods found!", ephemeral=ephemeral)
         else:
             if multiple_mods:
                 view = ModPicker(multiple_mods)
@@ -154,7 +153,10 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
             if isinstance(ctx_or_interaction, commands.Context):
                 msg = await self.bot.reply_to_msg(ctx_or_interaction.message, embed=embed, view=view, file=attachment)
             elif isinstance(ctx_or_interaction, nextcord.Interaction):
-                await ctx_or_interaction.response.send_message(embed=embed, view=view, files=[attachment] if attachment else None, ephemeral=True)
+                if view:
+                    await ctx_or_interaction.response.send_message(embed=embed, view=view, files=[attachment] if attachment else None, ephemeral=ephemeral)
+                else:
+                    await ctx_or_interaction.response.send_message(embed=embed, files=[attachment] if attachment else None, ephemeral=ephemeral)
                 msg = await ctx_or_interaction.original_message()
 
             if view:
@@ -175,7 +177,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
                         await msg.edit(embed=new_embed, file=new_attachment)
                         view.stop()
                     else:
-                        await interaction.send("Only the user who called this command can do this!", ephemeral=True)
+                        await interaction.send("Only the user who called this command can do this!", ephemeral=ephemeral)
 
                 async def timeout():
                     await msg.edit(view=None)
@@ -192,7 +194,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
         If close matches are found, up to 10 of those will be listed.
         If nothing even comes close, I'll let you know ;)"""
 
-        await self.handle_mod(ctx, mod_name)
+        await self.handle_mod(ctx, mod_name, ephemeral=False)
 
     @nextcord.slash_command(
         name="mod",
@@ -201,17 +203,14 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
     async def mod_slash(
         self,
         interaction: Interaction,
-        mod_name: str = SlashOption(description="Name of the mod to search for")
+        mod_name: str = SlashOption(description="Name of the mod to search for"),
+        private_command: bool = SlashOption(description="Only you can see the response", default=True)
     ):
-        await self.handle_mod(interaction, mod_name)
+        await self.handle_mod(interaction, mod_name, ephemeral=private_command)
 
 
-                
-
-    @commands.command(aliases=["docssearch"])
-    async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
-        """Usage: `docsearch (search: str)`
-        Response: Equivalent to using the search function on the SMR docs page; links the first search result"""
+    ##      Doc search command
+    async def handle_docsearch(self, ctx_or_interaction, search: str, ephemeral: bool) -> None:
         self.logger.info(f"Searching the documentation. {search =}")
         client: SearchClient = SearchClient("2FDCZBLZ1A", "28531804beda52a04275ecd964db429d")
 
@@ -228,9 +227,32 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
 
         for hit in query.hits:
             if hit.hierarchy["lvl0"].endswith("latest"):
-                await self.bot.reply_to_msg(ctx.message, f"This is the best result I got from the SMD :\n{hit.url}")
+                if isinstance(ctx_or_interaction, commands.Context):
+                    await self.bot.reply_to_msg(ctx_or_interaction.message, f"This is the best result I got from the SMD :\n{hit.url}")
+                elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                    await ctx_or_interaction.response.send_message(
+                        f"Best match:\n{hit.url}",
+                        ephemeral=ephemeral
+                    )
                 return
 
+    @commands.command(aliases=["docssearch"])
+    async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
+        """Usage: `docsearch (search: str)`
+        Response: Equivalent to using the search function on the SMR docs page; links the first search result"""
+        await self.handle_docsearch(ctx, search, ephemeral=False)
+
+    @nextcord.slash_command(name="docsearch", description="Search SMR documentation")
+    async def docsearch_slash(
+        self,
+        interaction: Interaction,
+        search: str = SlashOption(description="Search terms"),
+        private_command: bool = SlashOption(description="Only you can see the response", default=True)
+    ):
+        await self.handle_docsearch(interaction, search, ephemeral=private_command)
+
+
+    ##     OCR test command
     @commands.command()
     async def ocr_test(self, ctx: commands.Context) -> None:
         """Usage: `ocr_test` {attach an image!}"""
@@ -243,50 +265,22 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
 
         await self.bot.reply_to_msg(ctx.message, text)
 
+    # @nextcord.slash_command(name="ocr_test", description="Run OCR on uploaded images")
+    # async def ocr_test_slash(self, interaction: Interaction):
+    #     attachments = interaction.data.get("resolved", {}).get("attachments", {})
+    #     text = "OCR Debugging:\n\n"
 
-    @nextcord.slash_command(name="docsearch", description="Search SMR documentation")
-    async def docsearch_slash(
-        self,
-        interaction: Interaction,
-        search: str = SlashOption(description="Search terms")
-    ):
-        self.logger.info(f"Searching docs: {search}")
-        client = SearchClient("2FDCZBLZ1A", "28531804beda52a04275ecd964db429d")
+    #     if not attachments:
+    #         await interaction.response.send_message("Attach at least one image!", ephemeral=True)
+    #         return
 
-        query = await client.search_single_index(
-            index_name="ficsit",
-            search_params={
-                "query": search,
-                "facetFilters": [
-                    "component_name:satisfactory-modding",
-                    "component_version:latest",
-                ],
-            }
-        )
+    #     for n, att in attachments.items():
+    #         buffer = io.BytesIO()
+    #         await interaction.client.http.get_from_cdn(att["url"], buffer)
+    #         read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, buffer)
+    #         text += f"**Image {n}:**\n```\n{read_text}\n```\n"
 
-        for hit in query.hits:
-            if hit.hierarchy["lvl0"].endswith("latest"):
-                await interaction.response.send_message(
-                    f"Best match:\n{hit.url}"
-                )
-                return
-
-    @nextcord.slash_command(name="ocr_test", description="Run OCR on uploaded images")
-    async def ocr_test_slash(self, interaction: Interaction):
-        attachments = interaction.data.get("resolved", {}).get("attachments", {})
-        text = "OCR Debugging:\n\n"
-
-        if not attachments:
-            await interaction.response.send_message("Attach at least one image!", ephemeral=True)
-            return
-
-        for n, att in attachments.items():
-            buffer = io.BytesIO()
-            await interaction.client.http.get_from_cdn(att["url"], buffer)
-            read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, buffer)
-            text += f"**Image {n}:**\n```\n{read_text}\n```\n"
-
-        await interaction.response.send_message(text)
+    #     await interaction.response.send_message(text)
 
 
 def extract_target_type_from_converter_param(missing_argument: inspect.Parameter):

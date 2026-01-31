@@ -144,14 +144,16 @@ class EXPCmds(BaseCmds, Cog):
             config.Misc.change("levelling_state", True)
             await self.bot.reply_to_msg(ctx.message, "The levelling system is now active!")
 
-    @commands.command()
-    async def leaderboard(self, ctx: commands.Context):
-        """Usage: `leaderboard`
-        Response: Shows the top 10 most talkative members and their xp"""
+
+    #      Leaderboard Command
+    async def leaderboard(self, ctx_or_interaction, ephemeral: bool) -> None:
         query = config.Users.select().orderBy("-xp_count").limit(10)
         results = list(query)
         if not results:
-            await self.bot.reply_to_msg(ctx.message, "The database was empty. This should NEVER happen")
+            if isinstance(ctx_or_interaction, commands.Context):
+                await self.bot.reply_to_msg(ctx_or_interaction.message, "The database was empty. This should NEVER happen")
+            elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                await ctx_or_interaction.response.send_message("The database was empty. This should NEVER happen", ephemeral=ephemeral)
             return
 
         data = []
@@ -162,24 +164,72 @@ class EXPCmds(BaseCmds, Cog):
             data.append({"name": fetched_user.global_name, "xp": db_user.xp_count, "rank": db_user.rank})
 
         embed = createembed.leaderboard(data)
-        await self.bot.reply_to_msg(ctx.message, embed=embed)
+        if isinstance(ctx_or_interaction, commands.Context):
+            await self.bot.reply_to_msg(ctx_or_interaction.message, embed=embed)
+        elif isinstance(ctx_or_interaction, nextcord.Interaction):
+            await ctx_or_interaction.response.send_message(embed=embed, ephemeral=ephemeral)
+
+    @commands.command()
+    async def leaderboard(self, ctx: commands.Context):
+        """Usage: `leaderboard`
+        Response: Shows the top 10 most talkative members and their xp"""
+        await self.leaderboard(ctx, ephemeral=False)
+
+    @nextcord.slash_command(
+        name="leaderboard",
+        description="Shows the top 10 most talkative members and their xp."
+    )
+    async def leaderboard_slash(
+        self,
+        interaction: Interaction,
+        private_command: bool = SlashOption(description="Only you can see the response", default=False)
+    ):
+        await self.leaderboard(interaction, ephemeral=private_command)
+
+
+    #       Level Command
+    async def handle_level(self, ctx_or_interaction, ephemeral: bool, target_user: User = None) -> None:
+        target_user: User
+        if target_user:
+            user_id = target_user.id
+            user = self.bot.get_user(user_id)
+            if not user:
+                if isinstance(ctx_or_interaction, commands.Context):
+                    await self.bot.reply_to_msg(ctx_or_interaction.message, f"Sorry, I was unable to find the user with id {user_id}")
+                elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                    await ctx_or_interaction.response.send_message(f"Sorry, I was unable to find the user with id {user_id}", ephemeral=ephemeral)
+                return
+        else:
+            user = ctx_or_interaction.author
+            if isinstance(ctx_or_interaction, commands.Context):
+                user = ctx_or_interaction.author
+            elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                user = ctx_or_interaction.user
+        user_meta = config.Users.create_if_missing(user)
+        if isinstance(ctx_or_interaction, commands.Context):
+            await self.bot.reply_to_msg(ctx_or_interaction.message, f"{user.name} is level {user_meta.rank} with {user_meta.xp_count} xp")
+        elif isinstance(ctx_or_interaction, nextcord.Interaction):
+            await ctx_or_interaction.response.send_message(f"{user.name} is level {user_meta.rank} with {user_meta.xp_count} xp", ephemeral=False)
 
     @commands.command()
     async def level(self, ctx: commands.Context, target_user: commands.UserConverter = None):
         """Usage: `level` [user]
         Response: Either your level or the level of the user specified
         Notes: the user parameter can be the user's @ mention or their UID, like 506192269557366805"""
-        target_user: User
-        if target_user:
-            user_id = target_user.id
-            user = self.bot.get_user(user_id)
-            if not user:
-                await self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to find the user with id {user_id}")
-                return
-        else:
-            user = ctx.author
-        user_meta = config.Users.create_if_missing(user)
-        await self.bot.reply_to_msg(ctx.message, f"{user.name} is level {user_meta.rank} with {user_meta.xp_count} xp")
+        await self.handle_level(ctx, target_user, ephemeral=False)
+
+    @nextcord.slash_command(
+        name="level",
+        description="Shows either your level or the level of the user specified."
+    )
+    async def level_slash(
+        self,
+        interaction: Interaction,
+        target_user: User = SlashOption(description="The user to get the level of", required=False),
+        private_command: bool = SlashOption(description="Only you can see the response", default=True)
+    ):
+        await self.handle_level(interaction, target_user, ephemeral=private_command)
+    
 
     @BaseCmds.add.command(name="level_role")
     async def add_level_role(self, ctx: commands.Context, role: commands.RoleConverter, rank: int):
@@ -209,27 +259,3 @@ class EXPCmds(BaseCmds, Cog):
             await self.bot.reply_to_msg(ctx.message, "level role removed!")
         else:
             await self.bot.reply_to_msg(ctx.message, "level role could not be found!")
-
-    @nextcord.slash_command(
-        name="xp_give",
-        description="Gives the indicated user the specified XP."
-    )
-    async def xp_give_slash(
-        self,
-        interaction: Interaction,
-        target: User = SlashOption(description="The user to give XP to"),
-        amount: float = SlashOption(description="The amount of XP to give")
-    ):
-        profile = levelling.UserProfile(target.id, interaction.guild)
-        if amount < 0:
-            await interaction.response.send_message(
-                f"<:thonk:836648850377801769> attempt to give a negative\n"
-                f"Did you mean `{self.bot.command_prefix}xp take`?",
-                ephemeral=True
-            )
-        else:
-            await profile.give_xp(amount)
-            await interaction.response.send_message(
-                f"Gave {amount} XP to {target.name}. "
-                f"They are now rank {profile.rank} ({profile.xp_count} XP)",
-            )
