@@ -96,7 +96,6 @@ class CrashCmds(BaseCmds, Cog):
 
         await self.bot.reply_to_msg(ctx.message, f"Crash '{name}' modified!")
 
-
     #       Search Crashes Command
     @BaseCmds.search.command(name="crashes")
     async def search_crashes(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
@@ -110,10 +109,7 @@ class CrashCmds(BaseCmds, Cog):
         response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
 
-    @nextcord.slash_command(
-        name="search_crashes",
-        description="Searches crashes for the stuff requested."
-    )
+    @nextcord.slash_command(name="search_crashes", description="Searches crashes for the stuff requested.")
     async def search_crashes_slash(
         self,
         interaction: Interaction,
@@ -122,9 +118,9 @@ class CrashCmds(BaseCmds, Cog):
         column: str = SlashOption(
             description="The column of the database to search along",
             choices={"name": "name", "crash": "crash", "response": "response"},
-            default="name"
+            default="name",
         ),
-        private_command: bool = SlashOption(description="Only you can see the response", default=True)
+        private_command: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         flags = SearchFlags()
         flags.fuzzy = fuzzy
@@ -132,7 +128,6 @@ class CrashCmds(BaseCmds, Cog):
 
         response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await interaction.response.send_message(response, ephemeral=private_command)
-
 
     # @nextcord.slash_command(
     #     name="add_crash",

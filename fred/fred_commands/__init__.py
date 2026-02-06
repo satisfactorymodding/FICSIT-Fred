@@ -125,17 +125,18 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
 
         await self.bot.reply_to_msg(message, text, file=attachment)
 
-
     #       Mod search command
     async def handle_mod(self, ctx_or_interaction, mod_name: str, ephemeral: bool) -> None:
-        
+
         mod_name = mod_name.split("\n")[0]
 
         if len(mod_name) < 3:
             if isinstance(ctx_or_interaction, commands.Context):
                 await self.bot.reply_to_msg(ctx_or_interaction.message, "Searching needs at least three characters!")
             elif isinstance(ctx_or_interaction, nextcord.Interaction):
-                await ctx_or_interaction.response.send_message("Searching needs at least three characters!", ephemeral=ephemeral)
+                await ctx_or_interaction.response.send_message(
+                    "Searching needs at least three characters!", ephemeral=ephemeral
+                )
             return
 
         embed, attachment, multiple_mods = await createembed.mod_embed(mod_name, self.bot)
@@ -154,12 +155,17 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
                 msg = await self.bot.reply_to_msg(ctx_or_interaction.message, embed=embed, view=view, file=attachment)
             elif isinstance(ctx_or_interaction, nextcord.Interaction):
                 if view:
-                    await ctx_or_interaction.response.send_message(embed=embed, view=view, files=[attachment] if attachment else None, ephemeral=ephemeral)
+                    await ctx_or_interaction.response.send_message(
+                        embed=embed, view=view, files=[attachment] if attachment else None, ephemeral=ephemeral
+                    )
                 else:
-                    await ctx_or_interaction.response.send_message(embed=embed, files=[attachment] if attachment else None, ephemeral=ephemeral)
+                    await ctx_or_interaction.response.send_message(
+                        embed=embed, files=[attachment] if attachment else None, ephemeral=ephemeral
+                    )
                 msg = await ctx_or_interaction.original_message()
 
             if view:
+
                 async def callback(interaction: nextcord.Interaction):
 
                     if isinstance(ctx_or_interaction, commands.Context):
@@ -177,7 +183,9 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
                         await msg.edit(embed=new_embed, file=new_attachment)
                         view.stop()
                     else:
-                        await interaction.send("Only the user who called this command can do this!", ephemeral=ephemeral)
+                        await interaction.send(
+                            "Only the user who called this command can do this!", ephemeral=ephemeral
+                        )
 
                 async def timeout():
                     await msg.edit(view=None)
@@ -196,18 +204,14 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
 
         await self.handle_mod(ctx, mod_name, ephemeral=False)
 
-    @nextcord.slash_command(
-        name="mod",
-        description="Searches for a mod and returns info about it."
-    )
+    @nextcord.slash_command(name="mod", description="Searches for a mod and returns info about it.")
     async def mod_slash(
         self,
         interaction: Interaction,
         mod_name: str = SlashOption(description="Name of the mod to search for"),
-        private_command: bool = SlashOption(description="Only you can see the response", default=True)
+        private_command: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         await self.handle_mod(interaction, mod_name, ephemeral=private_command)
-
 
     ##      Doc search command
     async def handle_docsearch(self, ctx_or_interaction, search: str, ephemeral: bool) -> None:
@@ -228,12 +232,11 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
         for hit in query.hits:
             if hit.hierarchy["lvl0"].endswith("latest"):
                 if isinstance(ctx_or_interaction, commands.Context):
-                    await self.bot.reply_to_msg(ctx_or_interaction.message, f"This is the best result I got from the SMD :\n{hit.url}")
-                elif isinstance(ctx_or_interaction, nextcord.Interaction):
-                    await ctx_or_interaction.response.send_message(
-                        f"Best match:\n{hit.url}",
-                        ephemeral=ephemeral
+                    await self.bot.reply_to_msg(
+                        ctx_or_interaction.message, f"This is the best result I got from the SMD :\n{hit.url}"
                     )
+                elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                    await ctx_or_interaction.response.send_message(f"Best match:\n{hit.url}", ephemeral=ephemeral)
                 return
 
     @commands.command(aliases=["docssearch"])
@@ -247,10 +250,9 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
         self,
         interaction: Interaction,
         search: str = SlashOption(description="Search terms"),
-        private_command: bool = SlashOption(description="Only you can see the response", default=True)
+        private_command: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         await self.handle_docsearch(interaction, search, ephemeral=private_command)
-
 
     ##     OCR test command
     @commands.command()

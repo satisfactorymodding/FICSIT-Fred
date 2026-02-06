@@ -241,7 +241,6 @@ class CommandCmds(BaseCmds, Cog):
         Notes: If response is not supplied you will be prompted for one with a timeout"""
         await self.rename_command(ctx, name, new_name)
 
-
     #       Search Commands Command
     @BaseCmds.search.command(name="commands")
     async def search_commands(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
@@ -255,10 +254,7 @@ class CommandCmds(BaseCmds, Cog):
         response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
 
-    @nextcord.slash_command(
-        name="search_commands",
-        description="Searches commands for the stuff requested."
-    )
+    @nextcord.slash_command(name="search_commands", description="Searches commands for the stuff requested.")
     async def search_commands_slash(
         self,
         interaction: Interaction,
@@ -267,13 +263,12 @@ class CommandCmds(BaseCmds, Cog):
         column: str = SlashOption(
             description="The column of the database to search along",
             choices={"name": "name", "content": "content", "attachment": "attachment"},
-            default="name"
+            default="name",
         ),
-        private_command: bool = SlashOption(description="Only you can see the response", default=True)
+        private_command: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         response = get_search(config.Commands, pattern, column, fuzzy)
         await interaction.response.send_message(response, ephemeral=private_command)
-
 
     # @nextcord.slash_command(
     #     name="add_command",
