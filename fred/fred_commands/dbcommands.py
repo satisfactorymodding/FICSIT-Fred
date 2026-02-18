@@ -4,6 +4,7 @@ from ._command_utils import get_search
 from .. import config
 from nextcord import Interaction, SlashOption
 from nextcord.ext.commands import Cog
+import re2
 
 
 def _extract_prefix(string: str, prefix: str):
@@ -270,27 +271,64 @@ class CommandCmds(BaseCmds, Cog):
         response = get_search(config.Commands, pattern, column, fuzzy)
         await interaction.response.send_message(response, ephemeral=private_command)
 
-    # @nextcord.slash_command(
-    #     name="add_command",
-    #     description="Adds a simple command to the list of commands."
-    # )
-    # async def add_command_slash(
-    #     self,
-    #     interaction: Interaction,
-    #     command_name: str = SlashOption(description="The name of the command to add"),
-    #     response: str = SlashOption(description="The response for the command", required=False)
-    # ):
-    #     if config.Commands.fetch(command_name) is not None:
-    #         await interaction.response.send_message("This command already exists!")
-    #         return
+    #      invoke command
+    @nextcord.slash_command(
+        name="invoke_command",
+        description="Invokes a database command with the last message in the channel as its argument.",
+    )
+    async def invoke_command_slash(
+        self,
+        interaction: Interaction,
+        command_name: str = SlashOption(description="The name of the command to invoke"),
+        command_input: str = SlashOption(
+            description="Optional input to substitute into the command response", required=False
+        ),
+        ping_user: bool = SlashOption(description="Whether to ping the user in the response", default=None),
+    ):
 
-    #     if config.ReservedCommands.check(command_name):
-    #         await interaction.response.send_message("This command name is reserved")
-    #         return
+        if ping_user is None:
+            ping_user = not bool(command_input)
 
-    #     if not response:
-    #         await interaction.response.send_message("Please provide a response for the command.", ephemeral=True)
-    #         return
+        c_channel = interaction.channel
+        if ping_user:
+            last_message = c_channel.last_message.content if c_channel.last_message else ""
+            last_author = c_channel.last_message.author.mention if c_channel.last_message else interaction.user.mention
+        else:
+            last_message = ""
 
-    #     config.Commands(name=command_name, response=response)
-    #     await interaction.response.send_message(f"Command '{command_name}' added!")
+        if command_input:
+            last_message = command_input
+
+        # Check if command exists
+        db_command = config.Commands.fetch(command_name)
+        if not db_command:
+            await interaction.response.send_message(f"Command '{command_name}' does not exist.", ephemeral=True)
+            return
+
+        # Execute the command
+        if ping_user:
+            if last_message:
+                text = str(db_command["content"])
+                substitutions = map(int, re2.findall(r"{(\d+)}", text))
+                for substitution in substitutions:
+                    text = re2.sub(
+                        rf"\{{{substitution}\}}", last_message if substitution == 0 else "(missing argument)", text
+                    )
+                text = text.replace("{...}", last_message)
+
+                await interaction.response.send_message(f"{last_author}\n{text}", ephemeral=False)
+            else:
+                await interaction.response.send_message(
+                    f"{interaction.user.mention}, no valid last message found to execute the command `{command_name}`.",
+                    ephemeral=True,
+                )
+        else:
+            text = str(db_command["content"])
+            substitutions = map(int, re2.findall(r"{(\d+)}", text))
+            for substitution in substitutions:
+                text = re2.sub(
+                    rf"\{{{substitution}\}}", last_message if substitution == 0 else "(missing argument)", text
+                )
+            text = text.replace("{...}", last_message)
+
+            await interaction.response.send_message(text, ephemeral=False)
