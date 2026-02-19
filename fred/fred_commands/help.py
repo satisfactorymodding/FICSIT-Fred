@@ -7,6 +7,8 @@ from typing import Optional
 import attrs
 import nextcord
 import regex
+from nextcord import Interaction, SlashOption
+from nextcord.ext.commands import Cog
 
 from ._baseclass import BaseCmds, commands, config
 from ..libraries import common
@@ -14,7 +16,7 @@ from ..libraries import common
 logger = common.new_logger(__name__)
 
 
-class HelpCmds(BaseCmds):
+class HelpCmds(BaseCmds, Cog):
 
     @commands.group()
     async def help(self, ctx: commands.Context) -> None:
@@ -25,28 +27,47 @@ class HelpCmds(BaseCmds):
             await self.help_special(ctx, name="help")
             return
 
-    async def _send_help(self, ctx: commands.Context, **kwargs):
-        if not ctx.author.dm_channel:
-            await ctx.author.create_dm()
-        if not await self.bot.send_safe_direct_message(
-            ctx.author, in_dm=ctx.channel == ctx.author.dm_channel, **kwargs
-        ):
-            await ctx.reply(
-                "Help commands only work in DMs to avoid clutter. "
-                "You have either disabled server DMs or indicated that you do not wish for Fred to DM you. "
-                "Please enable both of these if you want to receive messages."
-            )
-        else:
-            try:
-                await ctx.message.delete()
-            except nextcord.Forbidden:
-                pass  # doesn't have delete perms, f.e. in a DM channel
+    async def _send_help(self, ctx_or_interaction, **kwargs):
 
-    @help.command(name="commands")
-    async def help_commands(self, ctx: commands.Context, page: int = None) -> None:
-        """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
-        Usage: `help commands [page: int]`
-        Response: Shows a table of all commands at the page specified"""
+        if isinstance(ctx_or_interaction, Interaction):
+            if not ctx_or_interaction.user.dm_channel:
+                await ctx_or_interaction.user.create_dm()
+            if not await self.bot.send_safe_direct_message(
+                ctx_or_interaction.user,
+                in_dm=ctx_or_interaction.channel == ctx_or_interaction.user.dm_channel,
+                **kwargs,
+            ):
+                await ctx_or_interaction.response.send_message(
+                    "Help commands only work in DMs to avoid clutter. "
+                    "You have either disabled server DMs or indicated that you do not wish for Fred to DM you. "
+                    "Please enable both of these if you want to receive messages.",
+                    ephemeral=True,
+                )
+            else:
+                if not ctx_or_interaction.response.is_done():
+                    await ctx_or_interaction.response.defer(ephemeral=True)
+                await ctx_or_interaction.followup.send("Help message sent to your DMs!", ephemeral=True)
+        else:
+            if not ctx_or_interaction.author.dm_channel:
+                await ctx_or_interaction.author.create_dm()
+            if not await self.bot.send_safe_direct_message(
+                ctx_or_interaction.author,
+                in_dm=ctx_or_interaction.channel == ctx_or_interaction.author.dm_channel,
+                **kwargs,
+            ):
+                await ctx_or_interaction.reply(
+                    "Help commands only work in DMs to avoid clutter. "
+                    "You have either disabled server DMs or indicated that you do not wish for Fred to DM you. "
+                    "Please enable both of these if you want to receive messages."
+                )
+            else:
+                try:
+                    await ctx_or_interaction.message.delete()
+                except nextcord.Forbidden:
+                    pass
+
+    #       Commands Help Command
+    async def help_commands_handler(self, ctxorctx_or_interaction, page: Optional[int] = None) -> None:
         if page is None:
             response = FredHelpEmbed.commands()
         elif page < 1:
@@ -54,8 +75,50 @@ class HelpCmds(BaseCmds):
             response.set_footer(text="y r u like dis")
         else:
             response = FredHelpEmbed.commands(index=page - 1)
-        await self._send_help(ctx, embed=response)
+        await self._send_help(ctxorctx_or_interaction, embed=response)
 
+    @help.command(name="commands")
+    async def help_commands(self, ctx: commands.Context, page: int = None) -> None:
+        """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
+        Usage: `help commands [page: int]`
+        Response: Shows a table of all commands at the page specified"""
+        await self.help_commands_handler(ctx, page)
+
+    @nextcord.slash_command(name="help_commands", description="Shows a list of all commands, paginated")
+    async def help_commands_slash(
+        self,
+        interaction: Interaction,
+        page: Optional[int] = SlashOption(description="The page number to view, starting at 1", required=False),
+    ) -> None:
+        await self.help_commands_handler(interaction, page)
+
+    #    Crashes Help Command
+    async def help_crashes_handler(self, ctxorctx_or_interaction, page: Optional[int] = None) -> None:
+        if page is None:
+            response = FredHelpEmbed.crashes()
+        elif page < 1:
+            response = FredHelpEmbed("Bad input", "No negative/zero indices! >:(", "crashes [page]")
+            response.set_footer(text="y r u like dis")
+        else:
+            response = FredHelpEmbed.crashes(index=page - 1)
+        await self._send_help(ctxorctx_or_interaction, embed=response)
+
+    @help.command(name="crashes")
+    async def help_crashes(self, ctx: commands.Context, page: int = None) -> None:
+        """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
+        Usage: `help crashes [page: int]`
+        Response: Shows a table of all crashes at the page specified"""
+        await self.help_crashes_handler(ctx, page)
+
+    @nextcord.slash_command(name="help_crashes", description="Shows a list of all crashes, paginated")
+    async def help_crashes_slash(
+        self,
+        interaction: Interaction,
+        page: Optional[int] = SlashOption(description="The page number to view, starting at 1", required=False),
+    ) -> None:
+        await self.help_crashes_handler(interaction, page)
+
+    #     Webhooks Help Command
     @help.command(name="webhooks")
     async def help_webhooks(self, ctx: commands.Context) -> None:
         """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
@@ -64,45 +127,62 @@ class HelpCmds(BaseCmds):
         response = FredHelpEmbed.git_webhooks()
         await self._send_help(ctx, embed=response)
 
-    @help.command(name="crashes")
-    async def help_crashes(self, ctx: commands.Context, page: int = None) -> None:
-        """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
-        Usage: `help crashes [page: int]`
-        Response: Shows a table of all crashes at the page specified"""
-        if page is None:
-            response = FredHelpEmbed.crashes()
-        elif page < 1:
-            response = FredHelpEmbed("Bad input", "No negative/zero indices! >:(", "crashes [page]")
-            response.set_footer(text="y r u like dis")
-        else:
-            response = FredHelpEmbed.crashes(index=page - 1)
-        await self._send_help(ctx, embed=response)
+    @nextcord.slash_command(name="help_webhooks", description="Shows info about GitHub webhooks")
+    async def help_webhooks_slash(self, interaction: Interaction) -> None:
+        response = FredHelpEmbed.git_webhooks()
+        await self._send_help(interaction, embed=response)
 
-    @help.command(name="crash")
-    async def help_crash(self, ctx: commands.Context, *, name: str = None) -> None:
-        """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
-        Usage: `help crash [name: str]`
-        Response: Shows info about the crash specified"""
+    #       Specific Crash Help Command
+    async def help_specific_crash_handler(self, ctx_or_interaction, name: Optional[str] = None) -> None:
         if name is None:
             response = FredHelpEmbed.crashes()
         elif name.isnumeric():
             response = FredHelpEmbed("Bad input", f"Did you mean `help crashes {name}`?", "crash [name]")
         else:
             response = FredHelpEmbed.specific_crash(name=name)
-        await self._send_help(ctx, embed=response)
+        await self._send_help(ctx_or_interaction, embed=response)
+
+    @help.command(name="crash")
+    async def help_crash(self, ctx: commands.Context, *, name: str = None) -> None:
+        """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
+        Usage: `help crash [name: str]`
+        Response: Shows info about the crash specified"""
+        await self.help_specific_crash_handler(ctx, name)
+
+    @nextcord.slash_command(name="help_crash", description="Shows info about a specific crash")
+    async def help_crash_slash(
+        self, interaction: Interaction, name: str = SlashOption(description="The name of the crash to get info about")
+    ) -> None:
+        await self.help_specific_crash_handler(interaction, name)
+
+    #       Special Commands Help Command
+    async def help_special_handler(self, ctx_or_interaction, name: Optional[str] = None) -> None:
+        if name is None:
+            response = FredHelpEmbed.all_special_commands(self)
+        else:
+            response = FredHelpEmbed.specific_special(self, name)
+        await self._send_help(ctx_or_interaction, embed=response)
 
     @help.command(name="special")
     async def help_special(self, ctx: commands.Context, *, name: str = None) -> None:
         """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
         Usage: `help special [name: str]`
         Response: Shows info about the special command specified, or all special commands if none is given"""
-        if name:
-            response = FredHelpEmbed.specific_special(self, name)
-        else:
-            response = FredHelpEmbed.all_special_commands(self)
+        await self.help_special_handler(ctx, name)
 
-        await self._send_help(ctx, embed=response)
+    @nextcord.slash_command(
+        name="help_special", description="Shows info about special commands, or a specific one if a name is provided"
+    )
+    async def help_special_slash(
+        self,
+        interaction: Interaction,
+        name: Optional[str] = SlashOption(
+            description="The name of the special command to get info about", required=False
+        ),
+    ) -> None:
+        await self.help_special_handler(interaction, name)
 
+    #      Media-Only Channels Help Command
     @help.command(name="media_only")
     async def help_media_only(self, ctx: commands.Context) -> None:
         """[Help Commands!](https://www.youtube.com/watch?v=2Q_ZzBGPdqE)
@@ -111,8 +191,14 @@ class HelpCmds(BaseCmds):
         response = FredHelpEmbed.media_only()
         await self._send_help(ctx, embed=response)
 
+    @nextcord.slash_command(name="help_media_only", description="Shows info about media-only channels")
+    async def help_media_only_slash(self, interaction: Interaction) -> None:
+        response = FredHelpEmbed.media_only()
+        await self._send_help(interaction, embed=response)
+
 
 page_size: int = 30  # if you change this, make it a multiple of three
+field_size: int = 10  # Define 'field_size' if it is missing
 
 
 @attrs.define

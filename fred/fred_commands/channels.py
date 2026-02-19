@@ -1,10 +1,12 @@
-from nextcord import TextChannel, ForumChannel
+import nextcord
 from nextcord.abc import GuildChannel
+from nextcord import Interaction, SlashOption, TextChannel, ForumChannel
+from nextcord.ext.commands import Cog
 
 from ._baseclass import BaseCmds, commands, config, common
 
 
-class ChannelCmds(BaseCmds):
+class ChannelCmds(BaseCmds, Cog):
 
     @BaseCmds.add.command(name="mediaonly")
     async def add_mediaonly(self, ctx: commands.Context, channel: commands.GuildChannelConverter):

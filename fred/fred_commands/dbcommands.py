@@ -1,6 +1,10 @@
+import nextcord
 from ._baseclass import BaseCmds, commands, SearchFlags
 from ._command_utils import get_search
 from .. import config
+from nextcord import Interaction, SlashOption
+from nextcord.ext.commands import Cog
+import re2
 
 
 def _extract_prefix(string: str, prefix: str):
@@ -13,7 +17,7 @@ def _extract_prefix(string: str, prefix: str):
         return False, string
 
 
-class CommandCmds(BaseCmds):
+class CommandCmds(BaseCmds, Cog):
 
     @BaseCmds.add.command(name="command")
     async def add_command(self, ctx: commands.Context, command_name: str.lower, *, response: str = None):
@@ -238,6 +242,7 @@ class CommandCmds(BaseCmds):
         Notes: If response is not supplied you will be prompted for one with a timeout"""
         await self.rename_command(ctx, name, new_name)
 
+    #       Search Commands Command
     @BaseCmds.search.command(name="commands")
     async def search_commands(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
         """Usage: `search commands (pattern) [options]`
@@ -249,3 +254,81 @@ class CommandCmds(BaseCmds):
 
         response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
+
+    @nextcord.slash_command(name="search_commands", description="Searches commands for the stuff requested.")
+    async def search_commands_slash(
+        self,
+        interaction: Interaction,
+        pattern: str = SlashOption(description="The pattern to search for"),
+        fuzzy: bool = SlashOption(description="Whether to use fuzzy matching", default=False),
+        column: str = SlashOption(
+            description="The column of the database to search along",
+            choices={"name": "name", "content": "content", "attachment": "attachment"},
+            default="name",
+        ),
+        private_command: bool = SlashOption(description="Only you can see the response", default=True),
+    ):
+        response = get_search(config.Commands, pattern, column, fuzzy)
+        await interaction.response.send_message(response, ephemeral=private_command)
+
+    #      invoke command
+    @nextcord.slash_command(
+        name="invoke_command",
+        description="Invokes a database command with the last message in the channel as its argument.",
+    )
+    async def invoke_command_slash(
+        self,
+        interaction: Interaction,
+        command_name: str = SlashOption(description="The name of the command to invoke"),
+        command_input: str = SlashOption(
+            description="Optional input to substitute into the command response", required=False
+        ),
+        ping_user: bool = SlashOption(description="Whether to ping the user in the response", default=None),
+    ):
+
+        if ping_user is None:
+            ping_user = not bool(command_input)
+
+        c_channel = interaction.channel
+        if ping_user:
+            last_message = c_channel.last_message.content if c_channel.last_message else ""
+            last_author = c_channel.last_message.author.mention if c_channel.last_message else interaction.user.mention
+        else:
+            last_message = ""
+
+        if command_input:
+            last_message = command_input
+
+        # Check if command exists
+        db_command = config.Commands.fetch(command_name)
+        if not db_command:
+            await interaction.response.send_message(f"Command '{command_name}' does not exist.", ephemeral=True)
+            return
+
+        # Execute the command
+        if ping_user:
+            if last_message:
+                text = str(db_command["content"])
+                substitutions = map(int, re2.findall(r"{(\d+)}", text))
+                for substitution in substitutions:
+                    text = re2.sub(
+                        rf"\{{{substitution}\}}", last_message if substitution == 0 else "(missing argument)", text
+                    )
+                text = text.replace("{...}", last_message)
+
+                await interaction.response.send_message(f"{last_author}\n{text}", ephemeral=False)
+            else:
+                await interaction.response.send_message(
+                    f"{interaction.user.mention}, no valid last message found to execute the command `{command_name}`.",
+                    ephemeral=True,
+                )
+        else:
+            text = str(db_command["content"])
+            substitutions = map(int, re2.findall(r"{(\d+)}", text))
+            for substitution in substitutions:
+                text = re2.sub(
+                    rf"\{{{substitution}\}}", last_message if substitution == 0 else "(missing argument)", text
+                )
+            text = text.replace("{...}", last_message)
+
+            await interaction.response.send_message(text, ephemeral=False)
