@@ -290,10 +290,10 @@ def _single_mod_embed(mod: dict) -> nextcord.Embed:
     if compatibility := mod["compatibility"]:
         ea = compatibility["EA"]
         exp = compatibility["EXP"]
-        desc += f"\nEA: {compatibility_to_emoji(ea['state'])}\n"
+        desc += f"\nStable: {compatibility_to_emoji(ea['state'])}\n"
         if note := ea["note"]:
             desc += f"Note: {note}\n"
-        desc += f"EXP: {compatibility_to_emoji(exp['state'])}\n"
+        desc += f"Experimental: {compatibility_to_emoji(exp['state'])}\n"
         if note := exp["note"]:
             desc += f"Note: {note}\n"
 
