@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fred"
-version = "2.26.2"
+version = "2.26.3"
 description = "A Discord bot for the Satisfactory Modding Discord "
 authors = ["Feyko <feykook@gmail.com>", "Borketh <does.not.kompute@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>"]
 license = "MIT License"
