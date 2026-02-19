@@ -83,7 +83,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds, 
         if (match := re2.match(command_pattern, message.content)) is None:
             return
 
-        (name, arguments) = match.groups()
+        name, arguments = match.groups()
 
         self.logger.info(f"Processing the command {name}", extra=common.message_info(message))
 

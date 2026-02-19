@@ -33,7 +33,7 @@ async def github_embed(data: dict) -> nextcord.Embed | None:
     global repo_name, repo_full_name
     try:
         repo_name = data["repository"]["full_name"]
-        repo_full_name = f'{data["repository"]["name"]}/{data["ref"].split("/")[2]}'
+        repo_full_name = f'{data["repository"]["name"]}/{'/'.join(data["ref"].split("/")[2:])}'
     except (KeyError, IndexError):
         repo_name, repo_full_name = "", ""
 
@@ -290,10 +290,10 @@ def _single_mod_embed(mod: dict) -> nextcord.Embed:
     if compatibility := mod["compatibility"]:
         ea = compatibility["EA"]
         exp = compatibility["EXP"]
-        desc += f"\nEA: {compatibility_to_emoji(ea['state'])}\n"
+        desc += f"\nStable: {compatibility_to_emoji(ea['state'])}\n"
         if note := ea["note"]:
             desc += f"Note: {note}\n"
-        desc += f"EXP: {compatibility_to_emoji(exp['state'])}\n"
+        desc += f"Experimental: {compatibility_to_emoji(exp['state'])}\n"
         if note := exp["note"]:
             desc += f"Note: {note}\n"
 
