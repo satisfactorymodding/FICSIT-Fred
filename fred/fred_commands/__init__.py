@@ -191,7 +191,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
                 return
 
         # grumbus.
-        await self.bot.reply_to_msg(ctx.message, "No results found for `{search}`.")
+        await self.bot.reply_to_msg(ctx.message, f"No results found for `{search}`.")
 
     @commands.command()
     async def ocr_test(self, ctx: commands.Context) -> None:
