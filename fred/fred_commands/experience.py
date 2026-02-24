@@ -7,7 +7,7 @@ from ..cogs import levelling
 from ..libraries import createembed
 
 
-class EXPCmds(BaseCmds, Cog):
+class EXPCmds(BaseCmds):
 
     @commands.group()
     @commands.check(common.mod_only)

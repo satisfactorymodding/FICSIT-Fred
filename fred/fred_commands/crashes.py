@@ -7,7 +7,7 @@ from ._baseclass import BaseCmds, commands, config, SearchFlags
 from ._command_utils import get_search
 
 
-class CrashCmds(BaseCmds, Cog):
+class CrashCmds(BaseCmds):
 
     @BaseCmds.add.command(name="crash")
     async def add_crash(self, ctx: commands.Context, crash_name: str.lower, match: str = None, *, response: str = None):

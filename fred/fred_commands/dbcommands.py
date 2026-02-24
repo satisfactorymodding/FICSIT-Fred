@@ -17,7 +17,7 @@ def _extract_prefix(string: str, prefix: str):
         return False, string
 
 
-class CommandCmds(BaseCmds, Cog):
+class CommandCmds(BaseCmds):
 
     @BaseCmds.add.command(name="command")
     async def add_command(self, ctx: commands.Context, command_name: str.lower, *, response: str = None):

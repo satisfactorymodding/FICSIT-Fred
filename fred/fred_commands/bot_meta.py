@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from ..fred import Bot
 
 
-class BotCmds(BaseCmds, Cog):
+class BotCmds(BaseCmds):
 
     #       Version Command
     @commands.command()

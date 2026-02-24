@@ -6,7 +6,7 @@ from nextcord.ext.commands import Cog
 from ._baseclass import BaseCmds, commands, config, common
 
 
-class ChannelCmds(BaseCmds, Cog):
+class ChannelCmds(BaseCmds):
 
     @BaseCmds.add.command(name="mediaonly")
     async def add_mediaonly(self, ctx: commands.Context, channel: commands.GuildChannelConverter):

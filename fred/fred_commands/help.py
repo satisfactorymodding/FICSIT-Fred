@@ -16,7 +16,7 @@ from ..libraries import common
 logger = common.new_logger(__name__)
 
 
-class HelpCmds(BaseCmds, Cog):
+class HelpCmds(BaseCmds):
 
     @commands.group()
     async def help(self, ctx: commands.Context) -> None:
