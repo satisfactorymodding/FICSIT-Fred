@@ -239,11 +239,8 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
                     await ctx_or_interaction.response.send_message(f"Best match:\n{hit.url}", ephemeral=ephemeral)
                 return
 
-    @commands.command(aliases=["docssearch"])
-    async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
-        """Usage: `docsearch (search: str)`
-        Response: Equivalent to using the search function on the SMR docs page; links the first search result"""
-        await self.handle_docsearch(ctx, search, ephemeral=False)
+        # grumbus.
+        await self.bot.reply_to_msg(ctx_or_interaction.message, f"No results found for `{search}`.")
 
     @nextcord.slash_command(name="docsearch", description="Search SMR documentation")
     async def docsearch_slash(
