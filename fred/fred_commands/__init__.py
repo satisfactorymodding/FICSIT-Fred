@@ -212,7 +212,9 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         await self.handle_mod(interaction, mod_name, ephemeral=private_command)
 
     ##      Doc search command
-    async def handle_docsearch(self, ctx_or_interaction, search: str, ephemeral: bool) -> None:
+    async def handle_docsearch(
+        self, ctx_or_interaction: commands.Context | Interaction, search: str, ephemeral: bool = False
+    ) -> None:
         self.logger.info(f"Searching the documentation. {search =}")
         client: SearchClient = SearchClient("2FDCZBLZ1A", "28531804beda52a04275ecd964db429d")
 
@@ -229,16 +231,13 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
 
         for hit in query.hits:
             if hit.hierarchy["lvl0"].endswith("latest"):
-                if isinstance(ctx_or_interaction, commands.Context):
-                    await self.bot.reply_to_msg(
-                        ctx_or_interaction.message, f"This is the best result I got from the SMD :\n{hit.url}"
-                    )
-                elif isinstance(ctx_or_interaction, nextcord.Interaction):
-                    await ctx_or_interaction.response.send_message(f"Best match:\n{hit.url}", ephemeral=ephemeral)
+                await self.bot.reply_generic(
+                    ctx_or_interaction, f"This is the best result I got from the SMD :\n{hit.url}", ephemeral=ephemeral
+                )
                 return
 
         # grumbus.
-        await self.bot.reply_to_msg(ctx_or_interaction.message, f"No results found for `{search}`.")
+        await self.bot.reply_generic(ctx_or_interaction, f"No results found for `{search}`.")
 
     @nextcord.slash_command(name="docsearch", description="Search SMR documentation")
     async def docsearch_slash(
@@ -248,6 +247,10 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         private_command: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         await self.handle_docsearch(interaction, search, ephemeral=private_command)
+
+    @commands.command(aliases=["docssearch"])
+    async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
+        await self.handle_docsearch(ctx, search)
 
     ##     OCR test command
     @commands.command()
