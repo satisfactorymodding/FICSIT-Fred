@@ -55,7 +55,7 @@ class HelpCmds(BaseCmds):
                     pass
 
     #       Commands Help Command
-    async def help_commands_handler(self, ctxorctx_or_interaction, page: Optional[int] = None) -> None:
+    async def help_commands_handler(self, ctx_or_interaction, page: Optional[int] = None) -> None:
         if page is None:
             response = FredHelpEmbed.commands()
         elif page < 1:
@@ -63,7 +63,7 @@ class HelpCmds(BaseCmds):
             response.set_footer(text="y r u like dis")
         else:
             response = FredHelpEmbed.commands(index=page - 1)
-        await self._send_help(ctxorctx_or_interaction, embed=response)
+        await self._send_help(ctx_or_interaction, embed=response)
 
     @help.command(name="commands")
     async def help_commands(self, ctx: commands.Context, page: int = None) -> None:
@@ -81,7 +81,7 @@ class HelpCmds(BaseCmds):
         await self.help_commands_handler(interaction, page)
 
     #    Crashes Help Command
-    async def help_crashes_handler(self, ctxorctx_or_interaction, page: Optional[int] = None) -> None:
+    async def help_crashes_handler(self, ctx_or_interaction, page: Optional[int] = None) -> None:
         if page is None:
             response = FredHelpEmbed.crashes()
         elif page < 1:
@@ -89,7 +89,7 @@ class HelpCmds(BaseCmds):
             response.set_footer(text="y r u like dis")
         else:
             response = FredHelpEmbed.crashes(index=page - 1)
-        await self._send_help(ctxorctx_or_interaction, embed=response)
+        await self._send_help(ctx_or_interaction, embed=response)
 
     @help.command(name="crashes")
     async def help_crashes(self, ctx: commands.Context, page: int = None) -> None:
