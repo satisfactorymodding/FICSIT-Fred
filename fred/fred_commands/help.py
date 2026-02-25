@@ -8,7 +8,7 @@ import attrs
 import nextcord
 import regex
 from nextcord import Interaction, SlashOption
-from nextcord.ext.commands import Cog
+from nextcord.ext.commands import Context
 
 from ._baseclass import BaseCmds, commands, config
 from ..libraries import common
@@ -27,26 +27,14 @@ class HelpCmds(BaseCmds):
             await self.help_special(ctx, name="help")
             return
 
-    async def _send_help(self, ctx_or_interaction, **kwargs):
+    @nextcord.slash_command(name="help")
+    async def help_slash(self, interaction: Interaction):
+        pass
+
+    async def _send_help(self, ctx_or_interaction: Context | Interaction, **kwargs):
 
         if isinstance(ctx_or_interaction, Interaction):
-            if not ctx_or_interaction.user.dm_channel:
-                await ctx_or_interaction.user.create_dm()
-            if not await self.bot.send_safe_direct_message(
-                ctx_or_interaction.user,
-                in_dm=ctx_or_interaction.channel == ctx_or_interaction.user.dm_channel,
-                **kwargs,
-            ):
-                await ctx_or_interaction.response.send_message(
-                    "Help commands only work in DMs to avoid clutter. "
-                    "You have either disabled server DMs or indicated that you do not wish for Fred to DM you. "
-                    "Please enable both of these if you want to receive messages.",
-                    ephemeral=True,
-                )
-            else:
-                if not ctx_or_interaction.response.is_done():
-                    await ctx_or_interaction.response.defer(ephemeral=True)
-                await ctx_or_interaction.followup.send("Help message sent to your DMs!", ephemeral=True)
+            await ctx_or_interaction.send(**kwargs, ephemeral=True)
         else:
             if not ctx_or_interaction.author.dm_channel:
                 await ctx_or_interaction.author.create_dm()
@@ -84,7 +72,7 @@ class HelpCmds(BaseCmds):
         Response: Shows a table of all commands at the page specified"""
         await self.help_commands_handler(ctx, page)
 
-    @nextcord.slash_command(name="help_commands", description="Shows a list of all commands, paginated")
+    @help_slash.subcommand(name="commands", description="Shows a list of all commands, paginated")
     async def help_commands_slash(
         self,
         interaction: Interaction,
@@ -110,7 +98,7 @@ class HelpCmds(BaseCmds):
         Response: Shows a table of all crashes at the page specified"""
         await self.help_crashes_handler(ctx, page)
 
-    @nextcord.slash_command(name="help_crashes", description="Shows a list of all crashes, paginated")
+    @help_slash.subcommand(name="crashes", description="Shows a list of all crashes, paginated")
     async def help_crashes_slash(
         self,
         interaction: Interaction,
@@ -127,7 +115,7 @@ class HelpCmds(BaseCmds):
         response = FredHelpEmbed.git_webhooks()
         await self._send_help(ctx, embed=response)
 
-    @nextcord.slash_command(name="help_webhooks", description="Shows info about GitHub webhooks")
+    @help_slash.subcommand(name="webhooks", description="Shows info about GitHub webhooks")
     async def help_webhooks_slash(self, interaction: Interaction) -> None:
         response = FredHelpEmbed.git_webhooks()
         await self._send_help(interaction, embed=response)
@@ -149,7 +137,7 @@ class HelpCmds(BaseCmds):
         Response: Shows info about the crash specified"""
         await self.help_specific_crash_handler(ctx, name)
 
-    @nextcord.slash_command(name="help_crash", description="Shows info about a specific crash")
+    @help_slash.subcommand(name="crash", description="Shows info about a specific crash")
     async def help_crash_slash(
         self, interaction: Interaction, name: str = SlashOption(description="The name of the crash to get info about")
     ) -> None:
@@ -170,8 +158,8 @@ class HelpCmds(BaseCmds):
         Response: Shows info about the special command specified, or all special commands if none is given"""
         await self.help_special_handler(ctx, name)
 
-    @nextcord.slash_command(
-        name="help_special", description="Shows info about special commands, or a specific one if a name is provided"
+    @help_slash.subcommand(
+        name="special", description="Shows info about special commands, or a specific one if a name is provided"
     )
     async def help_special_slash(
         self,
@@ -191,7 +179,7 @@ class HelpCmds(BaseCmds):
         response = FredHelpEmbed.media_only()
         await self._send_help(ctx, embed=response)
 
-    @nextcord.slash_command(name="help_media_only", description="Shows info about media-only channels")
+    @help_slash.subcommand(name="media-only", description="Shows info about media-only channels")
     async def help_media_only_slash(self, interaction: Interaction) -> None:
         response = FredHelpEmbed.media_only()
         await self._send_help(interaction, embed=response)
