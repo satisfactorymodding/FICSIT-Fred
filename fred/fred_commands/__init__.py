@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import nextcord
 import re2
 from algoliasearch.search.client import SearchClient
+from nextcord import Interaction, SlashOption
 from nextcord.ext.commands.view import StringView
 
 from ._baseclass import BaseCmds, common, config, commands
@@ -122,32 +123,55 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
 
         await self.bot.reply_to_msg(message, text, file=attachment)
 
-    @commands.command()
-    async def mod(self, ctx: commands.Context, *, mod_name: str) -> None:
-        """Usage: `mod (name: str)`
-        Response: If a near-exact match is found, gives you info about that mod.
-        If close matches are found, up to 10 of those will be listed.
-        If nothing even comes close, I'll let you know ;)"""
+    #       Mod search command
+    async def handle_mod(self, ctx_or_interaction, mod_name: str, ephemeral: bool) -> None:
 
         mod_name = mod_name.split("\n")[0]
 
         if len(mod_name) < 3:
-            await self.bot.reply_to_msg(ctx.message, "Searching needs at least three characters!")
+            if isinstance(ctx_or_interaction, commands.Context):
+                await self.bot.reply_to_msg(ctx_or_interaction.message, "Searching needs at least three characters!")
+            elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                await ctx_or_interaction.response.send_message(
+                    "Searching needs at least three characters!", ephemeral=ephemeral
+                )
             return
 
         embed, attachment, multiple_mods = await createembed.mod_embed(mod_name, self.bot)
         if embed is None:
-            await self.bot.reply_to_msg(ctx.message, "No mods found!")
+            if isinstance(ctx_or_interaction, commands.Context):
+                await self.bot.reply_to_msg(ctx_or_interaction.message, "No mods found!")
+            elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                await ctx_or_interaction.response.send_message("No mods found!", ephemeral=ephemeral)
         else:
             if multiple_mods:
                 view = ModPicker(multiple_mods)
             else:
                 view = None
-            msg = await self.bot.reply_to_msg(ctx.message, embed=embed, view=view, file=attachment)
+
+            if isinstance(ctx_or_interaction, commands.Context):
+                msg = await self.bot.reply_to_msg(ctx_or_interaction.message, embed=embed, view=view, file=attachment)
+            elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                if view:
+                    await ctx_or_interaction.response.send_message(
+                        embed=embed, view=view, files=[attachment] if attachment else None, ephemeral=ephemeral
+                    )
+                else:
+                    await ctx_or_interaction.response.send_message(
+                        embed=embed, files=[attachment] if attachment else None, ephemeral=ephemeral
+                    )
+                msg = await ctx_or_interaction.original_message()
+
             if view:
 
                 async def callback(interaction: nextcord.Interaction):
-                    if interaction.user == ctx.author:
+
+                    if isinstance(ctx_or_interaction, commands.Context):
+                        author = ctx_or_interaction.author
+                    elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                        author = ctx_or_interaction.user
+
+                    if interaction.user == author:
                         logging.info(interaction.data.values)
                         new_embed, new_attachment, _ = await createembed.mod_embed(
                             interaction.data["values"][0], self.bot, using_id=True
@@ -157,7 +181,9 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
                         await msg.edit(embed=new_embed, file=new_attachment)
                         view.stop()
                     else:
-                        await interaction.send("Only the user who called this command can do this!", ephemeral=True)
+                        await interaction.send(
+                            "Only the user who called this command can do this!", ephemeral=ephemeral
+                        )
 
                 async def timeout():
                     await msg.edit(view=None)
@@ -167,10 +193,28 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
 
                 await view.wait()
 
-    @commands.command(aliases=["docssearch"])
-    async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
-        """Usage: `docsearch (search: str)`
-        Response: Equivalent to using the search function on the SMR docs page; links the first search result"""
+    @commands.command()
+    async def mod(self, ctx: commands.Context, *, mod_name: str) -> None:
+        """Usage: `mod (name: str)`
+        Response: If a near-exact match is found, gives you info about that mod.
+        If close matches are found, up to 10 of those will be listed.
+        If nothing even comes close, I'll let you know ;)"""
+
+        await self.handle_mod(ctx, mod_name, ephemeral=False)
+
+    @nextcord.slash_command(name="mod", description="Searches for a mod and returns info about it.")
+    async def mod_slash(
+        self,
+        interaction: Interaction,
+        mod_name: str = SlashOption(description="Name of the mod to search for"),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
+    ):
+        await self.handle_mod(interaction, mod_name, ephemeral=ephemeral)
+
+    ##      Doc search command
+    async def handle_docsearch(
+        self, ctx_or_interaction: commands.Context | Interaction, search: str, ephemeral: bool = False
+    ) -> None:
         self.logger.info(f"Searching the documentation. {search =}")
         client: SearchClient = SearchClient("2FDCZBLZ1A", "28531804beda52a04275ecd964db429d")
 
@@ -187,12 +231,28 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
 
         for hit in query.hits:
             if hit.hierarchy["lvl0"].endswith("latest"):
-                await self.bot.reply_to_msg(ctx.message, f"This is the best result I got from the SMD :\n{hit.url}")
+                await self.bot.reply_generic(
+                    ctx_or_interaction, f"This is the best result I got from the SMD :\n{hit.url}", ephemeral=ephemeral
+                )
                 return
 
         # grumbus.
-        await self.bot.reply_to_msg(ctx.message, f"No results found for `{search}`.")
+        await self.bot.reply_generic(ctx_or_interaction, f"No results found for `{search}`.")
 
+    @nextcord.slash_command(name="docsearch", description="Search SMR documentation")
+    async def docsearch_slash(
+        self,
+        interaction: Interaction,
+        search: str = SlashOption(description="Search terms"),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
+    ):
+        await self.handle_docsearch(interaction, search, ephemeral=ephemeral)
+
+    @commands.command(aliases=["docssearch"])
+    async def docsearch(self, ctx: commands.Context, *, search: str) -> None:
+        await self.handle_docsearch(ctx, search)
+
+    ##     OCR test command
     @commands.command()
     async def ocr_test(self, ctx: commands.Context) -> None:
         """Usage: `ocr_test` {attach an image!}"""
@@ -204,6 +264,23 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
             text += f"**Image {n}:**\n ```\n{read_text}\n```\n"
 
         await self.bot.reply_to_msg(ctx.message, text)
+
+    # @nextcord.slash_command(name="ocr_test", description="Run OCR on uploaded images")
+    # async def ocr_test_slash(self, interaction: Interaction):
+    #     attachments = interaction.data.get("resolved", {}).get("attachments", {})
+    #     text = "OCR Debugging:\n\n"
+
+    #     if not attachments:
+    #         await interaction.response.send_message("Attach at least one image!", ephemeral=True)
+    #         return
+
+    #     for n, att in attachments.items():
+    #         buffer = io.BytesIO()
+    #         await interaction.client.http.get_from_cdn(att["url"], buffer)
+    #         read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, buffer)
+    #         text += f"**Image {n}:**\n```\n{read_text}\n```\n"
+
+    #     await interaction.response.send_message(text)
 
 
 def extract_target_type_from_converter_param(missing_argument: inspect.Parameter):

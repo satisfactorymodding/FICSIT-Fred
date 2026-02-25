@@ -1,3 +1,13 @@
+import io
+from os.path import split
+from urllib.parse import urlparse
+
+import nextcord
+import re2
+from nextcord import Interaction, SlashOption, Member
+from nextcord.ext.commands.view import StringView
+from nextcord.interactions import MISSING
+
 from ._baseclass import BaseCmds, commands, SearchFlags
 from ._command_utils import get_search
 from .. import config
@@ -238,6 +248,7 @@ class CommandCmds(BaseCmds):
         Notes: If response is not supplied you will be prompted for one with a timeout"""
         await self.rename_command(ctx, name, new_name)
 
+    #       Search Commands Command
     @BaseCmds.search.command(name="commands")
     async def search_commands(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
         """Usage: `search commands (pattern) [options]`
@@ -249,3 +260,77 @@ class CommandCmds(BaseCmds):
 
         response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
+
+    @nextcord.slash_command(name="search_commands", description="Searches commands for the stuff requested.")
+    async def search_commands_slash(
+        self,
+        interaction: Interaction,
+        pattern: str = SlashOption(description="The pattern to search for"),
+        fuzzy: bool = SlashOption(description="Whether to use fuzzy matching", default=False),
+        column: str = SlashOption(
+            description="The column of the database to search along",
+            choices={"name": "name", "content": "content", "attachment": "attachment"},
+            default="name",
+        ),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
+    ):
+        response = get_search(config.Commands, pattern, column, fuzzy)
+        await interaction.response.send_message(response, ephemeral=ephemeral)
+
+    #      invoke command
+    @nextcord.slash_command(
+        name="invoke_command",
+        description="Invokes a database command with the last message in the channel as its argument.",
+    )
+    async def invoke_command_slash(
+        self,
+        interaction: Interaction,
+        command_name: str = SlashOption(description="The name of the command to invoke"),
+        arguments: str = SlashOption(
+            description="Optional input to substitute into the command response", required=False, default=""
+        ),
+        ping_user: Member = SlashOption(description="Optional user to ping", required=False),
+        ephemeral: bool = SlashOption(description="Show only to you", default=False),
+    ):
+        # Check if command exists
+        if not (command := config.Commands.fetch(command_name)):
+            await interaction.response.send_message(f"Command '{command_name}' does not exist.", ephemeral=True)
+            return
+
+        if (
+            (content := command["content"])
+            and content.startswith(self.bot.command_prefix)  # for linked aliases of commands like ff->rp
+            and (linked_command := config.Commands.fetch(content.lstrip(self.bot.command_prefix)))
+        ):
+            command = linked_command
+            content = linked_command["content"]
+
+        if (attachment := command.get("attachment")) is not None:
+            async with self.bot.web_session.get(attachment) as resp:
+                buff = io.BytesIO(await resp.read())
+                _, filename = split(urlparse(attachment).path)
+                attachment = nextcord.File(filename=filename, fp=buff, force_close=True)
+
+        args = []
+        view = StringView(arguments)
+        while not view.eof:
+            view.skip_ws()
+            args.append(view.get_quoted_word())
+
+        if content:
+            text = str(content)
+            substitutions = map(int, re2.findall(r"{(\d+)}", text))
+            for substitution in substitutions:
+                text = re2.sub(
+                    rf"\{{{substitution}\}}",
+                    args[substitution] if substitution < len(args) else "(missing argument)",
+                    text,
+                )
+            text = text.replace("{...}", " ".join(args) if args else "(no arguments given)")
+        else:
+            text = ""
+
+        if ping_user and not ephemeral:
+            text += f"\n-# {ping_user.mention}"
+
+        await interaction.send(text, file=attachment or MISSING, ephemeral=ephemeral)

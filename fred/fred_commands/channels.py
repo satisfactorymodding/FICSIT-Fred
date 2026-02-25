@@ -1,3 +1,4 @@
+from nextcord.abc import GuildChannel
 from nextcord import TextChannel, ForumChannel
 from nextcord.abc import GuildChannel
 

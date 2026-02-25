@@ -223,6 +223,21 @@ class Bot(commands.Bot):
 
         return await chan.send(content, files=files, **kwargs)
 
+    async def reply_generic(
+        self,
+        target: nextcord.Message | nextcord.Interaction | commands.Context,
+        content: Optional[str] = None,
+        propagate_reply: bool = True,
+        **kwargs,
+    ) -> nextcord.Message:
+        if isinstance(target, nextcord.Message):
+            return await self.reply_to_msg(target, content, propagate_reply, **kwargs)
+        if isinstance(target, nextcord.Interaction):
+            return await target.send(content, **kwargs)
+        if isinstance(target, commands.Context):
+            return await self.reply_to_msg(target.message, content, propagate_reply, **kwargs)
+        raise TypeError(f"Unsupported type {type(target)}")
+
     async def reply_to_msg(
         self,
         message: nextcord.Message,

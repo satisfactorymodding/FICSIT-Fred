@@ -1,3 +1,4 @@
+from nextcord import slash_command, Interaction
 from nextcord.ext import commands
 
 from .. import config
@@ -96,6 +97,38 @@ class BaseCmds(common.FredCog):
             await self.bot.reply_to_msg(
                 ctx.message, f"This wouldn't even be a valid command if you did it the right way around!"
             )
+
+    @slash_command(name="add")
+    async def slash_add(self, itr: Interaction):
+        pass
+
+    @slash_command(name="remove")
+    async def slash_remove(self, itr: Interaction):
+        pass
+
+    @slash_command(name="rename")
+    async def slash_rename(self, itr: Interaction):
+        pass
+
+    @slash_command(name="search")
+    async def slash_search(self, itr: Interaction):
+        pass
+
+    @slash_command(name="set")
+    async def slash_set(self, itr: Interaction):
+        pass
+
+    @slash_command(name="modify")
+    async def slash_modify(self, itr: Interaction):
+        pass
+
+    @slash_command(name="get")
+    async def slash_get(self, itr: Interaction):
+        pass
+
+    @slash_command(name="alias")
+    async def slash_alias(self, itr: Interaction):
+        pass
 
 
 class SearchFlags(commands.FlagConverter, delimiter="=", prefix="-"):
