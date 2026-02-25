@@ -1,10 +1,16 @@
+import io
+from os.path import split
+from urllib.parse import urlparse
+
 import nextcord
+import re2
+from nextcord import Interaction, SlashOption, Member
+from nextcord.ext.commands.view import StringView
+from nextcord.interactions import MISSING
+
 from ._baseclass import BaseCmds, commands, SearchFlags
 from ._command_utils import get_search
 from .. import config
-from nextcord import Interaction, SlashOption
-from nextcord.ext.commands import Cog
-import re2
 
 
 def _extract_prefix(string: str, prefix: str):
@@ -280,55 +286,51 @@ class CommandCmds(BaseCmds):
         self,
         interaction: Interaction,
         command_name: str = SlashOption(description="The name of the command to invoke"),
-        command_input: str = SlashOption(
-            description="Optional input to substitute into the command response", required=False
+        arguments: str = SlashOption(
+            description="Optional input to substitute into the command response", required=False, default=""
         ),
-        ping_user: bool = SlashOption(description="Whether to ping the user in the response", default=None),
+        ping_user: Member = SlashOption(description="Optional user to ping", required=False),
+        ephemeral: bool = SlashOption(description="Show only to you", default=False),
     ):
-
-        if ping_user is None:
-            ping_user = not bool(command_input)
-
-        c_channel = interaction.channel
-        if ping_user:
-            last_message = c_channel.last_message.content if c_channel.last_message else ""
-            last_author = c_channel.last_message.author.mention if c_channel.last_message else interaction.user.mention
-        else:
-            last_message = ""
-
-        if command_input:
-            last_message = command_input
-
         # Check if command exists
-        db_command = config.Commands.fetch(command_name)
-        if not db_command:
+        if not (command := config.Commands.fetch(command_name)):
             await interaction.response.send_message(f"Command '{command_name}' does not exist.", ephemeral=True)
             return
 
-        # Execute the command
-        if ping_user:
-            if last_message:
-                text = str(db_command["content"])
-                substitutions = map(int, re2.findall(r"{(\d+)}", text))
-                for substitution in substitutions:
-                    text = re2.sub(
-                        rf"\{{{substitution}\}}", last_message if substitution == 0 else "(missing argument)", text
-                    )
-                text = text.replace("{...}", last_message)
+        if (
+            (content := command["content"])
+            and content.startswith(self.bot.command_prefix)  # for linked aliases of commands like ff->rp
+            and (linked_command := config.Commands.fetch(content.lstrip(self.bot.command_prefix)))
+        ):
+            command = linked_command
+            content = linked_command["content"]
 
-                await interaction.response.send_message(f"{last_author}\n{text}", ephemeral=False)
-            else:
-                await interaction.response.send_message(
-                    f"{interaction.user.mention}, no valid last message found to execute the command `{command_name}`.",
-                    ephemeral=True,
-                )
-        else:
-            text = str(db_command["content"])
+        if (attachment := command.get("attachment")) is not None:
+            async with self.bot.web_session.get(attachment) as resp:
+                buff = io.BytesIO(await resp.read())
+                _, filename = split(urlparse(attachment).path)
+                attachment = nextcord.File(filename=filename, fp=buff, force_close=True)
+
+        args = []
+        view = StringView(arguments)
+        while not view.eof:
+            view.skip_ws()
+            args.append(view.get_quoted_word())
+
+        if content:
+            text = str(content)
             substitutions = map(int, re2.findall(r"{(\d+)}", text))
             for substitution in substitutions:
                 text = re2.sub(
-                    rf"\{{{substitution}\}}", last_message if substitution == 0 else "(missing argument)", text
+                    rf"\{{{substitution}\}}",
+                    args[substitution] if substitution < len(args) else "(missing argument)",
+                    text,
                 )
-            text = text.replace("{...}", last_message)
+            text = text.replace("{...}", " ".join(args) if args else "(no arguments given)")
+        else:
+            text = ""
 
-            await interaction.response.send_message(text, ephemeral=False)
+        if ping_user and not ephemeral:
+            text += f"\n-# {ping_user.mention}"
+
+        await interaction.send(text, file=attachment or MISSING, ephemeral=ephemeral)
