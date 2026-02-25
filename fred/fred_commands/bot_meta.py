@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nextcord import Interaction, SlashOption, slash_command
+
 from ._baseclass import BaseCmds, commands, config, common
-from nextcord import Interaction, SlashOption
-from nextcord.ext.commands import Cog
-import nextcord
 
 if TYPE_CHECKING:
     from ..fred import Bot
@@ -21,13 +20,13 @@ class BotCmds(BaseCmds):
         Notes: Command is a useful is-alive check"""
         await self.bot.reply_to_msg(ctx.message, self.bot.version)
 
-    @nextcord.slash_command(name="version", description="Displays Fred's current version.")
+    @slash_command(name="version", description="Displays Fred's current version.")
     async def version_slash(
         self,
         interaction: Interaction,
-        private_command: bool = SlashOption(description="Only you can see the response", default=True),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
-        await interaction.response.send_message(self.bot.version, ephemeral=private_command)
+        await interaction.response.send_message(self.bot.version, ephemeral=ephemeral)
 
     #   Set Welcome Message Command
     @BaseCmds.set.command(name="welcome_message")
@@ -61,9 +60,9 @@ class BotCmds(BaseCmds):
         bot: Bot = ctx.bot
         await bot.Welcome.send_welcome_message(ctx.author)
 
-    @nextcord.slash_command(name="get_welcome", description="Sends the welcome message to you.")
+    @slash_command(name="get_welcome", description="Sends the welcome message to you.")
     async def get_welcome_slash(self, interaction: Interaction):
-        await interaction.response.send_message("Welcome to the server!", ephemeral=True)
+        await self.bot.Welcome.send_welcome_message(interaction.user)
 
     #   Set Main Guild Command
     @commands.check(common.mod_only)
