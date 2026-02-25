@@ -119,14 +119,14 @@ class CrashCmds(BaseCmds):
             choices={"name": "name", "crash": "crash", "response": "response"},
             default="name",
         ),
-        private_command: bool = SlashOption(description="Only you can see the response", default=True),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         flags = SearchFlags()
         flags.fuzzy = fuzzy
         flags.column = column
 
         response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
-        await interaction.response.send_message(response, ephemeral=private_command)
+        await interaction.response.send_message(response, ephemeral=ephemeral)
 
 
 def validate_crash(expression: str, response: str) -> str:

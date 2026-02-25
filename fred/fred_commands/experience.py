@@ -181,9 +181,9 @@ class EXPCmds(BaseCmds):
     async def leaderboard_slash(
         self,
         interaction: Interaction,
-        private_command: bool = SlashOption(description="Only you can see the response", default=False),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=False),
     ):
-        await self.leaderboard(interaction, ephemeral=private_command)
+        await self.leaderboard(interaction, ephemeral=ephemeral)
 
     #       Level Command
     async def handle_level(self, ctx_or_interaction, ephemeral: bool, target_user: User = None) -> None:
@@ -229,9 +229,9 @@ class EXPCmds(BaseCmds):
         self,
         interaction: Interaction,
         target_user: User = SlashOption(description="The user to get the level of", required=False),
-        private_command: bool = SlashOption(description="Only you can see the response", default=True),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
-        await self.handle_level(interaction, target_user, ephemeral=private_command)
+        await self.handle_level(interaction, target_user, ephemeral=ephemeral)
 
     @BaseCmds.add.command(name="level_role")
     async def add_level_role(self, ctx: commands.Context, role: commands.RoleConverter, rank: int):

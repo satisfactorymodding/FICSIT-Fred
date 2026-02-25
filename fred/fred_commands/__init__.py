@@ -207,9 +207,9 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         self,
         interaction: Interaction,
         mod_name: str = SlashOption(description="Name of the mod to search for"),
-        private_command: bool = SlashOption(description="Only you can see the response", default=True),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
-        await self.handle_mod(interaction, mod_name, ephemeral=private_command)
+        await self.handle_mod(interaction, mod_name, ephemeral=ephemeral)
 
     ##      Doc search command
     async def handle_docsearch(
@@ -244,9 +244,9 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         self,
         interaction: Interaction,
         search: str = SlashOption(description="Search terms"),
-        private_command: bool = SlashOption(description="Only you can see the response", default=True),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
-        await self.handle_docsearch(interaction, search, ephemeral=private_command)
+        await self.handle_docsearch(interaction, search, ephemeral=ephemeral)
 
     @commands.command(aliases=["docssearch"])
     async def docsearch(self, ctx: commands.Context, *, search: str) -> None:

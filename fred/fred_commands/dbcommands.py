@@ -272,10 +272,10 @@ class CommandCmds(BaseCmds):
             choices={"name": "name", "content": "content", "attachment": "attachment"},
             default="name",
         ),
-        private_command: bool = SlashOption(description="Only you can see the response", default=True),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         response = get_search(config.Commands, pattern, column, fuzzy)
-        await interaction.response.send_message(response, ephemeral=private_command)
+        await interaction.response.send_message(response, ephemeral=ephemeral)
 
     #      invoke command
     @nextcord.slash_command(
