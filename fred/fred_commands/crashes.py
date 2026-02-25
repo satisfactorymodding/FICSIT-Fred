@@ -1,7 +1,6 @@
-import re2
 import nextcord
+import re2
 from nextcord import Interaction, SlashOption
-from nextcord.ext.commands import Cog
 
 from ._baseclass import BaseCmds, commands, config, SearchFlags
 from ._command_utils import get_search

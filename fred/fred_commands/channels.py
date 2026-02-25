@@ -1,7 +1,6 @@
-import nextcord
 from nextcord.abc import GuildChannel
-from nextcord import Interaction, SlashOption, TextChannel, ForumChannel
-from nextcord.ext.commands import Cog
+from nextcord import TextChannel, ForumChannel
+from nextcord.abc import GuildChannel
 
 from ._baseclass import BaseCmds, commands, config, common
 

@@ -1,6 +1,5 @@
 import nextcord
 from nextcord import Interaction, SlashOption, Role, User
-from nextcord.ext.commands import Cog
 
 from ._baseclass import BaseCmds, commands, common, config
 from ..cogs import levelling

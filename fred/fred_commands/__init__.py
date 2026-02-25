@@ -10,10 +10,8 @@ from urllib.parse import urlparse
 import nextcord
 import re2
 from algoliasearch.search.client import SearchClient
-from nextcord.ext.commands.view import StringView
 from nextcord import Interaction, SlashOption
-from nextcord.ext import application_checks
-from nextcord.ext.commands import Cog
+from nextcord.ext.commands.view import StringView
 
 from ._baseclass import BaseCmds, common, config, commands
 from .bot_meta import BotCmds
