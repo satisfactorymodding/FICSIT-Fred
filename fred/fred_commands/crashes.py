@@ -108,7 +108,7 @@ class CrashCmds(BaseCmds):
         response = get_search(config.Crashes, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
 
-    @nextcord.slash_command(name="search_crashes", description="Searches crashes for the stuff requested.")
+    @BaseCmds.search.subcommand(name="search_crashes", description="Searches crashes for the stuff requested.")
     async def search_crashes_slash(
         self,
         interaction: Interaction,
@@ -125,7 +125,7 @@ class CrashCmds(BaseCmds):
         flags.fuzzy = fuzzy
         flags.column = column
 
-        response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
+        response = get_search(config.Crashes, pattern, flags.column, flags.fuzzy)
         await interaction.response.send_message(response, ephemeral=ephemeral)
 
 

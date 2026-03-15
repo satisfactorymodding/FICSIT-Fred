@@ -98,36 +98,16 @@ class BaseCmds(common.FredCog):
                 ctx.message, f"This wouldn't even be a valid command if you did it the right way around!"
             )
 
-    @slash_command(name="add")
-    async def slash_add(self, itr: Interaction):
-        pass
-
-    @slash_command(name="remove")
-    async def slash_remove(self, itr: Interaction):
-        pass
-
-    @slash_command(name="rename")
-    async def slash_rename(self, itr: Interaction):
-        pass
-
+# Slash command parent commands. Currently only used for search and get, can be expanded for future commands.
     @slash_command(name="search")
     async def slash_search(self, itr: Interaction):
-        pass
-
-    @slash_command(name="set")
-    async def slash_set(self, itr: Interaction):
-        pass
-
-    @slash_command(name="modify")
-    async def slash_modify(self, itr: Interaction):
+        #   Based on slash command API this should never be called.
         pass
 
     @slash_command(name="get")
+    @commands.check(common.l4_only)
     async def slash_get(self, itr: Interaction):
-        pass
-
-    @slash_command(name="alias")
-    async def slash_alias(self, itr: Interaction):
+        #   Based on slash command API this should never be called but adds authentication to get commands.
         pass
 
 

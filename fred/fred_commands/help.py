@@ -55,7 +55,7 @@ class HelpCmds(BaseCmds):
                     pass
 
     #       Commands Help Command
-    async def help_commands_handler(self, ctx_or_interaction, page: Optional[int] = None) -> None:
+    async def help_commands_handler(self, ctx_or_interaction: commands.Context | Interaction, page: Optional[int] = None) -> None:
         if page is None:
             response = FredHelpEmbed.commands()
         elif page < 1:
@@ -81,7 +81,7 @@ class HelpCmds(BaseCmds):
         await self.help_commands_handler(interaction, page)
 
     #    Crashes Help Command
-    async def help_crashes_handler(self, ctx_or_interaction, page: Optional[int] = None) -> None:
+    async def help_crashes_handler(self, ctx_or_interaction: commands.Context | Interaction, page: Optional[int] = None) -> None:
         if page is None:
             response = FredHelpEmbed.crashes()
         elif page < 1:
@@ -121,7 +121,7 @@ class HelpCmds(BaseCmds):
         await self._send_help(interaction, embed=response)
 
     #       Specific Crash Help Command
-    async def help_specific_crash_handler(self, ctx_or_interaction, name: Optional[str] = None) -> None:
+    async def help_specific_crash_handler(self, ctx_or_interaction: commands.Context | Interaction, name: Optional[str] = None) -> None:
         if name is None:
             response = FredHelpEmbed.crashes()
         elif name.isnumeric():
@@ -144,7 +144,7 @@ class HelpCmds(BaseCmds):
         await self.help_specific_crash_handler(interaction, name)
 
     #       Special Commands Help Command
-    async def help_special_handler(self, ctx_or_interaction, name: Optional[str] = None) -> None:
+    async def help_special_handler(self, ctx_or_interaction: commands.Context | Interaction, name: Optional[str] = None) -> None:
         if name is None:
             response = FredHelpEmbed.all_special_commands(self)
         else:

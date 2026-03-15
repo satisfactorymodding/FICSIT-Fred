@@ -144,7 +144,7 @@ class EXPCmds(BaseCmds):
             await self.bot.reply_to_msg(ctx.message, "The levelling system is now active!")
 
     #      Leaderboard Command
-    async def leaderboard(self, ctx_or_interaction, ephemeral: bool) -> None:
+    async def leaderboard_handler(self, ctx_or_interaction, ephemeral: bool) -> None:
         query = config.Users.select().orderBy("-xp_count").limit(10)
         results = list(query)
         if not results:
@@ -169,13 +169,13 @@ class EXPCmds(BaseCmds):
         if isinstance(ctx_or_interaction, commands.Context):
             await self.bot.reply_to_msg(ctx_or_interaction.message, embed=embed)
         elif isinstance(ctx_or_interaction, nextcord.Interaction):
-            await ctx_or_interaction.response.send_message(embed=embed, ephemeral=ephemeral)
+            await ctx_or_interaction.response.send_message(ctx_or_interaction.message ,embed=embed, ephemeral=ephemeral)
 
     @commands.command()
     async def leaderboard(self, ctx: commands.Context):
         """Usage: `leaderboard`
         Response: Shows the top 10 most talkative members and their xp"""
-        await self.leaderboard(ctx, ephemeral=False)
+        await self.leaderboard_handler(ctx, ephemeral=False)
 
     @nextcord.slash_command(name="leaderboard", description="Shows the top 10 most talkative members and their xp.")
     async def leaderboard_slash(
@@ -183,10 +183,10 @@ class EXPCmds(BaseCmds):
         interaction: Interaction,
         ephemeral: bool = SlashOption(description="Only you can see the response", default=False),
     ):
-        await self.leaderboard(interaction, ephemeral=ephemeral)
+        await self.leaderboard_handler(interaction, ephemeral=ephemeral)
 
     #       Level Command
-    async def handle_level(self, ctx_or_interaction, ephemeral: bool, target_user: User = None) -> None:
+    async def handle_level(self, ctx_or_interaction: commands.Context | Interaction, ephemeral: bool, target_user: User = None) -> None:
         target_user: User
         if target_user:
             user_id = target_user.id

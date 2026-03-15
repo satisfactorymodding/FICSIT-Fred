@@ -124,7 +124,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         await self.bot.reply_to_msg(message, text, file=attachment)
 
     #       Mod search command
-    async def handle_mod(self, ctx_or_interaction, mod_name: str, ephemeral: bool) -> None:
+    async def handle_mod(self, ctx_or_interaction: commands.Context | Interaction, mod_name: str, ephemeral: bool) -> None:
 
         mod_name = mod_name.split("\n")[0]
 
@@ -264,23 +264,6 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
             text += f"**Image {n}:**\n ```\n{read_text}\n```\n"
 
         await self.bot.reply_to_msg(ctx.message, text)
-
-    # @nextcord.slash_command(name="ocr_test", description="Run OCR on uploaded images")
-    # async def ocr_test_slash(self, interaction: Interaction):
-    #     attachments = interaction.data.get("resolved", {}).get("attachments", {})
-    #     text = "OCR Debugging:\n\n"
-
-    #     if not attachments:
-    #         await interaction.response.send_message("Attach at least one image!", ephemeral=True)
-    #         return
-
-    #     for n, att in attachments.items():
-    #         buffer = io.BytesIO()
-    #         await interaction.client.http.get_from_cdn(att["url"], buffer)
-    #         read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, buffer)
-    #         text += f"**Image {n}:**\n```\n{read_text}\n```\n"
-
-    #     await interaction.response.send_message(text)
 
 
 def extract_target_type_from_converter_param(missing_argument: inspect.Parameter):

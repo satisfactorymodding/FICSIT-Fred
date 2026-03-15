@@ -261,7 +261,7 @@ class CommandCmds(BaseCmds):
         response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
 
-    @nextcord.slash_command(name="search_commands", description="Searches commands for the stuff requested.")
+    @BaseCmds.search.subcommand(name="search_commands", description="Searches commands for the stuff requested.")
     async def search_commands_slash(
         self,
         interaction: Interaction,
