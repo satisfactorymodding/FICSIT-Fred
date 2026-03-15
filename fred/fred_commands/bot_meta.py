@@ -60,7 +60,7 @@ class BotCmds(BaseCmds):
         bot: Bot = ctx.bot
         await bot.Welcome.send_welcome_message(ctx.author)
 
-    @BaseCmds.get.subcommand(name="get_welcome", description="Sends the welcome message to you.")
+    @BaseCmds.slash_get.subcommand(name="get_welcome", description="Sends the welcome message to you.")
     async def get_welcome_slash(self, interaction: Interaction):
         await self.bot.Welcome.send_welcome_message(interaction.user)
 

@@ -108,7 +108,7 @@ class CrashCmds(BaseCmds):
         response = get_search(config.Crashes, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
 
-    @BaseCmds.search.subcommand(name="search_crashes", description="Searches crashes for the stuff requested.")
+    @BaseCmds.slash_search.subcommand(name="search_crashes", description="Searches crashes for the stuff requested.")
     async def search_crashes_slash(
         self,
         interaction: Interaction,
