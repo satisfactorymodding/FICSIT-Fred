@@ -12,8 +12,11 @@ class MediaOnly(FredCog):
         if isinstance(message.channel, Thread):
             if (
                 isinstance(message.channel.parent, ForumChannel)
-                and message.id == message.channel.id  # we only care if it's the initial post
-                and config.MediaOnlyChannels.check(message.channel.parent_id)  # last because it's a DB call
+                and message.id
+                == message.channel.id  # we only care if it's the initial post
+                and config.MediaOnlyChannels.check(
+                    message.channel.parent_id
+                )  # last because it's a DB call
             ):
                 return await self._process_message(message, thread=True)
             else:
@@ -27,13 +30,18 @@ class MediaOnly(FredCog):
         self.logger.info("Checking a message", extra=common.message_info(message))
 
         if len(message.embeds) > 0 or len(message.attachments) > 0:
-            self.logger.info("Message contains media", extra=common.message_info(message))
+            self.logger.info(
+                "Message contains media", extra=common.message_info(message)
+            )
             return False
 
         ctx = await self.bot.get_context(message)
 
         if await common.l4_only(ctx):
-            self.logger.info("Message doesn't contain media but the author is a T3", extra=common.message_info(message))
+            self.logger.info(
+                "Message doesn't contain media but the author is a T3",
+                extra=common.message_info(message),
+            )
             return False
 
         if thread:

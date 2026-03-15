@@ -19,7 +19,9 @@ class EXPCmds(BaseCmds):
             return
 
     @xp.command(name="give")
-    async def xp_give(self, ctx: commands.Context, target: commands.UserConverter, amount: float):
+    async def xp_give(
+        self, ctx: commands.Context, target: commands.UserConverter, amount: float
+    ):
         """Usage: `xp give (user) (amount)`
         Purpose: gives the indicated user the specified xp
         Notes: don't give negative xp, use take"""
@@ -35,11 +37,14 @@ class EXPCmds(BaseCmds):
             await profile.give_xp(amount)
             await self.bot.reply_to_msg(
                 ctx.message,
-                f"Gave {amount} xp to {target.name}. " f"They are now rank {profile.rank} ({profile.xp_count} xp)",
+                f"Gave {amount} xp to {target.name}. "
+                f"They are now rank {profile.rank} ({profile.xp_count} xp)",
             )
 
     @xp.command(name="take")
-    async def xp_take(self, ctx: commands.Context, target: commands.UserConverter, amount: float):
+    async def xp_take(
+        self, ctx: commands.Context, target: commands.UserConverter, amount: float
+    ):
         """Usage: `xp give (user) (amount)`
         Purpose: takes the specified xp from the indicated user
         Notes: don't take negative xp, use give"""
@@ -54,15 +59,20 @@ class EXPCmds(BaseCmds):
             return
 
         if not await profile.take_xp(amount):
-            await self.bot.reply_to_msg(ctx.message, "Cannot take more xp that this user has!")
+            await self.bot.reply_to_msg(
+                ctx.message, "Cannot take more xp that this user has!"
+            )
         else:
             await self.bot.reply_to_msg(
                 ctx.message,
-                f"Took {amount} xp from {target.name}. " f"They are now rank {profile.rank} ({profile.xp_count} xp)",
+                f"Took {amount} xp from {target.name}. "
+                f"They are now rank {profile.rank} ({profile.xp_count} xp)",
             )
 
     @xp.command(name="multiplier")
-    async def xp_multiplier(self, ctx: commands.Context, target: commands.UserConverter, multiplier: float):
+    async def xp_multiplier(
+        self, ctx: commands.Context, target: commands.UserConverter, multiplier: float
+    ):
         """Usage: `xp multiplier (user) (multiplier)`
         Purpose: sets the user's personalised xp gain multiplier from the base value
         Notes: a negative value will be converted to 0"""
@@ -72,12 +82,18 @@ class EXPCmds(BaseCmds):
         user_meta.xp_multiplier = amount
 
         if amount == 0:
-            await self.bot.reply_to_msg(ctx.message, f"{target.name} has been banned from xp gain")
+            await self.bot.reply_to_msg(
+                ctx.message, f"{target.name} has been banned from xp gain"
+            )
         else:
-            await self.bot.reply_to_msg(ctx.message, f"Set {target.name}'s xp multiplier to {amount}")
+            await self.bot.reply_to_msg(
+                ctx.message, f"Set {target.name}'s xp multiplier to {amount}"
+            )
 
     @xp.command(name="set")
-    async def xp_set(self, ctx: commands.Context, target: commands.UserConverter, amount: float):
+    async def xp_set(
+        self, ctx: commands.Context, target: commands.UserConverter, amount: float
+    ):
         """Usage: `xp set (user) (amount)`
         Purpose: sets the user's xp amount to the specified amount
         Notes: don't try negative values, it won't work"""
@@ -85,7 +101,9 @@ class EXPCmds(BaseCmds):
         profile = levelling.UserProfile(target.id, ctx.guild)
 
         if amount < 0:
-            await self.bot.reply_to_msg(ctx.message, "Negative numbers for xp are not allowed!")
+            await self.bot.reply_to_msg(
+                ctx.message, "Negative numbers for xp are not allowed!"
+            )
         else:
             await profile.set_xp(amount)
             await self.bot.reply_to_msg(
@@ -101,16 +119,22 @@ class EXPCmds(BaseCmds):
         Purpose: Sets base value for levelling calculations
         Notes: moderator and above only"""
         config.Misc.change("base_level_value", base_level_value)
-        await self.bot.reply_to_msg(ctx.message, "The base level value has been changed!")
+        await self.bot.reply_to_msg(
+            ctx.message, "The base level value has been changed!"
+        )
 
     @commands.check(common.mod_only)
     @BaseCmds.set.command(name="level_value_multiplier")
-    async def set_level_value_multiplier(self, ctx: commands.Context, level_value_multiplier: float):
+    async def set_level_value_multiplier(
+        self, ctx: commands.Context, level_value_multiplier: float
+    ):
         """Usage: `set level_value_multiplier (value: int)`
         Purpose: Sets coefficient for levelling calculations
         Notes: moderator and above only"""
         config.Misc.change("level_value_multiplier", level_value_multiplier)
-        await self.bot.reply_to_msg(ctx.message, "The level value multiplier has been changed!")
+        await self.bot.reply_to_msg(
+            ctx.message, "The level value multiplier has been changed!"
+        )
 
     @commands.check(common.mod_only)
     @BaseCmds.set.command(name="xp_gain_value")
@@ -138,10 +162,14 @@ class EXPCmds(BaseCmds):
         Notes: moderator and above only"""
         if not enabled:
             config.Misc.change("levelling_state", False)
-            await self.bot.reply_to_msg(ctx.message, "The levelling system is now inactive!")
+            await self.bot.reply_to_msg(
+                ctx.message, "The levelling system is now inactive!"
+            )
         else:
             config.Misc.change("levelling_state", True)
-            await self.bot.reply_to_msg(ctx.message, "The levelling system is now active!")
+            await self.bot.reply_to_msg(
+                ctx.message, "The levelling system is now active!"
+            )
 
     #      Leaderboard Command
     async def leaderboard_handler(self, ctx_or_interaction, ephemeral: bool) -> None:
@@ -150,11 +178,13 @@ class EXPCmds(BaseCmds):
         if not results:
             if isinstance(ctx_or_interaction, commands.Context):
                 await self.bot.reply_to_msg(
-                    ctx_or_interaction.message, "The database was empty. This should NEVER happen"
+                    ctx_or_interaction.message,
+                    "The database was empty. This should NEVER happen",
                 )
             elif isinstance(ctx_or_interaction, nextcord.Interaction):
                 await ctx_or_interaction.response.send_message(
-                    "The database was empty. This should NEVER happen", ephemeral=ephemeral
+                    "The database was empty. This should NEVER happen",
+                    ephemeral=ephemeral,
                 )
             return
 
@@ -163,13 +193,21 @@ class EXPCmds(BaseCmds):
             fetched_user = self.bot.get_user(db_user.user_id)
             if fetched_user is None:
                 raise LookupError(f"Unable to find user with ID {db_user.user_id}")
-            data.append({"name": fetched_user.global_name, "xp": db_user.xp_count, "rank": db_user.rank})
+            data.append(
+                {
+                    "name": fetched_user.global_name,
+                    "xp": db_user.xp_count,
+                    "rank": db_user.rank,
+                }
+            )
 
         embed = createembed.leaderboard(data)
         if isinstance(ctx_or_interaction, commands.Context):
             await self.bot.reply_to_msg(ctx_or_interaction.message, embed=embed)
         elif isinstance(ctx_or_interaction, nextcord.Interaction):
-            await ctx_or_interaction.response.send_message(ctx_or_interaction.message ,embed=embed, ephemeral=ephemeral)
+            await ctx_or_interaction.response.send_message(
+                ctx_or_interaction.message, embed=embed, ephemeral=ephemeral
+            )
 
     @commands.command()
     async def leaderboard(self, ctx: commands.Context):
@@ -177,16 +215,26 @@ class EXPCmds(BaseCmds):
         Response: Shows the top 10 most talkative members and their xp"""
         await self.leaderboard_handler(ctx, ephemeral=False)
 
-    @nextcord.slash_command(name="leaderboard", description="Shows the top 10 most talkative members and their xp.")
+    @nextcord.slash_command(
+        name="leaderboard",
+        description="Shows the top 10 most talkative members and their xp.",
+    )
     async def leaderboard_slash(
         self,
         interaction: Interaction,
-        ephemeral: bool = SlashOption(description="Only you can see the response", default=False),
+        ephemeral: bool = SlashOption(
+            description="Only you can see the response", default=False
+        ),
     ):
         await self.leaderboard_handler(interaction, ephemeral=ephemeral)
 
     #       Level Command
-    async def handle_level(self, ctx_or_interaction: commands.Context | Interaction, ephemeral: bool, target_user: User = None) -> None:
+    async def handle_level(
+        self,
+        ctx_or_interaction: commands.Context | Interaction,
+        ephemeral: bool,
+        target_user: User = None,
+    ) -> None:
         target_user: User
         if target_user:
             user_id = target_user.id
@@ -194,11 +242,13 @@ class EXPCmds(BaseCmds):
             if not user:
                 if isinstance(ctx_or_interaction, commands.Context):
                     await self.bot.reply_to_msg(
-                        ctx_or_interaction.message, f"Sorry, I was unable to find the user with id {user_id}"
+                        ctx_or_interaction.message,
+                        f"Sorry, I was unable to find the user with id {user_id}",
                     )
                 elif isinstance(ctx_or_interaction, nextcord.Interaction):
                     await ctx_or_interaction.response.send_message(
-                        f"Sorry, I was unable to find the user with id {user_id}", ephemeral=ephemeral
+                        f"Sorry, I was unable to find the user with id {user_id}",
+                        ephemeral=ephemeral,
                     )
                 return
         else:
@@ -210,31 +260,45 @@ class EXPCmds(BaseCmds):
         user_meta = config.Users.create_if_missing(user)
         if isinstance(ctx_or_interaction, commands.Context):
             await self.bot.reply_to_msg(
-                ctx_or_interaction.message, f"{user.name} is level {user_meta.rank} with {user_meta.xp_count} xp"
+                ctx_or_interaction.message,
+                f"{user.name} is level {user_meta.rank} with {user_meta.xp_count} xp",
             )
         elif isinstance(ctx_or_interaction, nextcord.Interaction):
             await ctx_or_interaction.response.send_message(
-                f"{user.name} is level {user_meta.rank} with {user_meta.xp_count} xp", ephemeral=False
+                f"{user.name} is level {user_meta.rank} with {user_meta.xp_count} xp",
+                ephemeral=False,
             )
 
     @commands.command()
-    async def level(self, ctx: commands.Context, target_user: commands.UserConverter = None):
+    async def level(
+        self, ctx: commands.Context, target_user: commands.UserConverter = None
+    ):
         """Usage: `level` [user]
         Response: Either your level or the level of the user specified
-        Notes: the user parameter can be the user's @ mention or their UID, like 506192269557366805"""
+        Notes: the user parameter can be the user's @ mention or their UID, like 506192269557366805
+        """
         await self.handle_level(ctx, target_user, ephemeral=False)
 
-    @nextcord.slash_command(name="level", description="Shows either your level or the level of the user specified.")
+    @nextcord.slash_command(
+        name="level",
+        description="Shows either your level or the level of the user specified.",
+    )
     async def level_slash(
         self,
         interaction: Interaction,
-        target_user: User = SlashOption(description="The user to get the level of", required=False),
-        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
+        target_user: User = SlashOption(
+            description="The user to get the level of", required=False
+        ),
+        ephemeral: bool = SlashOption(
+            description="Only you can see the response", default=True
+        ),
     ):
         await self.handle_level(interaction, target_user, ephemeral=ephemeral)
 
     @BaseCmds.add.command(name="level_role")
-    async def add_level_role(self, ctx: commands.Context, role: commands.RoleConverter, rank: int):
+    async def add_level_role(
+        self, ctx: commands.Context, role: commands.RoleConverter, rank: int
+    ):
         """Usage: `add level_role (role)`
         Purpose: adds a levelling role
         Notes: NOT IMPLEMENTED"""
@@ -242,14 +306,20 @@ class EXPCmds(BaseCmds):
         role_id = role.id
 
         if config.RankRoles.check(role_id):
-            await self.bot.reply_to_msg(ctx.message, "This role is already a level role")
+            await self.bot.reply_to_msg(
+                ctx.message, "This role is already a level role"
+            )
             return
 
         config.RankRoles(role_id=role_id, rank=rank)
-        await self.bot.reply_to_msg(ctx.message, f"level role {ctx.guild.get_role(role_id).name} added!")
+        await self.bot.reply_to_msg(
+            ctx.message, f"level role {ctx.guild.get_role(role_id).name} added!"
+        )
 
     @BaseCmds.remove.command(name="level_role")
-    async def remove_level_role(self, ctx: commands.Context, role: commands.RoleConverter):
+    async def remove_level_role(
+        self, ctx: commands.Context, role: commands.RoleConverter
+    ):
         """Usage: `remove level_role (role)`
         Purpose: removes a levelling role
         Notes: NOT IMPLEMENTED"""

@@ -1,5 +1,5 @@
 from nextcord import slash_command, Interaction
-from nextcord.ext import commands
+from nextcord.ext import commands, application_checks
 
 from .. import config
 from ..libraries import common
@@ -91,21 +91,23 @@ class BaseCmds(common.FredCog):
         probably_command = ctx.message.content.partition("alias")[2].split()[0]
         if probably_command in ("add", "remove"):
             await self.bot.reply_to_msg(
-                ctx.message, f"This is not the right command! Use `{probably_command} alias` instead!"
+                ctx.message,
+                f"This is not the right command! Use `{probably_command} alias` instead!",
             )
         else:
             await self.bot.reply_to_msg(
-                ctx.message, f"This wouldn't even be a valid command if you did it the right way around!"
+                ctx.message,
+                f"This wouldn't even be a valid command if you did it the right way around!",
             )
 
-# Slash command parent commands. Currently only used for search and get, can be expanded for future commands.
+    # Slash command parent commands. Currently only used for search and get, can be expanded for future commands.
     @slash_command(name="search")
     async def slash_search(self, itr: Interaction):
         #   Based on slash command API this should never be called.
         pass
 
     @slash_command(name="get")
-    @commands.check(common.l4_only)
+    @application_checks.check(common.l4_only)
     async def slash_get(self, itr: Interaction):
         #   Based on slash command API this should never be called but adds authentication to get commands.
         pass

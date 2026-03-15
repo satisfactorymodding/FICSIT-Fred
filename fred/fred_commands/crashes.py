@@ -9,7 +9,14 @@ from ._command_utils import get_search
 class CrashCmds(BaseCmds):
 
     @BaseCmds.add.command(name="crash")
-    async def add_crash(self, ctx: commands.Context, crash_name: str.lower, match: str = None, *, response: str = None):
+    async def add_crash(
+        self,
+        ctx: commands.Context,
+        crash_name: str.lower,
+        match: str = None,
+        *,
+        response: str = None,
+    ):
         """Usage: `add crash (name) ["regex"] [response]`
         Purpose: Adds a crash to the list of known crashes.
         Notes:
@@ -19,14 +26,20 @@ class CrashCmds(BaseCmds):
             the response mirroring that of the command indicated."""
 
         if config.Crashes.fetch(crash_name) is not None:
-            await self.bot.reply_to_msg(ctx.message, "A crash with this name already exists")
+            await self.bot.reply_to_msg(
+                ctx.message, "A crash with this name already exists"
+            )
             return
 
         if not match:
-            match, _ = await self.bot.reply_question(ctx.message, "What should the logs match (regex)?")
+            match, _ = await self.bot.reply_question(
+                ctx.message, "What should the logs match (regex)?"
+            )
 
         if not response:
-            response, _ = await self.bot.reply_question(ctx.message, "What should the response be?")
+            response, _ = await self.bot.reply_question(
+                ctx.message, "What should the response be?"
+            )
 
         issue = validate_crash(match, response)
         if issue:
@@ -34,7 +47,9 @@ class CrashCmds(BaseCmds):
             return
 
         config.Crashes(name=crash_name, crash=match, response=response)
-        await self.bot.reply_to_msg(ctx.message, "Known crash '" + crash_name + "' added!")
+        await self.bot.reply_to_msg(
+            ctx.message, "Known crash '" + crash_name + "' added!"
+        )
 
     @BaseCmds.remove.command(name="crash")
     async def remove_crash(self, ctx: commands.Context, crash_name: str.lower):
@@ -51,7 +66,12 @@ class CrashCmds(BaseCmds):
 
     @BaseCmds.modify.command(name="crash")
     async def modify_crash(
-        self, ctx: commands.Context, name: str.lower, new_crash: str = None, *, new_response: str = None
+        self,
+        ctx: commands.Context,
+        name: str.lower,
+        new_crash: str = None,
+        *,
+        new_response: str = None,
     ):
         """Usage: `modify crash (name) ["regex"] [response]`
         Purpose: Adds a crash to the list of known crashes.
@@ -68,12 +88,16 @@ class CrashCmds(BaseCmds):
             return
 
         try:
-            if change_crash := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the crash to match?"):
+            if change_crash := await self.bot.reply_yes_or_no(
+                ctx.message, "Do you want to change the crash to match?"
+            ):
                 new_crash, _ = await self.bot.reply_question(
                     ctx.message, "What is the regular expression to match in the logs?"
                 )
 
-            if change_response := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the response?"):
+            if change_response := await self.bot.reply_yes_or_no(
+                ctx.message, "Do you want to change the response?"
+            ):
                 new_response, _ = await self.bot.reply_question(
                     ctx.message,
                     f"What response do you want it to provide? Responding with `{self.bot.command_prefix}command_name`"
@@ -97,7 +121,9 @@ class CrashCmds(BaseCmds):
 
     #       Search Crashes Command
     @BaseCmds.search.command(name="crashes")
-    async def search_crashes(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
+    async def search_crashes(
+        self, ctx: commands.Context, pattern: str, *, flags: SearchFlags
+    ) -> None:
         """Usage: `search crashes (name) [options]`
         Purpose: Searches crashes for the stuff requested.
         Optional args:
@@ -108,18 +134,24 @@ class CrashCmds(BaseCmds):
         response = get_search(config.Crashes, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
 
-    @BaseCmds.slash_search.subcommand(name="search_crashes", description="Searches crashes for the stuff requested.")
+    @BaseCmds.slash_search.subcommand(
+        name="search_crashes", description="Searches crashes for the stuff requested."
+    )
     async def search_crashes_slash(
         self,
         interaction: Interaction,
         pattern: str = SlashOption(description="The pattern to search for"),
-        fuzzy: bool = SlashOption(description="Whether to use fuzzy matching", default=False),
+        fuzzy: bool = SlashOption(
+            description="Whether to use fuzzy matching", default=False
+        ),
         column: str = SlashOption(
             description="The column of the database to search along",
             choices={"name": "name", "crash": "crash", "response": "response"},
             default="name",
         ),
-        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
+        ephemeral: bool = SlashOption(
+            description="Only you can see the response", default=True
+        ),
     ):
         flags = SearchFlags()
         flags.fuzzy = fuzzy
