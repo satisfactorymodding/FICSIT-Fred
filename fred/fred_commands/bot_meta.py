@@ -73,7 +73,7 @@ class BotCmds(BaseCmds):
         await bot.Welcome.send_welcome_message(ctx.author)
 
     @BaseCmds.slash_get.subcommand(
-        name="welcome", description="Sends the welcome message to you."
+        name="get_welcome", description="Sends the welcome message to you."
     )
     @application_checks.check(common.l4_only)
     async def get_welcome_slash(self, interaction: Interaction):
