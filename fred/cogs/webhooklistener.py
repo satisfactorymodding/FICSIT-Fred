@@ -26,9 +26,7 @@ def runServer(self, bot):
         server = HTTPServerV6((ip, port), MakeGithookHandler(bot))
         server.serve_forever()
     except PermissionError:
-        logger.error(
-            f"Cannot handle githooks! Permission denied to listen to {ip=} {port=}."
-        )
+        logger.error(f"Cannot handle githooks! Permission denied to listen to {ip=} {port=}.")
 
 
 class Githook(common.FredCog):
@@ -89,9 +87,7 @@ def MakeGithookHandler(bot: Bot):
 
         def do_POST(self):
             logger.info("Handling a POST request")
-            if not all(
-                x in self.headers for x in [CONTENT_TYPE, CONTENT_LEN, EVENT_TYPE]
-            ):
+            if not all(x in self.headers for x in [CONTENT_TYPE, CONTENT_LEN, EVENT_TYPE]):
                 logger.error("Invalid POST request")
                 self.send_response(417)
                 return

@@ -27,9 +27,7 @@ logger = new_logger(__name__)
 
 
 class FredCog(commands.Cog):
-    bot: Bot = (
-        ...
-    )  # we can assume any cog will have a bot by the time it needs to be accessed
+    bot: Bot = ...  # we can assume any cog will have a bot by the time it needs to be accessed
 
     def __init__(self, bot: Bot):
         self.__class__.bot = bot
@@ -71,9 +69,7 @@ async def _permission_check_ctx(ctx: Context, *, level: int) -> bool:
     main_guild = await ctx.bot.fetch_guild(main_guild_id)
 
     if main_guild is None:
-        raise LookupError(
-            f"Unable to retrieve the guild {main_guild_id}. Is this the guild you meant?"
-        )
+        raise LookupError(f"Unable to retrieve the guild {main_guild_id}. Is this the guild you meant?")
 
     if (main_guild_member := await get_guild_member(main_guild, ctx.author.id)) is None:
         logger.warning(
@@ -92,9 +88,7 @@ async def _permission_check_member(member: Member, *, threshold_level: int) -> b
     logpayload["level"] = threshold_level
 
     if member.guild.id != config.Misc.fetch("main_guild_id"):
-        logger.warning(
-            "Checked permissions for a member of the wrong guild", extra=logpayload
-        )
+        logger.warning("Checked permissions for a member of the wrong guild", extra=logpayload)
         return False
 
     logger.info(
@@ -104,9 +98,7 @@ async def _permission_check_member(member: Member, *, threshold_level: int) -> b
 
     perm_roles = config.PermissionRoles.fetch_ge_lvl(threshold_level)
     user_roles = {role.id for role in member.roles}
-    user_roles_above_threshold = {
-        role for role in perm_roles if role.role_id in user_roles
-    }
+    user_roles_above_threshold = {role for role in perm_roles if role.role_id in user_roles}
 
     if user_roles_above_threshold:
         user_max_perm = max(user_roles_above_threshold, key=lambda role: role.perm_lvl)

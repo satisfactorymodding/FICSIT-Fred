@@ -56,11 +56,7 @@ class Bot(commands.Bot):
         self.web_session: aiohttp.ClientSession = ...
         self.loop = asyncio.get_event_loop()
         self.executor = ThreadPoolExecutor()
-        self.error_channel = (
-            int(chan)
-            if (chan := config.Misc.fetch("error_channel"))
-            else 748229790825185311
-        )
+        self.error_channel = int(chan) if (chan := config.Misc.fetch("error_channel")) else 748229790825185311
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
@@ -74,17 +70,11 @@ class Bot(commands.Bot):
     async def on_ready(self):
         await self.change_presence(activity=nextcord.Game(f"v{self.version}"))
         self.isReady = True
-        self.logger.info(
-            f"We have logged in as {self.user} with prefix {self.command_prefix}"
-        )
+        self.logger.info(f"We have logged in as {self.user} with prefix {self.command_prefix}")
 
-    async def on_reaction_add(
-        self, reaction: nextcord.Reaction, user: nextcord.User
-    ) -> None:
+    async def on_reaction_add(self, reaction: nextcord.Reaction, user: nextcord.User) -> None:
         if not user.bot and reaction.message.author.bot and reaction.emoji == "❌":
-            self.logger.info(
-                f"Removing my own message because {user.display_name} reacted with ❌."
-            )
+            self.logger.info(f"Removing my own message because {user.display_name} reacted with ❌.")
             await reaction.message.delete()
 
     def setup_DB(self):
@@ -144,9 +134,7 @@ class Bot(commands.Bot):
                 else:
                     channel_str = "a DM"
             else:
-                channel_str = (
-                    f"{channel.guild.name}: `#{channel.name}` ({channel.mention})"
-                )
+                channel_str = f"{channel.guild.name}: `#{channel.name}` ({channel.mention})"
         else:
             channel_str = ""
 
@@ -158,9 +146,7 @@ class Bot(commands.Bot):
         # error_embed = nextcord.Embed(colour=nextcord.Colour.red(), title=error_meta, description=full_error)
         # error_embed.set_author(name=fred_str)
 
-        await self.get_channel(self.error_channel).send(
-            f"**{fred_str}**\n{error_meta}\n```py\n{full_error}```"
-        )
+        await self.get_channel(self.error_channel).send(f"**{fred_str}**\n{error_meta}\n```py\n{full_error}```")
 
     async def githook_send(self, data: dict):
         self.logger.info("Handling GitHub payload", extra={"data": data})
@@ -214,14 +200,10 @@ class Bot(commands.Bot):
             self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
             return False
 
-    async def send_safe_direct_message(
-        self, user: nextcord.User, content=None, **kwargs
-    ) -> bool:
+    async def send_safe_direct_message(self, user: nextcord.User, content=None, **kwargs) -> bool:
         user_meta = config.Users.create_if_missing(user)
         try:
-            return await self._send_safe_direct_message_internal(
-                user, content, user_meta=user_meta, **kwargs
-            )
+            return await self._send_safe_direct_message_internal(user, content, user_meta=user_meta, **kwargs)
         except (nextcord.HTTPException, nextcord.Forbidden):
             # user has blocked bot or does not take mutual-server DMs
             return False
@@ -253,9 +235,7 @@ class Bot(commands.Bot):
         if isinstance(target, nextcord.Interaction):
             return await target.send(content, **kwargs)
         if isinstance(target, commands.Context):
-            return await self.reply_to_msg(
-                target.message, content, propagate_reply, **kwargs
-            )
+            return await self.reply_to_msg(target.message, content, propagate_reply, **kwargs)
         raise TypeError(f"Unsupported type {type(target)}")
 
     async def reply_to_msg(
@@ -284,9 +264,7 @@ class Bot(commands.Bot):
             reference.fail_if_not_exists = False
 
         try:
-            return await self.safe_send(
-                message.channel, content, reference=reference, **kwargs
-            )
+            return await self.safe_send(message.channel, content, reference=reference, **kwargs)
         except (nextcord.HTTPException, nextcord.Forbidden):
             if content and pingee.mention not in content:
                 content += f"\n-# {pingee.mention} ↩️"
@@ -299,25 +277,17 @@ class Bot(commands.Bot):
 
         def check(message2: nextcord.Message):
             nonlocal message
-            return (message2.author == message.author) and (
-                message2.channel == message.channel
-            )
+            return (message2.author == message.author) and (message2.channel == message.channel)
 
         try:
-            response: nextcord.Message = await self.wait_for(
-                "message", timeout=120.0, check=check
-            )
+            response: nextcord.Message = await self.wait_for("message", timeout=120.0, check=check)
         except asyncio.TimeoutError:
             await self.reply_to_msg(message, "Timed out and aborted after 120 seconds.")
             raise asyncio.TimeoutError
 
-        return response.content, (
-            response.attachments[0] if response.attachments else None
-        )
+        return response.content, (response.attachments[0] if response.attachments else None)
 
-    async def reply_yes_or_no(
-        self, message: nextcord.Message, question: Optional[str] = None, **kwargs
-    ) -> bool:
+    async def reply_yes_or_no(self, message: nextcord.Message, question: Optional[str] = None, **kwargs) -> bool:
         response, _ = await self.reply_question(message, question, **kwargs)
         s = response.strip().lower()
         if s in ("1", "true", "yes", "y", "on", "oui"):
@@ -370,16 +340,12 @@ class Bot(commands.Bot):
                 await self.process_commands(message)
             else:
                 _reacted = await self.Crashes.process_message(message)
-        self.logger.info(
-            "Finished processing a message", extra=common.message_info(message)
-        )
+        self.logger.info("Finished processing a message", extra=common.message_info(message))
 
     async def repository_query(self, query: str):
         self.logger.info(f"SMR query of length {len(query)} requested")
 
-        async with await self.web_session.post(
-            "https://api.ficsit.app/v2/query", json={"query": query}
-        ) as response:
+        async with await self.web_session.post("https://api.ficsit.app/v2/query", json={"query": query}) as response:
             response.raise_for_status()
             self.logger.info(f"SMR query returned with response {response.status}")
             value = await response.json()
@@ -388,9 +354,7 @@ class Bot(commands.Bot):
 
     async def async_url_get(self, url: str, /, get: type = bytes) -> str | bytes | dict:
         async with self.web_session.get(url) as response:
-            self.logger.info(
-                f"Requested {get} from {url} with response {response.status}"
-            )
+            self.logger.info(f"Requested {get} from {url} with response {response.status}")
 
             if get == dict:
                 rtn = await response.json()

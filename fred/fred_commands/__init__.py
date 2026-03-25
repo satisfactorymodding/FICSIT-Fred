@@ -30,20 +30,14 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         # We get an error about commands being found when using "runtime" commands, so we have to ignore that
         self.logger.error(f"Caught {error!r}")
         if isinstance(error, commands.CommandNotFound):
-            command = (
-                ctx.message.content.lower()
-                .lstrip(self.bot.command_prefix)
-                .split(" ")[0]
-            )
+            command = ctx.message.content.lower().lstrip(self.bot.command_prefix).split(" ")[0]
             if config.Commands.fetch(command) is not None:
                 return
             self.logger.warning("Invalid command attempted")
             return
         elif isinstance(error, commands.MissingRequiredArgument):
             self.logger.info("Successfully deferred error of missing required argument")
-            missing_argument_name, target_type = (
-                extract_target_type_from_converter_param(error.param)
-            )
+            missing_argument_name, target_type = extract_target_type_from_converter_param(error.param)
             output = f"You are missing at least one parameter for this command: '{missing_argument_name}'"
             if target_type:
                 output += f" of type '{target_type}'"
@@ -89,9 +83,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
 
         name, arguments = match.groups()
 
-        self.logger.info(
-            f"Processing the command {name}", extra=common.message_info(message)
-        )
+        self.logger.info(f"Processing the command {name}", extra=common.message_info(message))
 
         if (command := config.Commands.fetch(name)) is None:
             return
@@ -122,16 +114,10 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
             for substitution in substitutions:
                 text = re2.sub(
                     rf"\{{{substitution}\}}",
-                    (
-                        args[substitution]
-                        if substitution < len(args)
-                        else "(missing argument)"
-                    ),
+                    (args[substitution] if substitution < len(args) else "(missing argument)"),
                     text,
                 )
-            text = text.replace(
-                "{...}", " ".join(args) if args else "(no arguments given)"
-            )
+            text = text.replace("{...}", " ".join(args) if args else "(no arguments given)")
         else:
             text = None
 
@@ -159,18 +145,12 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
                 )
             return
 
-        embed, attachment, multiple_mods = await createembed.mod_embed(
-            mod_name, self.bot
-        )
+        embed, attachment, multiple_mods = await createembed.mod_embed(mod_name, self.bot)
         if embed is None:
             if isinstance(ctx_or_interaction, commands.Context):
-                await self.bot.reply_to_msg(
-                    ctx_or_interaction.message, "No mods found!"
-                )
+                await self.bot.reply_to_msg(ctx_or_interaction.message, "No mods found!")
             elif isinstance(ctx_or_interaction, nextcord.Interaction):
-                await ctx_or_interaction.response.send_message(
-                    "No mods found!", ephemeral=ephemeral
-                )
+                await ctx_or_interaction.response.send_message("No mods found!", ephemeral=ephemeral)
         else:
             if multiple_mods:
                 view = ModPicker(multiple_mods)
@@ -178,9 +158,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
                 view = None
 
             if isinstance(ctx_or_interaction, commands.Context):
-                msg = await self.bot.reply_to_msg(
-                    ctx_or_interaction.message, embed=embed, view=view, file=attachment
-                )
+                msg = await self.bot.reply_to_msg(ctx_or_interaction.message, embed=embed, view=view, file=attachment)
             elif isinstance(ctx_or_interaction, nextcord.Interaction):
                 if view:
                     await ctx_or_interaction.response.send_message(
@@ -238,16 +216,12 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
 
         await self.handle_mod(ctx, mod_name, ephemeral=False)
 
-    @nextcord.slash_command(
-        name="mod", description="Searches for a mod and returns info about it."
-    )
+    @nextcord.slash_command(name="mod", description="Searches for a mod and returns info about it.")
     async def mod_slash(
         self,
         interaction: Interaction,
         mod_name: str = SlashOption(description="Name of the mod to search for"),
-        ephemeral: bool = SlashOption(
-            description="Only you can see the response", default=True
-        ),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         await self.handle_mod(interaction, mod_name, ephemeral=ephemeral)
 
@@ -259,9 +233,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         ephemeral: bool = False,
     ) -> None:
         self.logger.info(f"Searching the documentation. {search =}")
-        client: SearchClient = SearchClient(
-            "2FDCZBLZ1A", "28531804beda52a04275ecd964db429d"
-        )
+        client: SearchClient = SearchClient("2FDCZBLZ1A", "28531804beda52a04275ecd964db429d")
 
         query = await client.search_single_index(
             index_name="ficsit",
@@ -284,18 +256,14 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
                 return
 
         # grumbus.
-        await self.bot.reply_generic(
-            ctx_or_interaction, f"No results found for `{search}`."
-        )
+        await self.bot.reply_generic(ctx_or_interaction, f"No results found for `{search}`.")
 
     @nextcord.slash_command(name="docsearch", description="Search SMR documentation")
     async def docsearch_slash(
         self,
         interaction: Interaction,
         search: str = SlashOption(description="Search terms"),
-        ephemeral: bool = SlashOption(
-            description="Only you can see the response", default=True
-        ),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         await self.handle_docsearch(interaction, search, ephemeral=ephemeral)
 
@@ -311,9 +279,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         for n, att in enumerate(ctx.message.attachments):
             with io.BytesIO() as img:
                 await att.save(img)
-                read_text = await self.bot.loop.run_in_executor(
-                    self.bot.executor, ocr.read, img
-                )
+                read_text = await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, img)
             text += f"**Image {n}:**\n ```\n{read_text}\n```\n"
 
         await self.bot.reply_to_msg(ctx.message, text)

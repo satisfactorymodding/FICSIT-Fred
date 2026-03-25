@@ -20,9 +20,7 @@ def search(
         return exact_match[column], True
 
     if len(pattern) < 2:
-        raise KeyError(
-            "Search pattern must be at least 2 characters long for fuzzy searching!"
-        )
+        raise KeyError("Search pattern must be at least 2 characters long for fuzzy searching!")
 
     # Set fuzzy range - (1/3 pattern length, max 6)
     max_edits = min(len(pattern) // 3, 6)
@@ -51,9 +49,7 @@ def search(
     return results, False
 
 
-def get_search(
-    table: Type[Commands | Crashes], pattern: str, column: str, force_fuzzy: bool
-) -> str:
+def get_search(table: Type[Commands | Crashes], pattern: str, column: str, force_fuzzy: bool) -> str:
     prefix = Misc.fetch("prefix") if table == Commands else ""
 
     try:

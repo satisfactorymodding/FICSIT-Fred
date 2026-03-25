@@ -29,9 +29,7 @@ class PermissionRoles(SQLObject):
 
     @staticmethod
     def fetch_ge_lvl(perm_lvl: int) -> list[PermissionRoles]:
-        query = PermissionRoles.select(PermissionRoles.q.perm_lvl >= perm_lvl).orderBy(
-            "-perm_lvl"
-        )
+        query = PermissionRoles.select(PermissionRoles.q.perm_lvl >= perm_lvl).orderBy("-perm_lvl")
         return list(query)
 
     @staticmethod
@@ -241,9 +239,7 @@ def migrate():
     migrations_dir = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
     migrations_filenames = list(migrations_dir.glob("migrations/*-*.up.sql"))
     valid_migrations = [
-        migration
-        for migration in migrations_filenames
-        if _migration_rev(migration) > current_migration_rev
+        migration for migration in migrations_filenames if _migration_rev(migration) > current_migration_rev
     ]
 
     for migration in valid_migrations:

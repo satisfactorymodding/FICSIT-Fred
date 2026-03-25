@@ -33,9 +33,7 @@ async def github_embed(data: dict) -> nextcord.Embed | None:
     global repo_name, repo_full_name
     try:
         repo_name = data["repository"]["full_name"]
-        repo_full_name = (
-            f'{data["repository"]["name"]}/{'/'.join(data["ref"].split("/")[2:])}'
-        )
+        repo_full_name = f'{data["repository"]["name"]}/{'/'.join(data["ref"].split("/")[2:])}'
     except (KeyError, IndexError):
         repo_name, repo_full_name = "", ""
 
@@ -74,21 +72,16 @@ def leaderboard(data: list[dict]) -> nextcord.Embed:
     )
 
     for user in data:
-        embed.add_field(
-            name=user["name"], value=f'XP: {user["xp"]} | Level: {user["rank"]}'
-        )
+        embed.add_field(name=user["name"], value=f'XP: {user["xp"]} | Level: {user["rank"]}')
 
     return embed
 
 
 def DM(text: str) -> nextcord.Embed:
-    embed = nextcord.Embed(
-        colour=config.ActionColours.fetch("purple"), description=text
-    )
+    embed = nextcord.Embed(colour=config.ActionColours.fetch("purple"), description=text)
 
     embed.set_footer(
-        text="To stop getting DM messages from me, type 'stop'. "
-        "If you ever want to reactivate it, type 'start'"
+        text="To stop getting DM messages from me, type 'stop'. " "If you ever want to reactivate it, type 'start'"
     )
     return embed
 
@@ -100,10 +93,7 @@ def format_commit(commit: dict) -> tuple[str, str]:
     attribution = f'[{author["name"]}](https://github.com/{author["username"]})'
     ts = timestamp(commit["timestamp"])
     change_summary_icons = " ".join(
-        [
-            f"{em} {len(commit[k])}"
-            for em, k in zip("✅❌📝", ["added", "removed", "modified"])
-        ]
+        [f"{em} {len(commit[k])}" for em, k in zip("✅❌📝", ["added", "removed", "modified"])]
     )
     return (
         f"{commit_message}\n",
@@ -146,14 +136,8 @@ def push(data: dict) -> nextcord.Embed:
             inline=False,
         )
 
-    embed.set_author(
-        name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"]
-    )
-    embed.set_footer(
-        text="Use the `"
-        + config.Misc.fetch("prefix")
-        + "legend` to learn what the icons mean!"
-    )
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
+    embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
     return embed
 
 
@@ -200,9 +184,7 @@ def pull_request(data: dict) -> nextcord.Embed:
         description=data["pull_request"]["title"],
     )
 
-    embed.set_author(
-        name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"]
-    )
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
     stats = "\n".join(
         [
@@ -216,11 +198,7 @@ def pull_request(data: dict) -> nextcord.Embed:
     direction = f'{data["pull_request"]["head"]["ref"]} -> {data["pull_request"]["base"]["ref"]}'
     embed.add_field(name=direction, value=stats)
 
-    embed.set_footer(
-        text="Use the `"
-        + config.Misc.fetch("prefix")
-        + "legend` to learn what the icons mean!"
-    )
+    embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
 
     return embed
 
@@ -241,9 +219,7 @@ def create(data: dict) -> nextcord.Embed:
         url=data["repository"]["html_url"],
     )
 
-    embed.set_author(
-        name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"]
-    )
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
     return embed
 
@@ -256,9 +232,7 @@ def delete(data: dict) -> nextcord.Embed:
         url=data["repository"]["html_url"],
     )
 
-    embed.set_author(
-        name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"]
-    )
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
     return embed
 
@@ -271,9 +245,7 @@ def release(data: dict) -> nextcord.Embed:
         url=data["release"]["html_url"],
     )
 
-    embed.set_author(
-        name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"]
-    )
+    embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
 
     return embed
 
@@ -360,9 +332,9 @@ def compatibility_to_emoji(compatibility_state: str) -> str:
 
 
 def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.Embed:
-    desc = "\n".join(
-        [f'{mod["name"]}[™](https://ficsit.app/mod/{mod["id"]})' for mod in mods[:10]]
-    ) + (f"\n*And {cut} more...*" if (cut := len(mods[10:])) else "")
+    desc = "\n".join([f'{mod["name"]}[™](https://ficsit.app/mod/{mod["id"]})' for mod in mods[:10]]) + (
+        f"\n*And {cut} more...*" if (cut := len(mods[10:])) else ""
+    )
     return nextcord.Embed(
         title="Multiple mods found:",
         description=desc,
@@ -433,18 +405,13 @@ async def mod_embed(
         }''' % (name, query_values)
     # fmt: on
     result = await bot.repository_query(query)
-    mods: list[dict] = (
-        [result["data"]["getModByIdOrReference"]]
-        if using_id
-        else result["data"]["getMods"]["mods"]
-    )
+    mods: list[dict] = [result["data"]["getModByIdOrReference"]] if using_id else result["data"]["getMods"]["mods"]
     # logger.debug(mods)
     if not mods:
         return None, None, None
 
     single_mod = len(mods) == 1 or (
-        common.mod_name_eq(mods[0]["name"], name)
-        and not common.mod_name_eq(mods[1]["name"], name)
+        common.mod_name_eq(mods[0]["name"], name) and not common.mod_name_eq(mods[1]["name"], name)
     )
     if single_mod:
         # we have only one result, or only one near-exact match
@@ -488,9 +455,7 @@ class CrashResponse:
 def crashes(responses: list[CrashResponse]) -> nextcord.Embed:
     embed = nextcord.Embed(colour=config.ActionColours.fetch("Purple"))
     # sort the responses by size, so they display in a more efficient order
-    responses = sorted(
-        responses, key=lambda r: len(r.value), reverse=True
-    )  # smaller = less important, can be cut
+    responses = sorted(responses, key=lambda r: len(r.value), reverse=True)  # smaller = less important, can be cut
 
     for response in responses[:24]:
         response.add_self_as_field(embed)
@@ -498,8 +463,7 @@ def crashes(responses: list[CrashResponse]) -> nextcord.Embed:
     if unsaid := responses[24:]:
         embed.add_field(
             name=f"And {len(unsaid)} more that don't fit here...",
-            value=", ".join(r.name for r in unsaid)
-            + "\nuse `help crash [name]` to see what they are",
+            value=", ".join(r.name for r in unsaid) + "\nuse `help crash [name]` to see what they are",
         )
 
     return embed

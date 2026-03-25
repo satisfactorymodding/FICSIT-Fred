@@ -50,9 +50,7 @@ logger = new_logger(__name__)
 
 async def regex_with_timeout(*args, **kwargs):
     try:
-        return await asyncio.wait_for(
-            asyncio.to_thread(re2.search, *args, **kwargs), REGEX_LIMIT
-        )
+        return await asyncio.wait_for(asyncio.to_thread(re2.search, *args, **kwargs), REGEX_LIMIT)
     except asyncio.TimeoutError:
         raise TimeoutError(
             f"A regex timed out after {REGEX_LIMIT} seconds! \n"
@@ -69,9 +67,7 @@ class Crashes(FredCog):
     type CrashJob = Coroutine[Any, Any, list[CrashResponse]]
     type CrashJobGenerator = Generator[Crashes.CrashJob, None, None]
 
-    async def make_sml_version_message(
-        self, game_version: int = 0, sml: str = "", **_
-    ) -> Optional[CrashResponse]:
+    async def make_sml_version_message(self, game_version: int = 0, sml: str = "", **_) -> Optional[CrashResponse]:
         if game_version and sml:
             # Check the right SML for that CL
             query = """{
@@ -88,8 +84,7 @@ class Crashes(FredCog):
             latest_compatible_sml = next(filter(is_compatible, sml_versions))
             if (new_version := latest_compatible_sml["version"]) != sml:
                 msg: str = (
-                    "You are not using the most recent SML release for your game. "
-                    f"Please update to {new_version}."
+                    "You are not using the most recent SML release for your game. " f"Please update to {new_version}."
                 )
                 if latest_compatible_sml != sml_versions[0]:
                     msg += "\nAlso, your game itself may need an update!"
@@ -170,10 +165,7 @@ class Crashes(FredCog):
             if compat_info["state"] == "Broken":
                 broken_mods.append((mod_name, compat_info["note"]))
 
-            if (
-                mod_latest_version > using_mod_version
-                and not mod_latest_version.prerelease
-            ):
+            if mod_latest_version > using_mod_version and not mod_latest_version.prerelease:
                 outdated_mods.append((mod_name, str(mod_latest_version)))
 
         if broken_mods:
@@ -188,33 +180,21 @@ class Crashes(FredCog):
             responses.append(CrashResponse("Incompatible mods found!", string))
 
         if outdated_mods:
-            string = "\n".join(
-                f"{mod[0]} can be updated to `{mod[1]}`" for mod in outdated_mods
-            )
+            string = "\n".join(f"{mod[0]} can be updated to `{mod[1]}`" for mod in outdated_mods)
             if len(string) > 900:  # fields have a 1024 char value length limit
                 string = "TOO MANY OUTDATED MODS TO LIST!!"
-            string += (
-                "\nUpdate these mods, there may be fixes for your issue in doing so."
-            )
+            string += "\nUpdate these mods, there may be fixes for your issue in doing so."
             responses.append(CrashResponse("Outdated mods found!", string))
         return responses
 
     async def mass_regex(self, text: str) -> AsyncIterator[CrashResponse]:
         for crash in config.Crashes.fetch_all():
-            if match := await safe_search(
-                crash["crash"], text, flags=re2.IGNORECASE | re2.S
-            ):
+            if match := await safe_search(crash["crash"], text, flags=re2.IGNORECASE | re2.S):
                 if str(crash["response"]).startswith(self.bot.command_prefix):
-                    if command := config.Commands.fetch(
-                        crash["response"].strip(self.bot.command_prefix)
-                    ):
+                    if command := config.Commands.fetch(crash["response"].strip(self.bot.command_prefix)):
                         command_response = command["content"]
-                        if command_response.startswith(
-                            self.bot.command_prefix
-                        ):  # is alias
-                            command = config.Commands.fetch(
-                                command_response.strip(self.bot.command_prefix)
-                            )
+                        if command_response.startswith(self.bot.command_prefix):  # is alias
+                            command = config.Commands.fetch(command_response.strip(self.bot.command_prefix))
                         yield CrashResponse(
                             name=crash["name"],
                             value=command["content"],
@@ -252,9 +232,7 @@ class Crashes(FredCog):
         self.logger.info("Processing text.")
         responses = [msg async for msg in self.mass_regex(text)]
 
-        responses.extend(
-            await self.process_text(await self.detect_and_fetch_pastebin_content(text))
-        )
+        responses.extend(await self.process_text(await self.detect_and_fetch_pastebin_content(text)))
 
         if match := await safe_search(
             r"([^\n]*Critical error:.*Engine exit[^\n]*\))",
@@ -278,13 +256,9 @@ class Crashes(FredCog):
         return responses
 
     async def process_image(self, file: IO) -> list[CrashResponse]:
-        return await self.process_text(
-            await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, file)
-        )
+        return await self.process_text(await self.bot.loop.run_in_executor(self.bot.executor, ocr.read, file))
 
-    def _create_debug_messages(
-        self, debug_zip: ZipFile, filename: str
-    ) -> Optional[CrashJob]:
+    def _create_debug_messages(self, debug_zip: ZipFile, filename: str) -> Optional[CrashJob]:
         files = debug_zip.namelist()
         info: Optional[InstallInfo] = None
         if "metadata.json" in files:
@@ -312,9 +286,7 @@ class Crashes(FredCog):
                     yield res
                 for zipped_item_filename in zip_file.namelist():
                     with zip_file.open(zipped_item_filename) as zip_item:
-                        yield from self._get_file_jobs(
-                            f"{filename}/{zipped_item_filename}", zip_item
-                        )
+                        yield from self._get_file_jobs(f"{filename}/{zipped_item_filename}", zip_item)
             case "log" | "txt" | "json":
                 self.logger.info(f"Adding job for log/text file {filename}")
                 yield self.process_text(str(file.read().decode()), filename=filename)
@@ -332,9 +304,7 @@ class Crashes(FredCog):
     def _ext_filter(ext: str) -> bool:
         return ext in ("png", "log", "txt", "zip", "json")
 
-    async def _obtain_attachments(
-        self, message: Message
-    ) -> AsyncGenerator[tuple[str, IO | Exception], None, None]:
+    async def _obtain_attachments(self, message: Message) -> AsyncGenerator[tuple[str, IO | Exception], None, None]:
         cdn_links = re2.findall(
             r"(https://(?:cdn.discordapp.com|media.discordapp.net)/attachments/\S+)",
             message.content,
@@ -352,10 +322,7 @@ class Crashes(FredCog):
 
                     async with self.bot.web_session.head(att_url) as response:
                         response.raise_for_status()
-                        if (
-                            int(response.headers.get("Content-Length", 0))
-                            > DOWNLOAD_SIZE_LIMIT
-                        ):
+                        if int(response.headers.get("Content-Length", 0)) > DOWNLOAD_SIZE_LIMIT:
                             yield name, ResourceWarning(f"File unreasonably large!")
 
                     async with self.bot.web_session.get(att_url) as response:
@@ -397,9 +364,7 @@ class Crashes(FredCog):
         try:
             self.logger.info("Creating message processing tasks")
             async with TaskGroup() as task_group:
-                jobs: list[Task] = [
-                    task_group.create_task(self.process_text(message.content))
-                ]
+                jobs: list[Task] = [task_group.create_task(self.process_text(message.content))]
 
                 async for name, file_or_exc in file_getter:
                     if isinstance(file_or_exc, Exception):
@@ -415,26 +380,17 @@ class Crashes(FredCog):
 
                     file: IO = file_or_exc
                     files.append(file)
-                    jobs.extend(
-                        (
-                            task_group.create_task(job)
-                            for job in self._get_file_jobs(name, file)
-                        )
-                    )
+                    jobs.extend((task_group.create_task(job) for job in self._get_file_jobs(name, file)))
         except ExceptionGroup as eg:
             for ex in eg.exceptions:
                 if isinstance(ex, TimeoutError):
                     self.logger.exception(ex)
-                    await message.remove_reaction(
-                        EMOJI_CRASHES_ANALYZING, self.bot.user
-                    )
+                    await message.remove_reaction(EMOJI_CRASHES_ANALYZING, self.bot.user)
                     await message.add_reaction(EMOJI_CRASHES_TIMEOUT)
                     for j in jobs:
                         j.cancel()
                 else:
-                    await message.remove_reaction(
-                        EMOJI_CRASHES_ANALYZING, self.bot.user
-                    )
+                    await message.remove_reaction(EMOJI_CRASHES_ANALYZING, self.bot.user)
                     raise ex
 
         self.logger.info("Collecting job results")
@@ -476,9 +432,7 @@ class Crashes(FredCog):
                     icon_url=message.author.avatar and message.author.avatar.url,
                     # defaults to None if no avatar, like mircea
                 )
-                await self.bot.reply_to_msg(
-                    message, embed=embed, propagate_reply=False, files=resp_files
-                )
+                await self.bot.reply_to_msg(message, embed=embed, propagate_reply=False, files=resp_files)
             return True
 
         else:
@@ -507,9 +461,7 @@ class InstallInfo:
     mismatches: list[str] = []
 
     @classmethod
-    def from_metadata_json(
-        cls: Type[InstallInfo], file: IO[bytes], filename: str
-    ) -> Optional[InstallInfo]:
+    def from_metadata_json(cls: Type[InstallInfo], file: IO[bytes], filename: str) -> Optional[InstallInfo]:
         metadata: dict = json.load(file)
         match metadata:
             case {
@@ -597,9 +549,7 @@ class InstallInfo:
                 self.sml_version = sml_version
 
         if game_version := info.get("game_version"):
-            if self.game_version and int(float(self.game_version)) != int(
-                float(game_version)
-            ):
+            if self.game_version and int(float(self.game_version)) != int(float(game_version)):
                 self.mismatches.append(f"Game Version ({game_version})")
             else:
                 self.game_version = game_version
@@ -617,10 +567,7 @@ class InstallInfo:
                 self.game_path = path
 
         if launcher := info.get("launcher"):
-            if (
-                self.game_launcher_id
-                and self.game_launcher_id.lower() != launcher.lower()
-            ):
+            if self.game_launcher_id and self.game_launcher_id.lower() != launcher.lower():
                 self.mismatches.append(f"Launcher ID: {launcher}")
             else:
                 self.game_launcher_id = launcher
@@ -635,9 +582,7 @@ class InstallInfo:
         # It used to matter more when we were using slower regex libraries. - Borketh
 
         lines: list[bytes] = log_file.readlines()
-        vanilla_info_search_area = filter(
-            lambda l: re2.search("^LogInit", l), map(lambda b: b.decode(), lines)
-        )
+        vanilla_info_search_area = filter(lambda l: re2.search("^LogInit", l), map(lambda b: b.decode(), lines))
 
         info = {}
         patterns = [
@@ -659,9 +604,7 @@ class InstallInfo:
                 info |= match.groupdict()
                 patterns.pop(0)
         else:
-            logger.info(
-                "Didn't find all four pieces of information normally found in a log!"
-            )
+            logger.info("Didn't find all four pieces of information normally found in a log!")
             logger.debug(json.dumps(info, indent=2))
 
         mod_loader_logs = filter(

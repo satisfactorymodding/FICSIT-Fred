@@ -40,8 +40,7 @@ class HelpCmds(BaseCmds):
                 await ctx_or_interaction.author.create_dm()
             if not await self.bot.send_safe_direct_message(
                 ctx_or_interaction.author,
-                in_dm=ctx_or_interaction.channel
-                == ctx_or_interaction.author.dm_channel,
+                in_dm=ctx_or_interaction.channel == ctx_or_interaction.author.dm_channel,
                 **kwargs,
             ):
                 await ctx_or_interaction.reply(
@@ -64,9 +63,7 @@ class HelpCmds(BaseCmds):
         if page is None:
             response = FredHelpEmbed.commands()
         elif page < 1:
-            response = FredHelpEmbed(
-                "Bad input", "No negative/zero indices! >:(", "commands"
-            )
+            response = FredHelpEmbed("Bad input", "No negative/zero indices! >:(", "commands")
             response.set_footer(text="y r u like dis")
         else:
             response = FredHelpEmbed.commands(index=page - 1)
@@ -79,15 +76,11 @@ class HelpCmds(BaseCmds):
         Response: Shows a table of all commands at the page specified"""
         await self.help_commands_handler(ctx, page)
 
-    @help_slash.subcommand(
-        name="commands", description="Shows a list of all commands, paginated"
-    )
+    @help_slash.subcommand(name="commands", description="Shows a list of all commands, paginated")
     async def help_commands_slash(
         self,
         interaction: Interaction,
-        page: Optional[int] = SlashOption(
-            description="The page number to view, starting at 1", required=False
-        ),
+        page: Optional[int] = SlashOption(description="The page number to view, starting at 1", required=False),
     ) -> None:
         await self.help_commands_handler(interaction, page)
 
@@ -100,9 +93,7 @@ class HelpCmds(BaseCmds):
         if page is None:
             response = FredHelpEmbed.crashes()
         elif page < 1:
-            response = FredHelpEmbed(
-                "Bad input", "No negative/zero indices! >:(", "crashes [page]"
-            )
+            response = FredHelpEmbed("Bad input", "No negative/zero indices! >:(", "crashes [page]")
             response.set_footer(text="y r u like dis")
         else:
             response = FredHelpEmbed.crashes(index=page - 1)
@@ -115,15 +106,11 @@ class HelpCmds(BaseCmds):
         Response: Shows a table of all crashes at the page specified"""
         await self.help_crashes_handler(ctx, page)
 
-    @help_slash.subcommand(
-        name="crashes", description="Shows a list of all crashes, paginated"
-    )
+    @help_slash.subcommand(name="crashes", description="Shows a list of all crashes, paginated")
     async def help_crashes_slash(
         self,
         interaction: Interaction,
-        page: Optional[int] = SlashOption(
-            description="The page number to view, starting at 1", required=False
-        ),
+        page: Optional[int] = SlashOption(description="The page number to view, starting at 1", required=False),
     ) -> None:
         await self.help_crashes_handler(interaction, page)
 
@@ -136,9 +123,7 @@ class HelpCmds(BaseCmds):
         response = FredHelpEmbed.git_webhooks()
         await self._send_help(ctx, embed=response)
 
-    @help_slash.subcommand(
-        name="webhooks", description="Shows info about GitHub webhooks"
-    )
+    @help_slash.subcommand(name="webhooks", description="Shows info about GitHub webhooks")
     async def help_webhooks_slash(self, interaction: Interaction) -> None:
         response = FredHelpEmbed.git_webhooks()
         await self._send_help(interaction, embed=response)
@@ -152,9 +137,7 @@ class HelpCmds(BaseCmds):
         if name is None:
             response = FredHelpEmbed.crashes()
         elif name.isnumeric():
-            response = FredHelpEmbed(
-                "Bad input", f"Did you mean `help crashes {name}`?", "crash [name]"
-            )
+            response = FredHelpEmbed("Bad input", f"Did you mean `help crashes {name}`?", "crash [name]")
         else:
             response = FredHelpEmbed.specific_crash(name=name)
         await self._send_help(ctx_or_interaction, embed=response)
@@ -166,9 +149,7 @@ class HelpCmds(BaseCmds):
         Response: Shows info about the crash specified"""
         await self.help_specific_crash_handler(ctx, name)
 
-    @help_slash.subcommand(
-        name="crash", description="Shows info about a specific crash"
-    )
+    @help_slash.subcommand(name="crash", description="Shows info about a specific crash")
     async def help_crash_slash(
         self,
         interaction: Interaction,
@@ -219,9 +200,7 @@ class HelpCmds(BaseCmds):
         response = FredHelpEmbed.media_only()
         await self._send_help(ctx, embed=response)
 
-    @help_slash.subcommand(
-        name="media-only", description="Shows info about media-only channels"
-    )
+    @help_slash.subcommand(name="media-only", description="Shows info about media-only channels")
     async def help_media_only_slash(self, interaction: Interaction) -> None:
         response = FredHelpEmbed.media_only()
         await self._send_help(interaction, embed=response)
@@ -235,9 +214,7 @@ field_size: int = 10  # Define 'field_size' if it is missing
 class SpecialCommand:
     name: str
     callback: Coroutine
-    subcommands: list[SpecialCommand] = attrs.Factory(
-        list
-    )  # use this otherwise everyone gets the ptr to the same list
+    subcommands: list[SpecialCommand] = attrs.Factory(list)  # use this otherwise everyone gets the ptr to the same list
 
 
 class FredHelpEmbed(nextcord.Embed):
@@ -258,9 +235,7 @@ class FredHelpEmbed(nextcord.Embed):
         desc = regex.sub(r"^\s*(\S.*)$", r"\1", desc, flags=regex.MULTILINE)
         desc = regex.sub(r"(?<=Usage: )`(.+)`", rf"`{self.prefix}\1`", desc)
         desc = regex.sub(r"^(\w+:) ", r"**\1** ", desc, flags=regex.MULTILINE)
-        super().__init__(
-            title=f"**{name}**", colour=self.help_colour, description=desc, **kwargs
-        )
+        super().__init__(title=f"**{name}**", colour=self.help_colour, description=desc, **kwargs)
         for f in fields:
             self.add_field(**f)
         self.set_footer(text=f"Usage: `{self.prefix}help {usage}`")
@@ -301,17 +276,13 @@ class FredHelpEmbed(nextcord.Embed):
         for cmd in commands_class.walk_commands():
             name, *subcommand = cmd.qualified_name.split()
             if name in specials:
-                specials[name].subcommands.append(
-                    SpecialCommand(subcommand[0], cmd.callback)
-                )
+                specials[name].subcommands.append(SpecialCommand(subcommand[0], cmd.callback))
             else:
                 specials[name] = SpecialCommand(name, cmd.callback)
         return specials
 
     @classmethod
-    def all_special_commands(
-        cls: Type[FredHelpEmbed], commands_class: commands.Cog
-    ) -> FredHelpEmbed:
+    def all_special_commands(cls: Type[FredHelpEmbed], commands_class: commands.Cog) -> FredHelpEmbed:
         desc = "*These are special commands doing something else than just replying with a predetermined answer.*"
 
         cmds = cls._get_specials(commands_class)
@@ -326,30 +297,20 @@ class FredHelpEmbed(nextcord.Embed):
                     value="\n".join(sorted(map(lambda s: s.name, cmd.subcommands))),
                 )
         if solo_cmds:
-            embed.add_field(
-                name="other", value="\n".join(sorted(map(lambda s: s.name, solo_cmds)))
-            )
+            embed.add_field(name="other", value="\n".join(sorted(map(lambda s: s.name, solo_cmds))))
 
         return embed
 
     @classmethod
-    def specific_special(
-        cls: Type[FredHelpEmbed], commands_class: commands.Cog, name: str
-    ) -> FredHelpEmbed:
+    def specific_special(cls: Type[FredHelpEmbed], commands_class: commands.Cog, name: str) -> FredHelpEmbed:
         commands_by_name = cls._get_specials(commands_class)
         super_cmd, *sub_cmd = name.split()
         if cmd := commands_by_name.get(super_cmd):
-            if sub_cmd and (
-                cmd_child := next(
-                    filter(lambda s: s.name == sub_cmd[0], cmd.subcommands), None
-                )
-            ):
+            if sub_cmd and (cmd_child := next(filter(lambda s: s.name == sub_cmd[0], cmd.subcommands), None)):
                 cmd = cmd_child
             desc = f"{cmd.callback.__doc__}"
             if cmd.subcommands:
-                desc += "\nSubcommands: " + ",\t".join(
-                    sorted(map(lambda s: s.name, cmd.subcommands))
-                )
+                desc += "\nSubcommands: " + ",\t".join(sorted(map(lambda s: s.name, cmd.subcommands)))
         else:
             desc = (
                 f'Could not find the command "{name}"!'
@@ -381,14 +342,9 @@ class FredHelpEmbed(nextcord.Embed):
 
         global page_size
         # splits all crashes into groups of {page_size}
-        pages = [
-            all_crashes[i : i + page_size]
-            for i in range(0, len(all_crashes), page_size)
-        ]
+        pages = [all_crashes[i : i + page_size] for i in range(0, len(all_crashes), page_size)]
         try:
-            page = pages[
-                index
-            ]  # this is why try - user can provide index out of bounds
+            page = pages[index]  # this is why try - user can provide index out of bounds
             # splits page into field groups of {field_size}
 
             desc += "```\n" + ("\n".join(crash.name for crash in page)) + "\n```"
@@ -401,9 +357,7 @@ class FredHelpEmbed(nextcord.Embed):
     @classmethod
     def specific_crash(cls: Type[FredHelpEmbed], name: str) -> FredHelpEmbed:
 
-        crash: Optional[config.Crashes] = config.Crashes.selectBy(
-            name=name.lower()
-        ).getOne(None)
+        crash: Optional[config.Crashes] = config.Crashes.selectBy(name=name.lower()).getOne(None)
 
         desc = (
             f"""
@@ -426,15 +380,10 @@ class FredHelpEmbed(nextcord.Embed):
         logger.info(f"Fetched {len(all_commands)} commands from database.")
         global page_size
         # splits all commands into groups of {page_size}
-        pages = [
-            all_commands[page : page + page_size]
-            for page in range(0, len(all_commands), page_size)
-        ]
+        pages = [all_commands[page : page + page_size] for page in range(0, len(all_commands), page_size)]
         try:
 
-            page = pages[
-                index
-            ]  # this is why try - user can provide index out of bounds
+            page = pages[index]  # this is why try - user can provide index out of bounds
             # splits page into field groups of {field_size}
 
             desc += "```\n" + ("\n".join(command.name for command in page)) + "\n```"

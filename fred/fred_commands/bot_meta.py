@@ -25,9 +25,7 @@ class BotCmds(BaseCmds):
     async def version_slash(
         self,
         interaction: Interaction,
-        ephemeral: bool = SlashOption(
-            description="Only you can see the response", default=True
-        ),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         await interaction.response.send_message(self.bot.version, ephemeral=ephemeral)
 
@@ -40,14 +38,10 @@ class BotCmds(BaseCmds):
         """
         if len(welcome_message) < 10:
             config.Misc.change("welcome_message", "")
-            await self.bot.reply_to_msg(
-                ctx.message, "The welcome message is now disabled"
-            )
+            await self.bot.reply_to_msg(ctx.message, "The welcome message is now disabled")
         else:
             config.Misc.change("welcome_message", welcome_message)
-            await self.bot.reply_to_msg(
-                ctx.message, "The welcome message has been changed"
-            )
+            await self.bot.reply_to_msg(ctx.message, "The welcome message has been changed")
 
     #    Set Latest Info Command
     @BaseCmds.set.command(name="latest_info")
@@ -57,14 +51,10 @@ class BotCmds(BaseCmds):
         Notes: messages under 10 characters will result in the message being disabled"""
         if len(latest_info) < 10:
             config.Misc.change("latest_info", "")
-            await self.bot.reply_to_msg(
-                ctx.message, "The latest info message is now disabled"
-            )
+            await self.bot.reply_to_msg(ctx.message, "The latest info message is now disabled")
         else:
             config.Misc.change("latest_info", latest_info)
-            await self.bot.reply_to_msg(
-                ctx.message, "The latest info message has been changed!"
-            )
+            await self.bot.reply_to_msg(ctx.message, "The latest info message has been changed!")
 
     #   Get Welcome Message Command
     @BaseCmds.get.command(name="welcome")
@@ -72,9 +62,7 @@ class BotCmds(BaseCmds):
         bot: Bot = ctx.bot
         await bot.Welcome.send_welcome_message(ctx.author)
 
-    @BaseCmds.slash_get.subcommand(
-        name="get_welcome", description="Sends the welcome message to you."
-    )
+    @BaseCmds.slash_get.subcommand(name="get_welcome", description="Sends the welcome message to you.")
     @application_checks.check(common.l4_only)
     async def get_welcome_slash(self, interaction: Interaction):
         await self.bot.Welcome.send_welcome_message(interaction.user)
