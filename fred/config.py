@@ -6,7 +6,16 @@ from numbers import Number
 from typing import Optional, Any
 
 import nextcord
-from sqlobject import SQLObject, IntCol, BoolCol, JSONCol, BigIntCol, StringCol, FloatCol, sqlhub
+from sqlobject import (
+    SQLObject,
+    IntCol,
+    BoolCol,
+    JSONCol,
+    BigIntCol,
+    StringCol,
+    FloatCol,
+    sqlhub,
+)
 from sqlobject.dberrors import DuplicateEntryError
 
 

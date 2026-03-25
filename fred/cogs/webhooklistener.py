@@ -97,7 +97,10 @@ def MakeGithookHandler(bot: Bot):
 
             # Return error if the payload type is that other weird format instead of a normal json
             if content_type != "application/json":
-                logger.error("POST request has invalid content_type", extra={"content_type": content_type})
+                logger.error(
+                    "POST request has invalid content_type",
+                    extra={"content_type": content_type},
+                )
                 self.send_error(400, "Bad Request", "Expected a JSON request")
                 return
 

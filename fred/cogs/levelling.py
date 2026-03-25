@@ -71,7 +71,8 @@ class UserProfile:
             if not role:
                 logpayload["role_id"] = role_id
                 logger.warning(
-                    "Could not validate someone's level role because the role isn't in the main guild", extra=logpayload
+                    "Could not validate someone's level role because the role isn't in the main guild",
+                    extra=logpayload,
                 )
                 return
             self.DB_user.rank_role_id = role_id
@@ -80,7 +81,10 @@ class UserProfile:
                 for member_role in self.member.roles:
                     if config.RankRoles.fetch_by_role(member_role.id) is not None:  # i.e. member_role is a rank role
                         logpayload["role_id"] = member_role.id
-                        logger.info("Removing a mismatched level role from someone", extra=logpayload)
+                        logger.info(
+                            "Removing a mismatched level role from someone",
+                            extra=logpayload,
+                        )
                         await self.member.remove_roles(member_role)
                 logpayload["role_id"] = role.id
                 logger.info("Removing a mismatched level role from someone", logpayload)

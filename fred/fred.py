@@ -223,6 +223,21 @@ class Bot(commands.Bot):
 
         return await chan.send(content, files=files, **kwargs)
 
+    async def reply_generic(
+        self,
+        target: nextcord.Message | nextcord.Interaction | commands.Context,
+        content: Optional[str] = None,
+        propagate_reply: bool = True,
+        **kwargs,
+    ) -> nextcord.Message:
+        if isinstance(target, nextcord.Message):
+            return await self.reply_to_msg(target, content, propagate_reply, **kwargs)
+        if isinstance(target, nextcord.Interaction):
+            return await target.send(content, **kwargs)
+        if isinstance(target, commands.Context):
+            return await self.reply_to_msg(target.message, content, propagate_reply, **kwargs)
+        raise TypeError(f"Unsupported type {type(target)}")
+
     async def reply_to_msg(
         self,
         message: nextcord.Message,
@@ -270,7 +285,7 @@ class Bot(commands.Bot):
             await self.reply_to_msg(message, "Timed out and aborted after 120 seconds.")
             raise asyncio.TimeoutError
 
-        return response.content, response.attachments[0] if response.attachments else None
+        return response.content, (response.attachments[0] if response.attachments else None)
 
     async def reply_yes_or_no(self, message: nextcord.Message, question: Optional[str] = None, **kwargs) -> bool:
         response, _ = await self.reply_question(message, question, **kwargs)
@@ -295,7 +310,10 @@ class Bot(commands.Bot):
             self.logger.info("Processing a DM", extra=common.message_info(message))
             if message.content.lower() == "start":
                 config.Users.fetch(message.author.id).accepts_dms = True
-                self.logger.info("A user now accepts to receive DMs", extra=common.message_info(message))
+                self.logger.info(
+                    "A user now accepts to receive DMs",
+                    extra=common.message_info(message),
+                )
                 await self.reply_to_msg(
                     message,
                     "You will now receive direct messages from me again! If you change your mind, send a message that says `stop`.",
@@ -303,7 +321,10 @@ class Bot(commands.Bot):
                 return
             elif message.content.lower() == "stop":
                 config.Users.fetch(message.author.id).accepts_dms = False
-                self.logger.info("A user now refuses to receive DMs", extra=common.message_info(message))
+                self.logger.info(
+                    "A user now refuses to receive DMs",
+                    extra=common.message_info(message),
+                )
                 await self.reply_to_msg(
                     message,
                     "You will no longer receive direct messages from me! To resume, send a message that says `start`.",
