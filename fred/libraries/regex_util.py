@@ -14,9 +14,7 @@ def pattern_uses_lookaround(pattern: str) -> bool:
 
 async def safe_search(pattern: str, text: str, flags=0):
     try:
-        return await asyncio.wait_for(
-            asyncio.to_thread(re2.search, pattern, text, flags=flags), REGEX_LIMIT
-        )
+        return await asyncio.wait_for(asyncio.to_thread(re2.search, pattern, text, flags=flags), REGEX_LIMIT)
     except asyncio.TimeoutError:
         raise TimeoutError(
             f"A regex timed out after {REGEX_LIMIT} seconds! \n"

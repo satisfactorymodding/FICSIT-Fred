@@ -26,9 +26,7 @@ def _extract_prefix(string: str, prefix: str):
 class CommandCmds(BaseCmds):
 
     @BaseCmds.add.command(name="command")
-    async def add_command(
-        self, ctx: commands.Context, command_name: str.lower, *, response: str = None
-    ):
+    async def add_command(self, ctx: commands.Context, command_name: str.lower, *, response: str = None):
         """Usage: `add command (name) [response]`
         Purpose: Adds a simple command to the list of commands
         Notes: If response is not supplied you will be prompted for one with a timeout
@@ -43,9 +41,7 @@ class CommandCmds(BaseCmds):
         attachment = ctx.message.attachments[0] if ctx.message.attachments else None
 
         if not response and not attachment:
-            response, attachment = await self.bot.reply_question(
-                ctx.message, "What should the response be?"
-            )
+            response, attachment = await self.bot.reply_question(ctx.message, "What should the response be?")
 
         is_alias, name = _extract_prefix(response, self.bot.command_prefix)
         if is_alias:
@@ -74,9 +70,7 @@ class CommandCmds(BaseCmds):
         is_alias, name = _extract_prefix(cmd["content"], self.bot.command_prefix)
 
         if is_alias:
-            delete = await self.bot.reply_yes_or_no(
-                ctx.message, f"This command is an alias of `{name}`! Delete?"
-            )
+            delete = await self.bot.reply_yes_or_no(ctx.message, f"This command is an alias of `{name}`! Delete?")
             if not delete:
                 return
         config.Commands.deleteBy(name=command_name)
@@ -97,22 +91,16 @@ class CommandCmds(BaseCmds):
         Notes: If response is not supplied you will be prompted for one with a timeout
         """
         if config.ReservedCommands.check(command_name):
-            await self.bot.reply_to_msg(
-                ctx.message, "This command is special and cannot be modified."
-            )
+            await self.bot.reply_to_msg(ctx.message, "This command is special and cannot be modified.")
             return
 
-        if not (
-            results := list(config.Commands.selectBy(name=command_name))
-        ):  # this command hasn't been created yet
+        if not (results := list(config.Commands.selectBy(name=command_name))):  # this command hasn't been created yet
             try:
                 question = "Command could not be found! Do you want to create it?"
                 if await self.bot.reply_yes_or_no(ctx.message, question):
                     await self.add_command(ctx, command_name, response=new_response)
                 else:
-                    await self.bot.reply_to_msg(
-                        ctx.message, "Command modification cancelled."
-                    )
+                    await self.bot.reply_to_msg(ctx.message, "Command modification cancelled.")
                 return
             except ValueError:
                 return
@@ -128,9 +116,7 @@ class CommandCmds(BaseCmds):
                 return
 
         if not new_response and not ctx.message.attachments:
-            new_response, attachment = await self.bot.reply_question(
-                ctx.message, "What should the response be?"
-            )
+            new_response, attachment = await self.bot.reply_question(ctx.message, "What should the response be?")
         else:
             attachment = ctx.message.attachments[0] if ctx.message.attachments else None
 
@@ -139,14 +125,10 @@ class CommandCmds(BaseCmds):
         results[0].attachment = attachment and attachment.url
 
         await self.bot.reply_to_msg(ctx.message, f"Command '{command_name}' modified!")
-        self.logger.info(
-            f"Command {command_name} modified. New response: '{new_response}'"
-        )
+        self.logger.info(f"Command {command_name} modified. New response: '{new_response}'")
 
     @staticmethod
-    def _valid_aliases(
-        target: str, aliases: list[str]
-    ) -> dict[str, list[str | tuple[str, str]]]:
+    def _valid_aliases(target: str, aliases: list[str]) -> dict[str, list[str | tuple[str, str]]]:
         rtn = {"valid": [], "overwrite": [], "failure": []}
         for alias in aliases:
             if config.ReservedCommands.check(alias):
@@ -161,16 +143,12 @@ class CommandCmds(BaseCmds):
                 rtn["valid"].append(alias)
         return rtn
 
-    async def _add_alias(
-        self, ctx: commands.Context, target: str, aliases: list[str]
-    ) -> str:
+    async def _add_alias(self, ctx: commands.Context, target: str, aliases: list[str]) -> str:
         link = self.bot.command_prefix + target
         alias_checks = self._valid_aliases(link, aliases)
 
         for alias in alias_checks["overwrite"]:
-            if await self.bot.reply_yes_or_no(
-                ctx.message, f"`{alias}` is already something else. Replace definition?"
-            ):
+            if await self.bot.reply_yes_or_no(ctx.message, f"`{alias}` is already something else. Replace definition?"):
                 config.Commands.deleteBy(name=alias)
                 alias_checks["valid"].append(alias)
             else:
@@ -204,9 +182,7 @@ class CommandCmds(BaseCmds):
         return user_info
 
     @BaseCmds.add.command(name="alias")
-    async def add_alias(
-        self, ctx: commands.Context, target: str.lower, *aliases: str.lower
-    ):
+    async def add_alias(self, ctx: commands.Context, target: str.lower, *aliases: str.lower):
         """Usage: `add alias (command) [aliases...]`
         Purpose: Adds one or more aliases to a command, checking first for overwriting stuff
         Notes: If an alias is not supplied you will be prompted for one with a timeout
@@ -232,9 +208,7 @@ class CommandCmds(BaseCmds):
                 return
 
         if not aliases:
-            response, _ = await self.bot.reply_question(
-                ctx.message, "Please input aliases, separated by spaces."
-            )
+            response, _ = await self.bot.reply_question(ctx.message, "Please input aliases, separated by spaces.")
             aliases = response.lower().split(" ")
 
         response = await self._add_alias(ctx, target, aliases)
@@ -260,42 +234,30 @@ class CommandCmds(BaseCmds):
         await self.bot.reply_to_msg(ctx.message, "Alias removed!")
 
     @BaseCmds.rename.command(name="command")
-    async def rename_command(
-        self, ctx: commands.Context, name: str.lower, *, new_name: str.lower = None
-    ) -> None:
+    async def rename_command(self, ctx: commands.Context, name: str.lower, *, new_name: str.lower = None) -> None:
         """Usage: `rename command (name) (new_name)`
         Purpose: Renames a command.
         Notes: If response is not supplied you will be prompted for one with a timeout
         """
         if config.ReservedCommands.check(name):
-            await self.bot.reply_to_msg(
-                ctx.message, "This command is special and cannot be modified."
-            )
+            await self.bot.reply_to_msg(ctx.message, "This command is special and cannot be modified.")
             return
 
         results: list[config.Commands]
-        if not (
-            results := list(config.Commands.selectBy(name=name))
-        ):  # this command hasn't been created yet
+        if not (results := list(config.Commands.selectBy(name=name))):  # this command hasn't been created yet
             await self.bot.reply_to_msg(ctx.message, "Command could not be found!")
             return
 
         if new_name is None:
-            new_name, _ = await self.bot.reply_question(
-                ctx.message, "What should the new name be?"
-            )
+            new_name, _ = await self.bot.reply_question(ctx.message, "What should the new name be?")
 
         # this just works, don't touch it. trying to use config.Commands.fetch makes a duplicate command.
         results[0].name = new_name
 
-        await self.bot.reply_to_msg(
-            ctx.message, f"Command `{name}` is now `{new_name}`!"
-        )
+        await self.bot.reply_to_msg(ctx.message, f"Command `{name}` is now `{new_name}`!")
 
     @BaseCmds.rename.command(name="alias")
-    async def rename_alias(
-        self, ctx: commands.Context, name: str.lower, *, new_name: str.lower = None
-    ) -> None:
+    async def rename_alias(self, ctx: commands.Context, name: str.lower, *, new_name: str.lower = None) -> None:
         """Usage: `rename alias (name) (new name)`
         Purpose: Renames an alias.
         Notes: If response is not supplied you will be prompted for one with a timeout
@@ -304,9 +266,7 @@ class CommandCmds(BaseCmds):
 
     #       Search Commands Command
     @BaseCmds.search.command(name="commands")
-    async def search_commands(
-        self, ctx: commands.Context, pattern: str, *, flags: SearchFlags
-    ) -> None:
+    async def search_commands(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
         """Usage: `search commands (pattern) [options]`
         Purpose: Searches commands for the stuff requested.
         Optional args:
@@ -317,24 +277,18 @@ class CommandCmds(BaseCmds):
         response = get_search(config.Commands, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
 
-    @BaseCmds.slash_search.subcommand(
-        name="commands", description="Searches commands for the stuff requested."
-    )
+    @BaseCmds.slash_search.subcommand(name="commands", description="Searches commands for the stuff requested.")
     async def search_commands_slash(
         self,
         interaction: Interaction,
         pattern: str = SlashOption(description="The pattern to search for"),
-        fuzzy: bool = SlashOption(
-            description="Whether to use fuzzy matching", default=False
-        ),
+        fuzzy: bool = SlashOption(description="Whether to use fuzzy matching", default=False),
         column: str = SlashOption(
             description="The column of the database to search along",
             choices={"name": "name", "content": "content", "attachment": "attachment"},
             default="name",
         ),
-        ephemeral: bool = SlashOption(
-            description="Only you can see the response", default=True
-        ),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
         response = get_search(config.Commands, pattern, column, fuzzy)
         await interaction.response.send_message(response, ephemeral=ephemeral)
@@ -347,36 +301,24 @@ class CommandCmds(BaseCmds):
     async def invoke_command_slash(
         self,
         interaction: Interaction,
-        command_name: str = SlashOption(
-            description="The name of the command to invoke"
-        ),
+        command_name: str = SlashOption(description="The name of the command to invoke"),
         arguments: str = SlashOption(
             description="Optional input to substitute into the command response",
             required=False,
             default="",
         ),
-        ping_user: Member = SlashOption(
-            description="Optional user to ping", required=False
-        ),
+        ping_user: Member = SlashOption(description="Optional user to ping", required=False),
         ephemeral: bool = SlashOption(description="Show only to you", default=False),
     ):
         # Check if command exists
         if not (command := config.Commands.fetch(command_name)):
-            await interaction.response.send_message(
-                f"Command '{command_name}' does not exist.", ephemeral=True
-            )
+            await interaction.response.send_message(f"Command '{command_name}' does not exist.", ephemeral=True)
             return
 
         if (
             (content := command["content"])
-            and content.startswith(
-                self.bot.command_prefix
-            )  # for linked aliases of commands like ff->rp
-            and (
-                linked_command := config.Commands.fetch(
-                    content.lstrip(self.bot.command_prefix)
-                )
-            )
+            and content.startswith(self.bot.command_prefix)  # for linked aliases of commands like ff->rp
+            and (linked_command := config.Commands.fetch(content.lstrip(self.bot.command_prefix)))
         ):
             command = linked_command
             content = linked_command["content"]
@@ -399,16 +341,10 @@ class CommandCmds(BaseCmds):
             for substitution in substitutions:
                 text = re2.sub(
                     rf"\{{{substitution}\}}",
-                    (
-                        args[substitution]
-                        if substitution < len(args)
-                        else "(missing argument)"
-                    ),
+                    (args[substitution] if substitution < len(args) else "(missing argument)"),
                     text,
                 )
-            text = text.replace(
-                "{...}", " ".join(args) if args else "(no arguments given)"
-            )
+            text = text.replace("{...}", " ".join(args) if args else "(no arguments given)")
         else:
             text = ""
 

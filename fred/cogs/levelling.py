@@ -52,9 +52,7 @@ class UserProfile:
 
     async def try_resolve_member(self):
         if self.member is None:
-            if (
-                member := await common.get_guild_member(self.guild, self.user_id)
-            ) is not None:
+            if (member := await common.get_guild_member(self.guild, self.user_id)) is not None:
                 self.member = member
             else:
                 logger.warning(f"Still unable to resolve user {self.user_id}")
@@ -81,9 +79,7 @@ class UserProfile:
 
             if not await common.permission_check(self.member, level=6):
                 for member_role in self.member.roles:
-                    if (
-                        config.RankRoles.fetch_by_role(member_role.id) is not None
-                    ):  # i.e. member_role is a rank role
+                    if config.RankRoles.fetch_by_role(member_role.id) is not None:  # i.e. member_role is a rank role
                         logpayload["role_id"] = member_role.id
                         logger.info(
                             "Removing a mismatched level role from someone",
@@ -103,9 +99,9 @@ class UserProfile:
             )
             return
         logpayload = common.user_info(self.member)
-        expected_level = math.log(
-            self.xp_count / config.Misc.fetch("base_level_value")
-        ) / math.log(config.Misc.fetch("level_value_multiplier"))
+        expected_level = math.log(self.xp_count / config.Misc.fetch("base_level_value")) / math.log(
+            config.Misc.fetch("level_value_multiplier")
+        )
         if expected_level < 0:
             expected_level = 0
         else:
@@ -130,11 +126,7 @@ class UserProfile:
         await self.validate_role()
 
     async def increment_xp(self):
-        xp_gain = (
-            config.Misc.fetch("xp_gain_value")
-            * self.DB_user.xp_multiplier
-            * self.DB_user.role_xp_multiplier
-        )
+        xp_gain = config.Misc.fetch("xp_gain_value") * self.DB_user.xp_multiplier * self.DB_user.role_xp_multiplier
         logpayload = common.user_info(self.member)
         logpayload["xp_increment"] = xp_gain
         logger.info("Incrementing someone's xp", logpayload)
@@ -185,9 +177,7 @@ class Levelling(common.FredCog):
 
     @common.FredCog.listener()
     async def on_message(self, message: Message):
-        self.logger.info(
-            "Levelling: Processing message", extra=common.message_info(message)
-        )
+        self.logger.info("Levelling: Processing message", extra=common.message_info(message))
         if (
             message.author.bot
             or isinstance(message.channel, DMChannel)
@@ -206,6 +196,4 @@ class Levelling(common.FredCog):
                     "Levelling: Someone sent a message too fast and will not be awarded xp",
                     extra=common.message_info(message),
                 )
-        self.xp_timers[profile.user_id] = datetime.now() + timedelta(
-            seconds=config.Misc.fetch("xp_gain_delay")
-        )
+        self.xp_timers[profile.user_id] = datetime.now() + timedelta(seconds=config.Misc.fetch("xp_gain_delay"))
