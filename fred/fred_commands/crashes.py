@@ -135,7 +135,7 @@ class CrashCmds(BaseCmds):
         await self.bot.reply_to_msg(ctx.message, response)
 
     @BaseCmds.slash_search.subcommand(
-        name="search_crashes", description="Searches crashes for the stuff requested."
+        name="crashes", description="Searches crashes for the stuff requested."
     )
     async def search_crashes_slash(
         self,

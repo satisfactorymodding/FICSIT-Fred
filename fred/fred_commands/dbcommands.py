@@ -318,7 +318,7 @@ class CommandCmds(BaseCmds):
         await self.bot.reply_to_msg(ctx.message, response)
 
     @BaseCmds.slash_search.subcommand(
-        name="search_commands", description="Searches commands for the stuff requested."
+        name="commands", description="Searches commands for the stuff requested."
     )
     async def search_commands_slash(
         self,
@@ -341,7 +341,7 @@ class CommandCmds(BaseCmds):
 
     #      invoke command
     @nextcord.slash_command(
-        name="invoke_command",
+        name="invoke-command",
         description="Invokes a database command with the last message in the channel as its argument.",
     )
     async def invoke_command_slash(
