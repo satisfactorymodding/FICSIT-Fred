@@ -157,7 +157,7 @@ class FredHelpEmbed(nextcord.Embed):
     @lru_cache
     def get_field_indices(index: int, field_number: int) -> str:
         start = 1 + FredHelpEmbed.get_shift(index, field_number)
-        end = field_size + FredHelpEmbed.get_shift(index, field_number)
+        end = page_size + FredHelpEmbed.get_shift(index, field_number)
         return f"{start}-{end}"
 
     @classmethod

@@ -2,7 +2,7 @@ from typing import Type
 
 from regex import ENHANCEMATCH, escape, search as re_search
 
-from ..config import Commands, Crashes, Misc
+from ..config import Commands, Crashes, Misc, CommandsDict, CrashesDict
 from ..libraries.common import new_logger
 
 logger = new_logger("[Command/Crash Search]")
@@ -16,8 +16,12 @@ def search(
     if column not in dir(table):
         raise KeyError(f"`{column}` is not a column in the {table.__name__} table!")
 
+    if column == "attachment":
+        raise KeyError(f"You cannot search for attachments!")
+
     if not force_fuzzy and (exact_match := table.fetch_by(column, pattern)):
-        return exact_match[column], True
+        res: str = exact_match.get(column) or ""
+        return res, True
 
     if len(pattern) < 2:
         raise KeyError("Search pattern must be at least 2 characters long for fuzzy searching!")
@@ -28,7 +32,8 @@ def search(
 
     scored_results: list[tuple[int, str]] = []
     for item in table.fetch_all():
-        value = item.get(column)
+        item: CommandsDict | CrashesDict
+        value = item.get(column) or ""
 
         # Filter non matching strings
         if not isinstance(value, str):

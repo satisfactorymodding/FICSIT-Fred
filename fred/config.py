@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import pathlib
 from numbers import Number
-from typing import Optional, Any
+from typing import Optional, Any, TypedDict
 
 import nextcord
 from sqlobject import SQLObject, IntCol, BoolCol, JSONCol, BigIntCol, StringCol, FloatCol, sqlhub
@@ -84,7 +84,7 @@ class Users(SQLObject):
         return Users.selectBy(user_id=user_id).getOne(None)
 
     @staticmethod
-    def create_if_missing(user: nextcord.User) -> Users:
+    def create_if_missing(user: nextcord.User | nextcord.Member) -> Users:
         return Users.selectBy(user_id=user.id).getOne(False) or Users(user_id=user.id)
 
 
@@ -112,7 +112,13 @@ class MediaOnlyChannels(SQLObject):
         return bool(MediaOnlyChannels.selectBy(channel_id=channel_id).getOne(False))
 
 
-type CommandsOrCrashesDict = dict[str, str | StringCol]
+class CommandsDict(TypedDict):
+    name: str
+    content: str
+    attachment: str | None
+
+
+type CrashesDict = dict[str, str]
 
 
 class Commands(SQLObject):
@@ -120,18 +126,20 @@ class Commands(SQLObject):
     content = StringCol()
     attachment = StringCol(default=None)
 
-    def as_dict(self) -> CommandsOrCrashesDict:
-        return dict(name=self.name, content=self.content, attachment=self.attachment)
+    def as_dict(self) -> CommandsDict:
+        return dict(
+            name=str(self.name), content=str(self.content), attachment=str(self.attachment) if self.attachment else None
+        )
 
     @staticmethod
-    def fetch(name: str) -> Optional[CommandsOrCrashesDict]:
+    def fetch(name: str) -> Optional[CommandsDict]:
         query: Optional[Commands]
         if query := Commands.selectBy(name=name.lower()).getOne(None):
             return query.as_dict()
         return None
 
     @classmethod
-    def fetch_by(cls, col: str, val: str) -> Optional[CommandsOrCrashesDict]:
+    def fetch_by(cls, col: str, val: str) -> Optional[CommandsDict]:
         # used by the search command to get a specific value if possible
         col, val = col.lower(), val.lower()
         if not isinstance(getattr(cls, col, None), property):
@@ -143,7 +151,7 @@ class Commands(SQLObject):
         return query.as_dict()
 
     @staticmethod
-    def fetch_all() -> list[CommandsOrCrashesDict]:
+    def fetch_all() -> list[CommandsDict]:
         query = Commands.selectBy()
         return [cmd.as_dict() for cmd in query.lazyIter()]
 
@@ -153,18 +161,18 @@ class Crashes(SQLObject):
     crash = StringCol()
     response = StringCol()
 
-    def as_dict(self) -> CommandsOrCrashesDict:
-        return dict(name=self.name, response=self.response, crash=self.crash)
+    def as_dict(self) -> CrashesDict:
+        return dict(name=str(self.name), response=str(self.response), crash=str(self.crash))
 
     @staticmethod
-    def fetch(name: str) -> Optional[CommandsOrCrashesDict]:
+    def fetch(name: str) -> Optional[CrashesDict]:
         query: Optional[Crashes]
         if (query := Crashes.selectBy(name=name.lower()).getOne(None)) is not None:
             return query.as_dict()
         return None
 
     @classmethod
-    def fetch_by(cls, col: str, val: str) -> Optional[CommandsOrCrashesDict]:
+    def fetch_by(cls, col: str, val: str) -> Optional[CrashesDict]:
         col, val = col.lower(), val.lower()
         if not isinstance(getattr(cls, col), property):
             raise KeyError("This is not a valid column!")
@@ -175,7 +183,7 @@ class Crashes(SQLObject):
         return query.as_dict()
 
     @staticmethod
-    def fetch_all() -> list[CommandsOrCrashesDict]:
+    def fetch_all() -> list[CrashesDict]:
         query = Crashes.selectBy()
         return [crash.as_dict() for crash in query.lazyIter()]
 

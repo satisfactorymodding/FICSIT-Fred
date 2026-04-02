@@ -78,8 +78,7 @@ class Crashes(FredCog):
                 if latest_compatible_sml != sml_versions[0]:
                     msg += "\nAlso, your game itself may need an update!"
                 return CrashResponse("Outdated SML!", msg, inline=True)
-            else:
-                return None
+        return None
 
     # fmt: off
     _QUERY_TEMPLATE: Final[str] = """
@@ -406,8 +405,7 @@ class Crashes(FredCog):
                 embed = createembed.crashes(filtered_responses)
                 embed.set_author(
                     name=f"Automated responses for {message.author.global_name or message.author.display_name} ({message.author.id})",
-                    icon_url=message.author.avatar and message.author.avatar.url,
-                    # defaults to None if no avatar, like mircea
+                    icon_url=message.author.display_avatar.url,
                 )
                 await self.bot.reply_to_msg(message, embed=embed, propagate_reply=False, files=resp_files)
             return True
@@ -519,19 +517,19 @@ class InstallInfo:
 
         info = self._get_fg_log_details(log_file)
 
-        if sml_version := info.get("sml"):
+        if sml_version := info.get("sml", ""):
             if self.sml_version and self.sml_version != sml_version:
                 self.mismatches.append(f"SML Version ({sml_version})")
             else:
                 self.sml_version = sml_version
 
-        if game_version := info.get("game_version"):
+        if game_version := info.get("game_version", ""):
             if self.game_version and int(float(self.game_version)) != int(float(game_version)):
                 self.mismatches.append(f"Game Version ({game_version})")
             else:
                 self.game_version = game_version
 
-        if path := info.get("path"):
+        if path := info.get("path", ""):
             if self.game_path:
                 p1 = path.replace("\\", "/")
                 p2 = self.game_path.replace("\\", "/")
@@ -543,13 +541,13 @@ class InstallInfo:
             else:
                 self.game_path = path
 
-        if launcher := info.get("launcher"):
+        if launcher := info.get("launcher", ""):
             if self.game_launcher_id and self.game_launcher_id.lower() != launcher.lower():
                 self.mismatches.append(f"Launcher ID: {launcher}")
             else:
                 self.game_launcher_id = launcher
 
-        if cli := info.get("cli"):
+        if cli := info.get("cli", ""):
             if self.game_command_line:
                 self.game_command_line += cli
 
@@ -591,10 +589,10 @@ class InstallInfo:
                 info |= match.groupdict()
                 break
 
-        if cl := info.get("game_version"):
+        if cl := info.get("game_version", ""):
             info["game_version"] = int(cl)
 
-        if cli := info.get("cli"):
+        if cli := info.get("cli", ""):
             info["cli"] = filter_epic_commandline(cli)
 
         return info

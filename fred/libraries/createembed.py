@@ -39,7 +39,7 @@ async def github_embed(data: dict) -> nextcord.Embed | None:
 
     if (data_type := data.get("type")) is None:
         logger.error("data didn't have a type field")
-        return
+        return None
 
     match data_type:
         case "push":
@@ -271,7 +271,7 @@ def issue_comment(data: dict) -> nextcord.Embed:
 
 
 def _single_mod_embed(mod: dict) -> nextcord.Embed:
-    if (zulu_time := mod.get("last_version_date")) and len(mod.get("versions")) > 0:
+    if (zulu_time := mod.get("last_version_date")) and len(mod.get("versions", "")) > 0:
         ts = timestamp(f"{zulu_time[:19]}+00:00")
     else:
         ts = ""
@@ -315,6 +315,8 @@ def compatibility_to_emoji(compatibility_state: str) -> str:
             return ":warning:"
         case "Broken":
             return ":no_entry_sign:"
+        case _:
+            raise ValueError(f"Unknown compatibility state: {compatibility_state}")
 
 
 def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.Embed:
