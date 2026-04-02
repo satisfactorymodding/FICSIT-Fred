@@ -162,20 +162,23 @@ class Bot(commands.Bot):
     async def _send_safe_direct_message_internal(
         self,
         user: nextcord.User | nextcord.Member,
-        content: str = None,
+        content: Optional[str] = None,
         embed: nextcord.Embed = None,
         user_meta: config.Users = None,
         in_dm: bool = False,
         **kwargs,
     ) -> bool:
         if self.owo:
-            if content is not None:
-                content = common.owoize(content)
+            content = common.owoize(content)
 
             if embed is not None:
                 embed.title = common.owoize(embed.title)
                 embed.description = common.owoize(embed.description)
-                # don't do the fields because those are most often literal command names, like in help
+                if embed.footer is not None:
+                    embed.footer.text = common.owoize(embed.footer.text)
+                if embed.fields is not None:
+                    for field in embed.fields:
+                        field.description = common.owoize(field.description)
 
         self.logger.info("Sending a DM", extra=common.user_info(user))
         if not user_meta:
