@@ -91,6 +91,8 @@ def format_commit(commit: dict) -> tuple[str, str]:
     )
     return f"{commit_message}\n", f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n'
 
+def _append_legend_footer(embed: nextcord.Embed) -> None:
+    embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
 
 # data format: https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
 def push(data: dict) -> nextcord.Embed:
@@ -125,7 +127,7 @@ def push(data: dict) -> nextcord.Embed:
         embed.add_field(name=f"{not_shown} commits not shown", value="See GitHub for more details!", inline=False)
 
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
-    embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
+    _append_legend_footer(embed)
     return embed
 
 
@@ -187,9 +189,7 @@ def pull_request(data: dict) -> nextcord.Embed:
 
     direction = f'{data["pull_request"]["head"]["ref"]} -> {data["pull_request"]["base"]["ref"]}'
     embed.add_field(name=direction, value=stats)
-
-    embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
-
+    _append_legend_footer(embed)
     return embed
 
 
