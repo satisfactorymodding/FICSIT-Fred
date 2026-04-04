@@ -22,7 +22,7 @@ These intents are needed to receive the content of messages and receive member j
 
 Docker is for making containers. If you're not sure what that means, look it up it's real cool! In our case, it helps
 use set up all needed dependencies for Fred without you needing to do anything other than install Docker.
-On Linux, use [Docker Engine](https://docs.docker.com/engine/install/) instead of use Docker Desktop.
+On Linux, use [Docker Engine](https://docs.docker.com/engine/install/) instead of Docker Desktop.
 On Windows, [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) is the easiest way.
 If you don't want to install Docker (especially on Windows where Docker Desktop can take up resources and requires
 virtualization to be enabled), you can also manually set up a PostgreSQL DB and configure Fred to point to it,
