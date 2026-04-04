@@ -83,7 +83,7 @@ def DM(text: str) -> nextcord.Embed:
 def format_commit(commit: dict) -> tuple[str, str]:
     hash_id = f'`{commit["id"][:8]}`'
     commit_message = commit["message"].split("\n")[0].replace("*", r"\*")
-    author = commit["committer"]
+    author = commit["author"]
     attribution = f'[{author["name"]}](https://github.com/{author["username"]})'
     ts = timestamp(commit["timestamp"])
     change_summary_icons = " ".join(
@@ -126,6 +126,8 @@ def push(data: dict) -> nextcord.Embed:
     if not_shown := len(commits[24:]):
         embed.add_field(name=f"{not_shown} commits not shown", value="See GitHub for more details!", inline=False)
 
+    # Note: if we wanted to get user display name instead of username,
+    # looks like we'd have to web request the `url` field then use the `name` field from the response
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
     _append_legend_footer(embed)
     return embed
