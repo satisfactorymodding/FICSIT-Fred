@@ -79,10 +79,11 @@ def DM(text: str) -> nextcord.Embed:
     return embed
 
 
+# data format: expand `commits` properties on: https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
 def format_commit(commit: dict) -> tuple[str, str]:
     hash_id = f'`{commit["id"][:8]}`'
     commit_message = commit["message"].split("\n")[0].replace("*", r"\*")
-    author = commit["committer"]
+    author = commit["author"]
     attribution = f'[{author["name"]}](https://github.com/{author["username"]})'
     ts = timestamp(commit["timestamp"])
     change_summary_icons = " ".join(
@@ -90,7 +91,10 @@ def format_commit(commit: dict) -> tuple[str, str]:
     )
     return f"{commit_message}\n", f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n'
 
+def _append_legend_footer(embed: nextcord.Embed) -> None:
+    embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
 
+# data format: https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
 def push(data: dict) -> nextcord.Embed:
     if data["forced"]:
         colour = config.ActionColours.fetch("Red")
@@ -100,10 +104,10 @@ def push(data: dict) -> nextcord.Embed:
         forced = ""
 
     if data["created"]:
-        embed = create(data)
+        embed = push_ref_create(data)
         return embed
     elif data["deleted"]:
-        embed = delete(data)
+        embed = push_ref_delete(data)
         return embed
 
     commits = data["commits"]
@@ -122,11 +126,14 @@ def push(data: dict) -> nextcord.Embed:
     if not_shown := len(commits[24:]):
         embed.add_field(name=f"{not_shown} commits not shown", value="See GitHub for more details!", inline=False)
 
+    # Note: if we wanted to get user display name instead of username,
+    # looks like we'd have to web request the `url` field then use the `name` field from the response
     embed.set_author(name=data["sender"]["login"], icon_url=data["sender"]["avatar_url"])
-    embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
+    _append_legend_footer(embed)
     return embed
 
 
+# data format: (note: docs on 'added' has empty data for `member` but it probably shares it with 'removed'?) https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=removed#member
 def contributor_added(data: dict) -> nextcord.Embed:
     embed = nextcord.Embed(
         title=f'__**{data["member"]["login"]}**__ has been added to the Repository!',
@@ -139,6 +146,7 @@ def contributor_added(data: dict) -> nextcord.Embed:
     return embed
 
 
+# data format: https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
 def pull_request(data: dict) -> nextcord.Embed:
     action = data["action"]
     colour = config.ActionColours.fetch("Orange")
@@ -183,13 +191,12 @@ def pull_request(data: dict) -> nextcord.Embed:
 
     direction = f'{data["pull_request"]["head"]["ref"]} -> {data["pull_request"]["base"]["ref"]}'
     embed.add_field(name=direction, value=stats)
-
-    embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
-
+    _append_legend_footer(embed)
     return embed
 
 
-def create(data: dict) -> nextcord.Embed:
+# data format: https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
+def push_ref_create(data: dict) -> nextcord.Embed:
     _, ref_type, ref_name = data["ref"].split("/")
     match ref_type:
         case "tags":
@@ -210,7 +217,8 @@ def create(data: dict) -> nextcord.Embed:
     return embed
 
 
-def delete(data: dict) -> nextcord.Embed:
+# data format: https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
+def push_ref_delete(data: dict) -> nextcord.Embed:
     _, ref_type, ref_name = data["ref"].split("/")
     embed = nextcord.Embed(
         title=f'{ref_type} "{ref_name}" deleted in {repo_name}',
@@ -223,6 +231,7 @@ def delete(data: dict) -> nextcord.Embed:
     return embed
 
 
+# data format: https://docs.github.com/en/webhooks/webhook-events-and-payloads#release
 def release(data: dict) -> nextcord.Embed:
     state = "pre-release" if data["release"]["prerelease"] else "release"
     embed = nextcord.Embed(
@@ -236,6 +245,7 @@ def release(data: dict) -> nextcord.Embed:
     return embed
 
 
+# data format: https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
 def issue(data: dict) -> nextcord.Embed:
     match action := data["action"]:
         case "opened":
@@ -257,6 +267,7 @@ def issue(data: dict) -> nextcord.Embed:
     return embed
 
 
+# data format: https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
 def issue_comment(data: dict) -> nextcord.Embed:
     author = data["comment"]["user"]
     embed = nextcord.Embed(
