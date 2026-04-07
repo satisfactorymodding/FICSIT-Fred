@@ -8,11 +8,14 @@
   "words": [
     "Borketh",
     "dberrors",
+    "Feyko",
     "FICSIT",
     "libpq",
     "Mircea",
     "owoize",
     "pgadmin",
+    "pyenv",
+    "pyproject",
     "virtualenv"
   ],
   // flagWords - list of words to be always considered incorrect

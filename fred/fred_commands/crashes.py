@@ -79,23 +79,23 @@ class CrashCmds(BaseCmds):
             await ctx.send(f"Could not find a crash with name '{name}'. Aborting")
             return
 
+        checked_crash = new_crash or str(crash.crash)
+        checked_response = new_response or str(crash.response)
+
         try:
-            if change_crash := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the crash to match?"):
-                new_crash, _ = await self.bot.reply_question(
+            if await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the crash to match?"):
+                checked_crash, _ = await self.bot.reply_question(
                     ctx.message, "What is the regular expression to match in the logs?"
                 )
 
-            if change_response := await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the response?"):
-                new_response, _ = await self.bot.reply_question(
+            if await self.bot.reply_yes_or_no(ctx.message, "Do you want to change the response?"):
+                checked_response, _ = await self.bot.reply_question(
                     ctx.message,
                     f"What response do you want it to provide? Responding with `{self.bot.command_prefix}command_name`"
                     "will use the response of that command.",
                 )
         except ValueError:
             return
-
-        checked_crash = new_crash if change_crash else crash.crash
-        checked_response = new_response if change_response else crash.response
 
         issue = validate_crash(checked_crash, checked_response)
         if issue:

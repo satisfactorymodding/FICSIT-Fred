@@ -5,10 +5,10 @@ from functools import lru_cache, singledispatch
 from io import BytesIO
 from typing import TYPE_CHECKING, Optional
 
-import regex as re
 from nextcord import User, Message, Member, Guild, NotFound, File
 from nextcord.ext import commands
 from nextcord.ext.commands import Context
+from uwuipy import Uwuipy
 
 from .. import config
 
@@ -142,33 +142,18 @@ def mod_name_eq(name1: str, name2: str) -> bool:
     return reduce_str(name1) == reduce_str(name2)
 
 
-owo_table = {
-    r"\bth([aeiou])": r"d\1",
-    r"\bTh([aeiou])": r"D\1",
-    r"oo": r"uwu",
-    r"r": r"w",
-    r"R": r"W",
-    r"ove": r"uv",
-    r"!": r":3",
-    r"(?<![aeiou])([Nn])([aeiou])": r"\1y\2",
-    r"you": "u",
-    r"You": "U",
-    r"fuzzy": r"fuzzy-wuzzy",
-}
+_owoizer = Uwuipy(stutter_chance=0.05, face_chance=0.05, action_chance=0, power=4)
 
 
-def owoize(string: str) -> str:
-    new_string: list[str] = []
-    for line in string.split("\n"):
-        new_line: list[str] = []
-        for word in line.split():
-            if re.match(r"://|`", word) is None:
-                for match, sub in owo_table.items():
-                    word = re.sub(match, sub, word)
-            new_line.append(word)
-        new_string.append(" ".join(new_line))
-
-    return "\n".join(new_string)
+def owoize(string: Optional[str]) -> Optional[str]:
+    return (
+        _owoizer.uwuify(
+            string,
+            skip_urls=True,
+        )
+        if string is not None
+        else None
+    )
 
 
 def text2file(content: str, filename="file") -> File:

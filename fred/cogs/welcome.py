@@ -1,4 +1,4 @@
-from nextcord import Member
+from nextcord import Member, User
 
 from .. import config
 from ..libraries import common
@@ -12,7 +12,7 @@ class Welcome(common.FredCog):
 
         await self.send_welcome_message(member)
 
-    async def send_welcome_message(self, member: Member):
+    async def send_welcome_message(self, member: Member | User):
         if welcome := config.Misc.fetch("welcome_message"):
             self.logger.info(
                 "Sending the welcome message to a new member",

@@ -260,9 +260,8 @@ class CommandCmds(BaseCmds):
     async def rename_alias(self, ctx: commands.Context, name: str.lower, *, new_name: str.lower = None) -> None:
         """Usage: `rename alias (name) (new name)`
         Purpose: Renames an alias.
-        Notes: If response is not supplied you will be prompted for one with a timeout
-        """
-        await self.rename_command(ctx, name, new_name)
+        Notes: If response is not supplied you will be prompted for one with a timeout"""
+        await self.rename_command(ctx, name, new_name=new_name)
 
     #       Search Commands Command
     @BaseCmds.search.command(name="commands")

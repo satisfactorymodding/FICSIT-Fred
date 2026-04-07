@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fred"
-version = "2.26.3"
+version = "2.26.6"
 description = "A Discord bot for the Satisfactory Modding Discord "
 authors = ["Feyko <feykook@gmail.com>", "Borketh <does.not.kompute@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>"]
 license = "MIT License"
@@ -15,13 +15,13 @@ algoliasearch = "^4.11.2"
 SQLObject = "^3.12.0"
 aiohttp = "^3.13.3"
 semver = "^3.0.2"
-regex = "^2025"
+regex = "^2026"
 psycopg = { extras = ["binary"], version = "^3.2.3" }
 pyre2 = "^0.3.10"
+uwuipy = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
-black = { extras = ["d"], version = "^24.8.0" }
-jsonpickle = "^3.0.0"
+black = { extras = ["d"], version = "^26.3.1" }
 
 [tool.poetry.scripts]
 fred = "fred.__main__:main"

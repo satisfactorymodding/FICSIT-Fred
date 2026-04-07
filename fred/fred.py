@@ -53,10 +53,10 @@ class Bot(commands.Bot):
         self.setup_cogs()
         FredHelpEmbed.setup()
         self.owo = False
-        self.web_session: aiohttp.ClientSession = ...
+        self.web_session: aiohttp.ClientSession = ...  # type: ignore
         self.loop = asyncio.get_event_loop()
         self.executor = ThreadPoolExecutor()
-        self.error_channel = int(chan) if (chan := config.Misc.fetch("error_channel")) else 748229790825185311
+        self.error_channel: int = int(config.Misc.fetch("error_channel")) or 748229790825185311  # type: ignore
 
     async def start(self, *args, **kwargs):
         async with aiohttp.ClientSession() as session:
@@ -146,7 +146,10 @@ class Bot(commands.Bot):
         # error_embed = nextcord.Embed(colour=nextcord.Colour.red(), title=error_meta, description=full_error)
         # error_embed.set_author(name=fred_str)
 
-        await self.get_channel(self.error_channel).send(f"**{fred_str}**\n{error_meta}\n```py\n{full_error}```")
+        error_channel = self.get_partial_messageable(self.error_channel)
+        if error_channel is None:
+            raise RuntimeError("Error channel unreachable! Value: " + str(self.error_channel))
+        await error_channel.send(f"**{fred_str}**\n{error_meta}\n```py\n{full_error}```")
 
     async def githook_send(self, data: dict):
         self.logger.info("Handling GitHub payload", extra={"data": data})
@@ -156,26 +159,29 @@ class Bot(commands.Bot):
             self.logger.info("Non-supported Payload received")
         else:
             self.logger.info("GitHub payload was supported, sending an embed")
-            channel = self.get_channel(config.Misc.fetch("githook_channel"))
+            channel = self.get_partial_messageable(config.Misc.fetch("githook_channel"))  # type: ignore
             await channel.send(content=None, embed=embed)
 
     async def _send_safe_direct_message_internal(
         self,
         user: nextcord.User | nextcord.Member,
-        content: str = None,
+        content: Optional[str] = None,
         embed: nextcord.Embed = None,
         user_meta: config.Users = None,
         in_dm: bool = False,
         **kwargs,
     ) -> bool:
         if self.owo:
-            if content is not None:
-                content = common.owoize(content)
+            content = common.owoize(content)
 
             if embed is not None:
                 embed.title = common.owoize(embed.title)
                 embed.description = common.owoize(embed.description)
-                # don't do the fields because those are most often literal command names, like in help
+                if embed.footer is not None:
+                    embed.footer.text = common.owoize(embed.footer.text)
+                if embed.fields is not None:
+                    for field in embed.fields:
+                        field.description = common.owoize(field.description)
 
         self.logger.info("Sending a DM", extra=common.user_info(user))
         if not user_meta:
@@ -186,21 +192,19 @@ class Bot(commands.Bot):
             return False
 
         try:
+            dm_channel = user.dm_channel or await user.create_dm()
 
-            if not user.dm_channel:
-                await user.create_dm()
-
-            if not embed:
+            if not embed and content is not None:
                 embed = createembed.DM(content)
                 content = None
 
-            await self.safe_send(user.dm_channel, content, embed=embed, **kwargs)
+            await self.safe_send(dm_channel, content, embed=embed, **kwargs)
             return True
         except Exception:  # noqa
             self.logger.error(f"DMs: Failed to DM, reason: \n{traceback.format_exc()}")
             return False
 
-    async def send_safe_direct_message(self, user: nextcord.User, content=None, **kwargs) -> bool:
+    async def send_safe_direct_message(self, user: nextcord.User | nextcord.Member, content=None, **kwargs) -> bool:
         user_meta = config.Users.create_if_missing(user)
         try:
             return await self._send_safe_direct_message_internal(user, content, user_meta=user_meta, **kwargs)
@@ -210,18 +214,18 @@ class Bot(commands.Bot):
 
     @staticmethod
     async def safe_send(
-        chan: nextcord.TextChannel | nextcord.DMChannel,
+        to: nextcord.PartialMessageable | nextcord.abc.Messageable,
         content: Optional[str],
         *,
         files: Optional[list[nextcord.File]] = None,
         **kwargs,
     ) -> nextcord.Message:
         if content is not None and len(content) > 2000:
-            files = files or []
+            files: list[nextcord.File] = files or []
             files.append(text2file(content, filename="long-message.txt"))
             content = "Message too long, converted to text file!"
 
-        return await chan.send(content, files=files, **kwargs)
+        return await to.send(content=content, files=files, **kwargs)
 
     async def reply_generic(
         self,
@@ -280,7 +284,8 @@ class Bot(commands.Bot):
             return (message2.author == message.author) and (message2.channel == message.channel)
 
         try:
-            response: nextcord.Message = await self.wait_for("message", timeout=120.0, check=check)
+            maybe_response = self.wait_for("message", timeout=120.0, check=check)
+            response: nextcord.Message = await maybe_response
         except asyncio.TimeoutError:
             await self.reply_to_msg(message, "Timed out and aborted after 120 seconds.")
             raise asyncio.TimeoutError
@@ -335,7 +340,7 @@ class Bot(commands.Bot):
         if not removed:
             before, space, after = message.content.partition(" ")
             # if the prefix is the only thing before the space then this isn't a command
-            if before.startswith(self.command_prefix) and len(before) > 1:
+            if before.startswith(str(self.command_prefix)) and len(before) > 1:
                 self.logger.info("Processing commands")
                 await self.process_commands(message)
             else:
