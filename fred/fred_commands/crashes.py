@@ -1,4 +1,6 @@
+import nextcord
 import re2
+from nextcord import Interaction, SlashOption
 
 from ._baseclass import BaseCmds, commands, config, SearchFlags
 from ._command_utils import get_search
@@ -7,7 +9,14 @@ from ._command_utils import get_search
 class CrashCmds(BaseCmds):
 
     @BaseCmds.add.command(name="crash")
-    async def add_crash(self, ctx: commands.Context, crash_name: str.lower, match: str = None, *, response: str = None):
+    async def add_crash(
+        self,
+        ctx: commands.Context,
+        crash_name: str.lower,
+        match: str = None,
+        *,
+        response: str = None,
+    ):
         """Usage: `add crash (name) ["regex"] [response]`
         Purpose: Adds a crash to the list of known crashes.
         Notes:
@@ -49,7 +58,12 @@ class CrashCmds(BaseCmds):
 
     @BaseCmds.modify.command(name="crash")
     async def modify_crash(
-        self, ctx: commands.Context, name: str.lower, new_crash: str = None, *, new_response: str = None
+        self,
+        ctx: commands.Context,
+        name: str.lower,
+        new_crash: str = None,
+        *,
+        new_response: str = None,
     ):
         """Usage: `modify crash (name) ["regex"] [response]`
         Purpose: Adds a crash to the list of known crashes.
@@ -93,6 +107,7 @@ class CrashCmds(BaseCmds):
 
         await self.bot.reply_to_msg(ctx.message, f"Crash '{name}' modified!")
 
+    #       Search Crashes Command
     @BaseCmds.search.command(name="crashes")
     async def search_crashes(self, ctx: commands.Context, pattern: str, *, flags: SearchFlags) -> None:
         """Usage: `search crashes (name) [options]`
@@ -104,6 +119,26 @@ class CrashCmds(BaseCmds):
 
         response = get_search(config.Crashes, pattern, flags.column, flags.fuzzy)
         await self.bot.reply_to_msg(ctx.message, response)
+
+    @BaseCmds.slash_search.subcommand(name="crashes", description="Searches crashes for the stuff requested.")
+    async def search_crashes_slash(
+        self,
+        interaction: Interaction,
+        pattern: str = SlashOption(description="The pattern to search for"),
+        fuzzy: bool = SlashOption(description="Whether to use fuzzy matching", default=False),
+        column: str = SlashOption(
+            description="The column of the database to search along",
+            choices={"name": "name", "crash": "crash", "response": "response"},
+            default="name",
+        ),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
+    ):
+        flags = SearchFlags()
+        flags.fuzzy = fuzzy
+        flags.column = column
+
+        response = get_search(config.Crashes, pattern, flags.column, flags.fuzzy)
+        await interaction.response.send_message(response, ephemeral=ephemeral)
 
 
 def validate_crash(expression: str, response: str) -> str:

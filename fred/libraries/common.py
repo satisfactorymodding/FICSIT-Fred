@@ -73,7 +73,8 @@ async def _permission_check_ctx(ctx: Context, *, level: int) -> bool:
 
     if (main_guild_member := await get_guild_member(main_guild, ctx.author.id)) is None:
         logger.warning(
-            "Checked permissions for someone but they weren't in the main guild", extra=user_info(ctx.author)
+            "Checked permissions for someone but they weren't in the main guild",
+            extra=user_info(ctx.author),
         )
         return False
 
@@ -90,7 +91,10 @@ async def _permission_check_member(member: Member, *, threshold_level: int) -> b
         logger.warning("Checked permissions for a member of the wrong guild", extra=logpayload)
         return False
 
-    logger.info(f"Checking permissions for {member.display_name} ({member.id})", extra=logpayload)
+    logger.info(
+        f"Checking permissions for {member.display_name} ({member.id})",
+        extra=logpayload,
+    )
 
     perm_roles = config.PermissionRoles.fetch_ge_lvl(threshold_level)
     user_roles = {role.id for role in member.roles}
@@ -122,7 +126,11 @@ def user_info(user: Optional[User | Member]) -> dict:
 def message_info(message: Optional[Message]) -> dict:
     if message is None:
         return {}
-    return {"message_id": message.id, "channel_id": message.channel.id, **user_info(message.author)}
+    return {
+        "message_id": message.id,
+        "channel_id": message.channel.id,
+        **user_info(message.author),
+    }
 
 
 def reduce_str(string: str) -> str:

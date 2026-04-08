@@ -33,7 +33,10 @@ class MediaOnly(FredCog):
         ctx = await self.bot.get_context(message)
 
         if await common.l4_only(ctx):
-            self.logger.info("Message doesn't contain media but the author is a T3", extra=common.message_info(message))
+            self.logger.info(
+                "Message doesn't contain media but the author is a T3",
+                extra=common.message_info(message),
+            )
             return False
 
         if thread:
