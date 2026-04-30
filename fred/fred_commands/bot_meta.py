@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nextcord import Interaction, SlashOption, slash_command, Emoji
+from nextcord import Interaction, SlashOption, slash_command
 from nextcord.ext import application_checks
 
 from ._baseclass import BaseCmds, commands, config, common

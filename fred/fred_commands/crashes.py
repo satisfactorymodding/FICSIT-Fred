@@ -1,4 +1,3 @@
-import nextcord
 import re2
 from nextcord import Interaction, SlashOption
 
