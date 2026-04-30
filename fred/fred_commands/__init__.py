@@ -230,7 +230,7 @@ class Commands(BotCmds, ChannelCmds, CommandCmds, CrashCmds, EXPCmds, HelpCmds):
         self,
         ctx_or_interaction: commands.Context | Interaction,
         search: str,
-        ephemeral: bool = False,
+        ephemeral: bool,
     ) -> None:
         self.logger.info(f"Searching the documentation. {search =}")
         client: SearchClient = SearchClient("2FDCZBLZ1A", "28531804beda52a04275ecd964db429d")

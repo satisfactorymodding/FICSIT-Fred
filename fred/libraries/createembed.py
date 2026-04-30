@@ -101,8 +101,10 @@ def format_commit(commit: dict) -> tuple[str, str]:
         f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n',
     )
 
+
 def _append_legend_footer(embed: nextcord.Embed) -> None:
     embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
+
 
 # data format: https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
 def push(data: dict) -> nextcord.Embed:

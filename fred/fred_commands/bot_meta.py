@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nextcord import Interaction, SlashOption, slash_command
+from nextcord import Interaction, SlashOption, slash_command, Emoji
 from nextcord.ext import application_checks
 
 from ._baseclass import BaseCmds, commands, config, common
@@ -61,11 +61,13 @@ class BotCmds(BaseCmds):
     async def get_welcome(self, ctx: commands.Context):
         bot: Bot = ctx.bot
         await bot.Welcome.send_welcome_message(ctx.author)
+        await ctx.message.add_reaction("👍")
 
     @BaseCmds.slash_get.subcommand(name="welcome", description="Sends the welcome message to you.")
     @application_checks.check(common.l4_only)
     async def get_welcome_slash(self, interaction: Interaction):
         await self.bot.Welcome.send_welcome_message(interaction.user)
+        await interaction.send("The current welcome message has been sent to you!", ephemeral=True)
 
     #   Set Main Guild Command
     @commands.check(common.mod_only)

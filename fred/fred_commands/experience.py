@@ -163,11 +163,11 @@ class EXPCmds(BaseCmds):
         data = []
         for db_user in results:
             fetched_user = self.bot.get_user(db_user.user_id)
-            if fetched_user is None:
-                raise LookupError(f"Unable to find user with ID {db_user.user_id}")
+            # if fetched_user is None:
+            #     raise LookupError(f"Unable to find user with ID {db_user.user_id}")
             data.append(
                 {
-                    "name": fetched_user.global_name,
+                    "name": fetched_user and fetched_user.global_name or f"[{db_user.user_id}]",
                     "xp": db_user.xp_count,
                     "rank": db_user.rank,
                 }
@@ -200,6 +200,7 @@ class EXPCmds(BaseCmds):
     async def handle_level(
         self,
         ctx_or_interaction: commands.Context | Interaction,
+        *,
         ephemeral: bool,
         target_user: User = None,
     ) -> None:
@@ -243,7 +244,7 @@ class EXPCmds(BaseCmds):
         Response: Either your level or the level of the user specified
         Notes: the user parameter can be the user's @ mention or their UID, like 506192269557366805
         """
-        await self.handle_level(ctx, target_user, ephemeral=False)
+        await self.handle_level(ctx, target_user=target_user, ephemeral=False)
 
     @nextcord.slash_command(
         name="level",
@@ -255,7 +256,7 @@ class EXPCmds(BaseCmds):
         target_user: User = SlashOption(description="The user to get the level of", required=False),
         ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
     ):
-        await self.handle_level(interaction, target_user, ephemeral=ephemeral)
+        await self.handle_level(interaction, target_user=target_user, ephemeral=ephemeral)
 
     @BaseCmds.add.command(name="level_role")
     async def add_level_role(self, ctx: commands.Context, role: commands.RoleConverter, rank: int):

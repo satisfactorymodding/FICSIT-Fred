@@ -326,7 +326,7 @@ class FredHelpEmbed(nextcord.Embed):
         for chan in config.MediaOnlyChannels.selectBy():
             desc += f"- <#{chan.channel_id}>\n"
 
-        desc += "\n*All other messages will get deleted (if it doesn't, I might be down :( )*"
+        desc += "\n*All other messages will get deleted (if not, I might be down :( )*"
 
         return cls("Media-Only Channels", desc, usage="media_only")
 
@@ -390,5 +390,5 @@ class FredHelpEmbed(nextcord.Embed):
             return cls(title, desc, usage="commands [page]")
 
         except IndexError:
-            desc = f"There aren't that many commands! Try a number less than {index}."
+            desc = f"There aren't that many commands! Try Fga number less than {index}."
             return cls(title, desc, usage="commands [page]")
