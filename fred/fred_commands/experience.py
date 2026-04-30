@@ -1,4 +1,5 @@
-from nextcord import Role, User
+import nextcord
+from nextcord import Interaction, SlashOption, Role, User
 
 from ._baseclass import BaseCmds, commands, common, config
 from ..cogs import levelling
@@ -142,42 +143,120 @@ class EXPCmds(BaseCmds):
             config.Misc.change("levelling_state", True)
             await self.bot.reply_to_msg(ctx.message, "The levelling system is now active!")
 
-    @commands.command()
-    async def leaderboard(self, ctx: commands.Context):
-        """Usage: `leaderboard`
-        Response: Shows the top 10 most talkative members and their xp"""
+    #      Leaderboard Command
+    async def leaderboard_handler(self, ctx_or_interaction, ephemeral: bool) -> None:
         query = config.Users.select().orderBy("-xp_count").limit(10)
         results = list(query)
         if not results:
-            await self.bot.reply_to_msg(ctx.message, "The database was empty. This should NEVER happen")
+            if isinstance(ctx_or_interaction, commands.Context):
+                await self.bot.reply_to_msg(
+                    ctx_or_interaction.message,
+                    "The database was empty. This should NEVER happen",
+                )
+            elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                await ctx_or_interaction.response.send_message(
+                    "The database was empty. This should NEVER happen",
+                    ephemeral=ephemeral,
+                )
             return
 
         data = []
         for db_user in results:
             fetched_user = self.bot.get_user(db_user.user_id)
-            if fetched_user is None:
-                raise LookupError(f"Unable to find user with ID {db_user.user_id}")
-            data.append({"name": fetched_user.global_name, "xp": db_user.xp_count, "rank": db_user.rank})
+            # if fetched_user is None:
+            #     raise LookupError(f"Unable to find user with ID {db_user.user_id}")
+            data.append(
+                {
+                    "name": fetched_user and fetched_user.global_name or f"[{db_user.user_id}]",
+                    "xp": db_user.xp_count,
+                    "rank": db_user.rank,
+                }
+            )
 
         embed = createembed.leaderboard(data)
-        await self.bot.reply_to_msg(ctx.message, embed=embed)
+        if isinstance(ctx_or_interaction, commands.Context):
+            await self.bot.reply_to_msg(ctx_or_interaction.message, embed=embed)
+        elif isinstance(ctx_or_interaction, nextcord.Interaction):
+            await ctx_or_interaction.response.send_message(ctx_or_interaction.message, embed=embed, ephemeral=ephemeral)
 
     @commands.command()
-    async def level(self, ctx: commands.Context, target_user: commands.UserConverter = None):
-        """Usage: `level` [user]
-        Response: Either your level or the level of the user specified
-        Notes: the user parameter can be the user's @ mention or their UID, like 506192269557366805"""
+    async def leaderboard(self, ctx: commands.Context):
+        """Usage: `leaderboard`
+        Response: Shows the top 10 most talkative members and their xp"""
+        await self.leaderboard_handler(ctx, ephemeral=False)
+
+    @nextcord.slash_command(
+        name="leaderboard",
+        description="Shows the top 10 most talkative members and their xp.",
+    )
+    async def leaderboard_slash(
+        self,
+        interaction: Interaction,
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=False),
+    ):
+        await self.leaderboard_handler(interaction, ephemeral=ephemeral)
+
+    #       Level Command
+    async def handle_level(
+        self,
+        ctx_or_interaction: commands.Context | Interaction,
+        *,
+        ephemeral: bool,
+        target_user: User = None,
+    ) -> None:
         target_user: User
         if target_user:
             user_id = target_user.id
             user = self.bot.get_user(user_id)
             if not user:
-                await self.bot.reply_to_msg(ctx.message, f"Sorry, I was unable to find the user with id {user_id}")
+                if isinstance(ctx_or_interaction, commands.Context):
+                    await self.bot.reply_to_msg(
+                        ctx_or_interaction.message,
+                        f"Sorry, I was unable to find the user with id {user_id}",
+                    )
+                elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                    await ctx_or_interaction.response.send_message(
+                        f"Sorry, I was unable to find the user with id {user_id}",
+                        ephemeral=ephemeral,
+                    )
                 return
         else:
-            user = ctx.author
+            user = ctx_or_interaction.author
+            if isinstance(ctx_or_interaction, commands.Context):
+                user = ctx_or_interaction.author
+            elif isinstance(ctx_or_interaction, nextcord.Interaction):
+                user = ctx_or_interaction.user
         user_meta = config.Users.create_if_missing(user)
-        await self.bot.reply_to_msg(ctx.message, f"{user.name} is level {user_meta.rank} with {user_meta.xp_count} xp")
+        if isinstance(ctx_or_interaction, commands.Context):
+            await self.bot.reply_to_msg(
+                ctx_or_interaction.message,
+                f"{user.name} is level {user_meta.rank} with {user_meta.xp_count} xp",
+            )
+        elif isinstance(ctx_or_interaction, nextcord.Interaction):
+            await ctx_or_interaction.response.send_message(
+                f"{user.name} is level {user_meta.rank} with {user_meta.xp_count} xp",
+                ephemeral=False,
+            )
+
+    @commands.command()
+    async def level(self, ctx: commands.Context, target_user: commands.UserConverter = None):
+        """Usage: `level` [user]
+        Response: Either your level or the level of the user specified
+        Notes: the user parameter can be the user's @ mention or their UID, like 506192269557366805
+        """
+        await self.handle_level(ctx, target_user=target_user, ephemeral=False)
+
+    @nextcord.slash_command(
+        name="level",
+        description="Shows either your level or the level of the user specified.",
+    )
+    async def level_slash(
+        self,
+        interaction: Interaction,
+        target_user: User = SlashOption(description="The user to get the level of", required=False),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=True),
+    ):
+        await self.handle_level(interaction, target_user=target_user, ephemeral=ephemeral)
 
     @BaseCmds.add.command(name="level_role")
     async def add_level_role(self, ctx: commands.Context, role: commands.RoleConverter, rank: int):

@@ -5,7 +5,7 @@ from functools import lru_cache, singledispatch
 from io import BytesIO
 from typing import TYPE_CHECKING, Optional
 
-from nextcord import User, Message, Member, Guild, NotFound, File
+from nextcord import User, Message, Member, Guild, NotFound, File, Interaction
 from nextcord.ext import commands
 from nextcord.ext.commands import Context
 from uwuipy import Uwuipy
@@ -43,19 +43,12 @@ async def get_guild_member(guild: Guild, user_id: int) -> Optional[Member]:
         return None
 
 
-def is_bot_author(user_id: int) -> bool:
-    logger.info("Checking if someone is the author", extra={"user_id": user_id})
-    return user_id == 227473074616795137
+async def l4_only(ctx: Context | Interaction) -> bool:
+    return await permission_check(ctx, level=4)
 
 
-async def l4_only(ctx: Context) -> bool:
-    logger.info("Checking if someone is a T3", extra=user_info(ctx.author))
-    return is_bot_author(ctx.author.id) or await permission_check(ctx, level=4)
-
-
-async def mod_only(ctx: Context) -> bool:
-    logger.info("Checking if someone is a Moderator", extra=user_info(ctx.author))
-    return is_bot_author(ctx.author.id) or await permission_check(ctx, level=6)
+async def mod_only(ctx: Context | Interaction) -> bool:
+    return await permission_check(ctx, level=6)
 
 
 @singledispatch
@@ -63,7 +56,28 @@ async def permission_check(_ctx_or_member, *, level: int) -> bool: ...
 
 
 @permission_check.register
+async def _permission_check_itr(itr: Interaction, *, level: int) -> bool:
+    logger.info(f"Checking if a user (from an Interaction) has permission level {level}", extra=user_info(itr.user))
+    main_guild_id = config.Misc.fetch("main_guild_id")
+    main_guild = await itr.client.fetch_guild(main_guild_id)
+
+    if main_guild is None:
+        raise LookupError(f"Unable to retrieve the guild {main_guild_id}. Is this the guild you meant?")
+
+    if (main_guild_member := await get_guild_member(main_guild, itr.user.id)) is None:
+        logger.warning(
+            "Checked permissions for someone but they weren't in the main guild",
+            extra=user_info(itr.user),
+        )
+        return False
+
+    return await _permission_check_member(main_guild_member, threshold_level=level)
+
+
+@permission_check.register
 async def _permission_check_ctx(ctx: Context, *, level: int) -> bool:
+
+    logger.info(f"Checking if a user (from a Context) has permission level {level}", extra=user_info(ctx.author))
 
     main_guild_id = config.Misc.fetch("main_guild_id")
     main_guild = await ctx.bot.fetch_guild(main_guild_id)
@@ -73,7 +87,8 @@ async def _permission_check_ctx(ctx: Context, *, level: int) -> bool:
 
     if (main_guild_member := await get_guild_member(main_guild, ctx.author.id)) is None:
         logger.warning(
-            "Checked permissions for someone but they weren't in the main guild", extra=user_info(ctx.author)
+            "Checked permissions for someone but they weren't in the main guild",
+            extra=user_info(ctx.author),
         )
         return False
 
@@ -83,6 +98,9 @@ async def _permission_check_ctx(ctx: Context, *, level: int) -> bool:
 @permission_check.register
 async def _permission_check_member(member: Member, *, threshold_level: int) -> bool:
     """Checks permissions for a member assuming they are in the main guild."""
+
+    logger.info(f"Checking if a user (from a Member) has permission level {threshold_level}", extra=user_info(member))
+
     logpayload = user_info(member)
     logpayload["level"] = threshold_level
 
@@ -90,10 +108,13 @@ async def _permission_check_member(member: Member, *, threshold_level: int) -> b
         logger.warning("Checked permissions for a member of the wrong guild", extra=logpayload)
         return False
 
-    logger.info(f"Checking permissions for {member.display_name} ({member.id})", extra=logpayload)
+    logger.info(
+        f"Checking permissions for {member.display_name} ({member.id})",
+        extra=logpayload,
+    )
 
-    perm_roles = config.PermissionRoles.fetch_ge_lvl(threshold_level)
     user_roles = {role.id for role in member.roles}
+    perm_roles = config.PermissionRoles.fetch_ge_lvl(threshold_level)
     user_roles_above_threshold = {role for role in perm_roles if role.role_id in user_roles}
 
     if user_roles_above_threshold:
@@ -122,7 +143,11 @@ def user_info(user: Optional[User | Member]) -> dict:
 def message_info(message: Optional[Message]) -> dict:
     if message is None:
         return {}
-    return {"message_id": message.id, "channel_id": message.channel.id, **user_info(message.author)}
+    return {
+        "message_id": message.id,
+        "channel_id": message.channel.id,
+        **user_info(message.author),
+    }
 
 
 def reduce_str(string: str) -> str:

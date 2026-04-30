@@ -8,7 +8,18 @@ import re as regex_fallback
 from asyncio import Task, TaskGroup
 from os.path import split
 from pathlib import Path
-from typing import AsyncIterator, IO, Type, Coroutine, Generator, Optional, Any, Final, TypedDict, AsyncGenerator
+from typing import (
+    AsyncIterator,
+    IO,
+    Type,
+    Coroutine,
+    Generator,
+    Optional,
+    Any,
+    Final,
+    TypedDict,
+    AsyncGenerator,
+)
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -197,7 +208,11 @@ class Crashes(FredCog):
                             return f"{{Group {group} not captured in crash regex!}}"
                         return match.group(group)
 
-                    response = re2.sub(r"{(\d+)}", replace_response_value_with_captured, str(crash["response"]))
+                    response = re2.sub(
+                        r"{(\d+)}",
+                        replace_response_value_with_captured,
+                        str(crash["response"]),
+                    )
                     yield CrashResponse(name=crash["name"], value=response, inline=True)
 
     async def detect_and_fetch_pastebin_content(self, text: str) -> str:
@@ -219,7 +234,9 @@ class Crashes(FredCog):
         responses.extend(await self.process_text(await self.detect_and_fetch_pastebin_content(text)))
 
         if match := await safe_search(
-            r"([^\n]*Critical error:.*Engine exit[^\n]*\))", text, flags=re2.I | re2.M | re2.S
+            r"([^\n]*Critical error:.*Engine exit[^\n]*\))",
+            text,
+            flags=re2.I | re2.M | re2.S,
         ):
             filename = os.path.basename(filename)
             crash = match.group(1)
@@ -227,7 +244,11 @@ class Crashes(FredCog):
                 CrashResponse(
                     name=f"Crash found in {filename}",
                     value="It has been attached to this message.",
-                    attachment=File(io.StringIO(crash), filename="Abridged " + filename, force_close=True),
+                    attachment=File(
+                        io.StringIO(crash),
+                        filename="Abridged " + filename,
+                        force_close=True,
+                    ),
                 )
             )
 
@@ -284,7 +305,8 @@ class Crashes(FredCog):
 
     async def _obtain_attachments(self, message: Message) -> AsyncGenerator[tuple[str, IO | Exception], None, None]:
         cdn_links = re2.findall(
-            r"(https://(?:cdn.discordapp.com|media.discordapp.net)/attachments/\S+)", message.content
+            r"(https://(?:cdn.discordapp.com|media.discordapp.net)/attachments/\S+)",
+            message.content,
         )
 
         yield bool(cdn_links or message.attachments)
@@ -349,7 +371,8 @@ class Crashes(FredCog):
                         self.logger.exception(file_or_exc)
                         responses.append(
                             CrashResponse(
-                                name="Download failed", value=f"Could not obtain file '{name}' due to `{file_or_exc}`"
+                                name="Download failed",
+                                value=f"Could not obtain file '{name}' due to `{file_or_exc}`",
                             )
                         )
                         continue
@@ -582,7 +605,10 @@ class InstallInfo:
             logger.info("Didn't find all four pieces of information normally found in a log!")
             logger.debug(json.dumps(info, indent=2))
 
-        mod_loader_logs = filter(lambda l: re2.search("LogSatisfactoryModLoader", l), map(lambda b: b.decode(), lines))
+        mod_loader_logs = filter(
+            lambda l: re2.search("LogSatisfactoryModLoader", l),
+            map(lambda b: b.decode(), lines),
+        )
 
         for line in mod_loader_logs:
             if match := re2.search(r"(?<=v\.)(?P<sml>[\d.]+)", line):

@@ -14,7 +14,10 @@ class ChannelCmds(BaseCmds):
         channel: GuildChannel
 
         if not can_enforce_mediaonly(channel):
-            await self.bot.reply_to_msg(ctx.message, f"I don't know how to enforce mediaonly in {channel.mention}.")
+            await self.bot.reply_to_msg(
+                ctx.message,
+                f"I don't know how to enforce mediaonly in {channel.mention}.",
+            )
             return
 
         if config.MediaOnlyChannels.check(channel.id):
@@ -47,7 +50,8 @@ class ChannelCmds(BaseCmds):
         channel: TextChannel
         config.Misc.change("githook_channel", channel.id)
         await self.bot.reply_to_msg(
-            ctx.message, f"The channel for the github hooks is now " f"{self.bot.get_channel(channel.id).mention}!"
+            ctx.message,
+            f"The channel for the github hooks is now " f"{self.bot.get_channel(channel.id).mention}!",
         )
 
     @commands.check(common.mod_only)

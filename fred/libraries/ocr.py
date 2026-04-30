@@ -13,7 +13,10 @@ def read(file: IO):
         image = Image.open(file)
         ratio = 2160 / image.height
         if ratio > 1:
-            image = image.resize((round(image.width * ratio), round(image.height * ratio)), Image.Resampling.LANCZOS)
+            image = image.resize(
+                (round(image.width * ratio), round(image.height * ratio)),
+                Image.Resampling.LANCZOS,
+            )
         try:
             enhancer_contrast = ImageEnhance.Contrast(image)
 

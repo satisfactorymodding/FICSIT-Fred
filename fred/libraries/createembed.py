@@ -50,7 +50,10 @@ async def github_embed(data: dict) -> nextcord.Embed | None:
             if data["action"] == "added":
                 embed = contributor_added(data)
         case "release":
-            if not data["release"]["draft"] and data["action"] in ["released", "prereleased"]:
+            if not data["release"]["draft"] and data["action"] in [
+                "released",
+                "prereleased",
+            ]:
                 embed = release(data)
         case "issue":
             embed = issue(data)
@@ -62,7 +65,11 @@ async def github_embed(data: dict) -> nextcord.Embed | None:
 def leaderboard(data: list[dict]) -> nextcord.Embed:
     desc = f"Here are the {len(data)} people with the highest xp count"
 
-    embed = nextcord.Embed(title="XP Leaderboard", colour=config.ActionColours.fetch("purple"), description=desc)
+    embed = nextcord.Embed(
+        title="XP Leaderboard",
+        colour=config.ActionColours.fetch("purple"),
+        description=desc,
+    )
 
     for user in data:
         embed.add_field(name=user["name"], value=f'XP: {user["xp"]} | Level: {user["rank"]}')
@@ -89,10 +96,15 @@ def format_commit(commit: dict) -> tuple[str, str]:
     change_summary_icons = " ".join(
         [f"{em} {len(commit[k])}" for em, k in zip("✅❌📝", ["added", "removed", "modified"])]
     )
-    return f"{commit_message}\n", f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n'
+    return (
+        f"{commit_message}\n",
+        f'{change_summary_icons} - by {attribution} {ts} [{hash_id}]({commit["url"]})\n',
+    )
+
 
 def _append_legend_footer(embed: nextcord.Embed) -> None:
     embed.set_footer(text="Use the `" + config.Misc.fetch("prefix") + "legend` to learn what the icons mean!")
+
 
 # data format: https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
 def push(data: dict) -> nextcord.Embed:
@@ -124,7 +136,11 @@ def push(data: dict) -> nextcord.Embed:
         embed.add_field(name=title, value=details, inline=False)
 
     if not_shown := len(commits[24:]):
-        embed.add_field(name=f"{not_shown} commits not shown", value="See GitHub for more details!", inline=False)
+        embed.add_field(
+            name=f"{not_shown} commits not shown",
+            value="See GitHub for more details!",
+            inline=False,
+        )
 
     # Note: if we wanted to get user display name instead of username,
     # looks like we'd have to web request the `url` field then use the `name` field from the response
@@ -335,18 +351,26 @@ def _multiple_mod_embed(original_query_name: str, mods: list[dict]) -> nextcord.
         f"\n*And {cut} more...*" if (cut := len(mods[10:])) else ""
     )
     return nextcord.Embed(
-        title="Multiple mods found:", description=desc, url=f"https://ficsit.app/mods?q={url_safe(original_query_name)}"
+        title="Multiple mods found:",
+        description=desc,
+        url=f"https://ficsit.app/mods?q={url_safe(original_query_name)}",
     )
 
 
 async def webp_icon_as_png(url: str, bot: Bot) -> tuple[nextcord.File, str]:
-    with BytesIO(await bot.async_url_get(url)) as virtual_webp, BytesIO() as virtual_png:
+    with (
+        BytesIO(await bot.async_url_get(url)) as virtual_webp,
+        BytesIO() as virtual_png,
+    ):
         webp_dat = Image.open(virtual_webp).convert("RGB")
         webp_dat.save(virtual_png, "png")
         virtual_png.seek(0)
         filename = f"{url.split('/')[-2]}.png".strip()
         file = nextcord.File(virtual_png, filename=filename)
-    return file, filename  # this is out of the ctx manager to ensure the buffers are closed
+    return (
+        file,
+        filename,
+    )  # this is out of the ctx manager to ensure the buffers are closed
 
 
 # SMR Lookup Embed Formats
