@@ -295,19 +295,19 @@ class CommandCmds(BaseCmds):
     #      invoke command
     @nextcord.slash_command(
         name="invoke-command",
-        description="Invokes a database command with the last message in the channel as its argument.",
+        description="Invokes a database command, allowing you to specify arguments and optionally a user to ping.",
     )
     async def invoke_command_slash(
         self,
         interaction: Interaction,
-        command_name: str = SlashOption(description="The name of the command to invoke"),
+        command_name: str = SlashOption(description="The name of the command to invoke. Use /help commands or /search commands to see supported commands."),
         arguments: str = SlashOption(
-            description="Optional input to substitute into the command response",
+            description="Optional input to the command",
             required=False,
             default="",
         ),
         ping_user: Member = SlashOption(description="Optional user to ping", required=False),
-        ephemeral: bool = SlashOption(description="Show only to you", default=False),
+        ephemeral: bool = SlashOption(description="Only you can see the response", default=False),
     ):
         # Check if command exists
         if not (command := config.Commands.fetch(command_name)):
