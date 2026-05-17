@@ -19,6 +19,8 @@ regex = "^2026"
 psycopg = { extras = ["binary"], version = "^3.2.3" }
 pyre2 = "^0.3.10"
 uwuipy = "^1.0.0"
+setuptools = "^82.0.1"
+rapidocr-onnxruntime = {version = ">=1.4.4,<2.0.0", python = ">=3.12,<3.13"}
 
 [tool.poetry.group.dev.dependencies]
 black = { extras = ["d"], version = "^26.3.1" }
