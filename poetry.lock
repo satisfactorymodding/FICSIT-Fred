@@ -164,7 +164,6 @@ attrs = ">=17.3.0"
 frozenlist = ">=1.1.1"
 multidict = ">=4.5,<7.0"
 propcache = ">=0.2.0"
-typing_extensions = {version = ">=4.4", markers = "python_version < \"3.13\""}
 yarl = ">=1.17.0,<2.0"
 
 [package.extras]
@@ -184,18 +183,17 @@ files = [
 
 [package.dependencies]
 frozenlist = ">=1.1.0"
-typing-extensions = {version = ">=4.2", markers = "python_version < \"3.13\""}
 
 [[package]]
 name = "algoliasearch"
-version = "4.42.0"
+version = "4.44.0"
 description = "A fully-featured and blazing-fast Python API client to interact with Algolia."
 optional = false
 python-versions = ">=3.8.1"
 groups = ["main"]
 files = [
-    {file = "algoliasearch-4.42.0-py3-none-any.whl", hash = "sha256:92b6f3ec77f40a393c33c108f5643c004d260885a8e3a1abf4b9129520e6e260"},
-    {file = "algoliasearch-4.42.0.tar.gz", hash = "sha256:473adadf3f63117cbea171850d4b488b2254f293242456759ceff89ba5a96cef"},
+    {file = "algoliasearch-4.44.0-py3-none-any.whl", hash = "sha256:73008536b45efd379de76217d50f64c5da3f0c36b028b20f5e4ca594e3128e54"},
+    {file = "algoliasearch-4.44.0.tar.gz", hash = "sha256:cca24c648323fe2bfc2823e88975195620c92dc2baeff5fa1fd98cbc164d31a7"},
 ]
 
 [package.dependencies]
@@ -249,7 +247,6 @@ description = "LTS Port of Python audioop"
 optional = false
 python-versions = ">=3.13"
 groups = ["main"]
-markers = "python_version >= \"3.13\""
 files = [
     {file = "audioop_lts-0.2.2-cp313-abi3-macosx_10_13_universal2.whl", hash = "sha256:fd3d4602dc64914d462924a08c1a9816435a2155d74f325853c1f1ac3b2d9800"},
     {file = "audioop_lts-0.2.2-cp313-abi3-macosx_10_13_x86_64.whl", hash = "sha256:550c114a8df0aafe9a05442a1162dfc8fec37e9af1d625ae6060fed6e756f303"},
@@ -492,21 +489,18 @@ files = [
 ]
 
 [package.dependencies]
-cffi = [
-    {version = ">=1.0.0", markers = "python_version < \"3.13\""},
-    {version = ">=1.17.0", markers = "python_version >= \"3.13\""},
-]
+cffi = {version = ">=1.17.0", markers = "python_version >= \"3.13\""}
 
 [[package]]
 name = "certifi"
-version = "2026.5.20"
+version = "2026.6.17"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "certifi-2026.5.20-py3-none-any.whl", hash = "sha256:3c52e209ba0a4ad7aebe60436a4ab349c39e1e602e8c134221e546902ad25897"},
-    {file = "certifi-2026.5.20.tar.gz", hash = "sha256:69dea482ab64caa7b9f6aba1c6bf48bb6a5448d1c0f1b17ab42ad8c763a5344d"},
+    {file = "certifi-2026.6.17-py3-none-any.whl", hash = "sha256:2227dcbaafe0d2f59279d1762ddddc37783ed4354594f194ffc31d20f41fc3db"},
+    {file = "certifi-2026.6.17.tar.gz", hash = "sha256:024c88eeec92ca068db80f02b8b07c9cef7b9fe261d1d535abfd5abd6f6af432"},
 ]
 
 [[package]]
@@ -1516,7 +1510,6 @@ files = [
 
 [package.dependencies]
 psycopg-binary = {version = "3.3.4", optional = true, markers = "implementation_name != \"pypy\" and extra == \"binary\""}
-typing-extensions = {version = ">=4.6", markers = "python_version < \"3.13\""}
 tzdata = {version = "*", markers = "sys_platform == \"win32\""}
 
 [package.extras]
@@ -1690,10 +1683,7 @@ files = [
 ]
 
 [package.dependencies]
-cffi = [
-    {version = ">=1.5.0", markers = "python_version < \"3.14\""},
-    {version = ">=2.0.0b1", markers = "python_version >= \"3.14\""},
-]
+cffi = {version = ">=2.0.0b1", markers = "python_version >= \"3.14\""}
 
 [package.extras]
 idna = ["idna (>=2.1)"]
@@ -2197,10 +2187,7 @@ files = [
 ]
 
 [package.dependencies]
-FormEncode = [
-    {version = ">=2.1.1", markers = "python_version >= \"3.13\""},
-    {version = ">=1.3.1", markers = "python_version >= \"3.4\""},
-]
+FormEncode = {version = ">=2.1.1", markers = "python_version >= \"3.13\""}
 PyDispatcher = ">=2.0.4"
 
 [package.extras]
@@ -2235,12 +2222,11 @@ version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "dev"]
+groups = ["main"]
 files = [
     {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
     {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
 ]
-markers = {dev = "python_version < \"3.13\""}
 
 [[package]]
 name = "typing-inspection"
@@ -2421,5 +2407,5 @@ propcache = ">=0.2.1"
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.12.0"
-content-hash = "0f6c14ffee2cc10fd6dade808516b7dc48da06173123272ca392b94a52ea0f1b"
+python-versions = "^3.14.0"
+content-hash = "78283fd61e0823823ceea25f079ce55f40bdce49e6f48d9bdaf2f8491c48f599"

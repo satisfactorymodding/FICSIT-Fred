@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "fred"
-version = "2.27.3"
+version = "2.27.4"
 description = "A Discord bot for the Satisfactory Modding Discord "
 authors = ["Feyko <feykook@gmail.com>", "Borketh <does.not.kompute@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>"]
 license = "MIT License"
 
 [tool.poetry.dependencies]
-python = "^3.12.0"
+python = "^3.14.0"
 nextcord = { extras = ["speed"], version = "^3.2.0" }
 Pillow = "^12.1.1"
 pytesseract = "^0.3.13"
