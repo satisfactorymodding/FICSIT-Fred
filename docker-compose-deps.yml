@@ -1,10 +1,10 @@
 services:
     postgres:
-        image: postgres:14-alpine
+        image: postgres:16-alpine
         environment:
             POSTGRES_PASSWORD: fred
             POSTGRES_USER: fred
-            PGDATA: /var/lib/postgresql/data/pgdata
+            PGDATA: /var/lib/postgresql/data/pgdata:14
         ports:
             - "5432:5432"
         volumes:
