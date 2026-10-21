@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fred"
-version = "2.27.4"
+version = "2.27.5"
 description = "A Discord bot for the Satisfactory Modding Discord "
 authors = ["Feyko <feykook@gmail.com>", "Borketh <does.not.kompute@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>"]
 license = "MIT License"
@@ -8,7 +8,7 @@ license = "MIT License"
 [tool.poetry.dependencies]
 python = "^3.14.0"
 nextcord = { extras = ["speed"], version = "^3.2.0" }
-Pillow = "^12.1.1"
+Pillow = "==13.0.0"
 pytesseract = "^0.3.13"
 python-dotenv = "^1.0.1"
 algoliasearch = "^4.11.2"
