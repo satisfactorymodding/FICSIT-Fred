@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fred"
-version = "2.27.5"
+version = "2.27.6"
 description = "A Discord bot for the Satisfactory Modding Discord "
 authors = ["Feyko <feykook@gmail.com>", "Borketh <does.not.kompute@gmail.com>", "Mircea Roata <mircearoatapalade@yahoo.ro>"]
 license = "MIT License"
@@ -28,7 +28,7 @@ fred = "fred.__main__:main"
 
 [tool.black]
 line-length = 120
-target-version = ['py312']
+target-version = ['py314']
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
