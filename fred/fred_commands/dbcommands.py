@@ -300,7 +300,9 @@ class CommandCmds(BaseCmds):
     async def invoke_command_slash(
         self,
         interaction: Interaction,
-        command_name: str = SlashOption(description="The name of the command to invoke. Use /help commands or /search commands to see supported commands."),
+        command_name: str = SlashOption(
+            description="The name of the command to invoke. Use /help commands or /search commands to see supported commands."
+        ),
         arguments: str = SlashOption(
             description="Optional input to the command",
             required=False,

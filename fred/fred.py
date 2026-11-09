@@ -208,7 +208,7 @@ class Bot(commands.Bot):
         user_meta = config.Users.create_if_missing(user)
         try:
             return await self._send_safe_direct_message_internal(user, content, user_meta=user_meta, **kwargs)
-        except (nextcord.HTTPException, nextcord.Forbidden):
+        except nextcord.HTTPException, nextcord.Forbidden:
             # user has blocked bot or does not take mutual-server DMs
             return False
 
@@ -269,7 +269,7 @@ class Bot(commands.Bot):
 
         try:
             return await self.safe_send(message.channel, content, reference=reference, **kwargs)
-        except (nextcord.HTTPException, nextcord.Forbidden):
+        except nextcord.HTTPException, nextcord.Forbidden:
             if content and pingee.mention not in content:
                 content += f"\n-# {pingee.mention} ↩️"
             return await self.safe_send(message.channel, content, **kwargs)
