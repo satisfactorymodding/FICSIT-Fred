@@ -400,7 +400,6 @@ description = "Python bindings for the Brotli compression library"
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "platform_python_implementation == \"CPython\""
 files = [
     {file = "brotli-1.2.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:09b560859a04d112d206639c7e444161ee2f413098aa6de11d43daf3ce883d24"},
     {file = "brotli-1.2.1-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:66f171af80744c06f6b4e5b01fe6e40c70cc4e17570888746a281422fed83fc0"},
