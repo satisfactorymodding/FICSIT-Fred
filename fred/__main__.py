@@ -5,7 +5,9 @@ from .fred import Bot, nextcord
 
 
 async def a_main():
-    intents = nextcord.Intents.all()
+    intents = nextcord.Intents(
+        guilds=True, members=True, messages=True, message_content=True, emojis_and_stickers=True, reactions=True
+    )
 
     client = Bot("?", help_command=None, intents=intents, chunk_guilds_at_startup=False)
     await client.start(getenv("FRED_TOKEN"), reconnect=True)

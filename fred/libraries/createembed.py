@@ -34,7 +34,7 @@ async def github_embed(data: dict) -> nextcord.Embed | None:
     try:
         repo_name = data["repository"]["full_name"]
         repo_full_name = f'{data["repository"]["name"]}/{'/'.join(data["ref"].split("/")[2:])}'
-    except (KeyError, IndexError):
+    except KeyError, IndexError:
         repo_name, repo_full_name = "", ""
 
     if (data_type := data.get("type")) is None:
